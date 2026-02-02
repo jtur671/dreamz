@@ -41,3 +41,8 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Project docs (local only)
+.claude/
+CLAUDE.md
+docs/
