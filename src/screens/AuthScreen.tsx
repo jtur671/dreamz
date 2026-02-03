@@ -25,7 +25,10 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
 
   async function handleEmailAuth() {
-    if (!email || !password) {
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail || !trimmedPassword) {
       Alert.alert('Error', 'Please enter email and password');
       return;
     }
@@ -34,8 +37,8 @@ export default function AuthScreen() {
 
     if (isSignUp) {
       const { error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: trimmedEmail,
+        password: trimmedPassword,
       });
       if (error) {
         Alert.alert('Sign Up Error', error.message);
@@ -44,8 +47,8 @@ export default function AuthScreen() {
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: trimmedEmail,
+        password: trimmedPassword,
       });
       if (error) {
         Alert.alert('Sign In Error', error.message);
