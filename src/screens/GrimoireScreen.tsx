@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   SafeAreaView,
   RefreshControl,
+  TextInput,
+  Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
@@ -22,6 +24,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
   const [dreams, setDreams] = useState<Dream[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Refresh when tab is focused
   useFocusEffect(
@@ -75,6 +78,55 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
     }
   }
 
+  function handleDeletePress(dream: Dream) {
+    const title = dream.reading?.title || 'this dream';
+    Alert.alert(
+      'Delete Dream',
+      `Are you sure you want to delete "${title}"? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => deleteDream(dream.id),
+        },
+      ]
+    );
+  }
+
+  async function deleteDream(dreamId: string) {
+    const { error } = await supabase
+      .from('dreams')
+      .delete()
+      .eq('id', dreamId);
+
+    if (error) {
+      Alert.alert('Error', 'Failed to delete dream. Please try again.');
+      return;
+    }
+
+    // Remove from local state
+    setDreams(dreams.filter(d => d.id !== dreamId));
+  }
+
+  // Filter dreams based on search query
+  const filteredDreams = dreams.filter(dream => {
+    if (!searchQuery.trim()) return true;
+
+    const query = searchQuery.toLowerCase();
+    const title = dream.reading?.title?.toLowerCase() || '';
+    const text = dream.dream_text.toLowerCase();
+    const tags = dream.reading?.tags?.join(' ').toLowerCase() || '';
+    const omen = dream.reading?.omen?.toLowerCase() || '';
+
+    return (
+      title.includes(query) ||
+      text.includes(query) ||
+      tags.includes(query) ||
+      omen.includes(query)
+    );
+  });
+
   function renderDream({ item }: { item: Dream }) {
     const hasReading = !!item.reading;
     const title = item.reading?.title;
@@ -83,10 +135,22 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
       <TouchableOpacity
         style={styles.dreamCard}
         onPress={() => handleDreamPress(item)}
+        onLongPress={() => handleDeletePress(item)}
         disabled={!hasReading}
       >
-        {title && <Text style={styles.dreamTitle}>{title}</Text>}
-        <Text style={styles.dreamDate}>{formatDate(item.created_at)}</Text>
+        <View style={styles.cardHeader}>
+          <View style={styles.cardHeaderText}>
+            {title && <Text style={styles.dreamTitle}>{title}</Text>}
+            <Text style={styles.dreamDate}>{formatDate(item.created_at)}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => handleDeletePress(item)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={styles.deleteButtonText}>...</Text>
+          </TouchableOpacity>
+        </View>
         {item.mood && <Text style={styles.dreamMood}>{item.mood}</Text>}
         <Text style={styles.dreamText} numberOfLines={3}>
           {item.dream_text}
@@ -116,6 +180,28 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
           {dreams.length} dream{dreams.length !== 1 ? 's' : ''} recorded
         </Text>
 
+        {dreams.length > 0 && (
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search dreams, symbols, tags..."
+              placeholderTextColor="#6b5b8a"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                style={styles.clearButton}
+                onPress={() => setSearchQuery('')}
+              >
+                <Text style={styles.clearButtonText}>Clear</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
         {dreams.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>📖</Text>
@@ -132,9 +218,19 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
               <Text style={styles.emptyButtonText}>Record a Dream</Text>
             </TouchableOpacity>
           </View>
+        ) : filteredDreams.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>🔮</Text>
+            <Text style={styles.emptyText}>
+              No dreams match your search
+            </Text>
+            <Text style={styles.emptySubtext}>
+              Try different keywords or clear the search
+            </Text>
+          </View>
         ) : (
           <FlatList
-            data={dreams}
+            data={filteredDreams}
             renderItem={renderDream}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
@@ -179,7 +275,32 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: '#8b7fa8',
-    marginBottom: 24,
+    marginBottom: 16,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: '#2a2a4e',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#e0d4f7',
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
+  },
+  clearButton: {
+    marginLeft: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  clearButtonText: {
+    color: '#9b7fd4',
+    fontSize: 14,
   },
   listContent: {
     paddingBottom: 24,
@@ -191,6 +312,22 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#3a3a5e',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  cardHeaderText: {
+    flex: 1,
+  },
+  deleteButton: {
+    padding: 4,
+  },
+  deleteButtonText: {
+    color: '#8b7fa8',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   dreamTitle: {
     fontSize: 16,
