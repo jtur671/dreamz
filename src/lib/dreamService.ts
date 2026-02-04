@@ -20,7 +20,8 @@ export type UpdateDreamResult =
  */
 export async function saveDream(
   dreamText: string,
-  mood?: string
+  mood?: string,
+  dreamType: 'dream' | 'nightmare' = 'dream'
 ): Promise<SaveDreamResult> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -35,6 +36,7 @@ export async function saveDream(
         user_id: user.id,
         dream_text: dreamText.trim(),
         mood: mood || null,
+        dream_type: dreamType,
       })
       .select()
       .single();
@@ -56,7 +58,8 @@ export async function saveDream(
 export async function analyzeDream(
   dreamText: string,
   mood?: string,
-  dreamId?: string
+  dreamId?: string,
+  zodiacSign?: string
 ): Promise<AnalyzeDreamResult> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -75,6 +78,7 @@ export async function analyzeDream(
         dream_text: dreamText,
         mood: mood || undefined,
         dream_id: dreamId || undefined,
+        zodiac_sign: zodiacSign || undefined,
       }),
     });
 
@@ -146,10 +150,13 @@ function isValidReading(reading: unknown): reading is DreamReading {
     typeof r.title === 'string' &&
     typeof r.tldr === 'string' &&
     Array.isArray(r.symbols) &&
-    r.symbols.length >= 1 &&
+    r.symbols.length >= 3 &&
+    r.symbols.length <= 7 &&
     typeof r.omen === 'string' &&
     typeof r.ritual === 'string' &&
     typeof r.journal_prompt === 'string' &&
-    Array.isArray(r.tags)
+    Array.isArray(r.tags) &&
+    r.tags.length >= 3 &&
+    r.tags.length <= 7
   );
 }
