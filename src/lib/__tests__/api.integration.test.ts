@@ -219,7 +219,7 @@ describe('API Integration Tests', () => {
       if (result.success) {
         expect(result.reading.symbols.length).toBeGreaterThanOrEqual(1);
 
-        result.reading.symbols.forEach((symbol) => {
+        result.reading.symbols.forEach((symbol: { name: string; meaning: string; shadow: string; guidance: string }) => {
           expect(symbol).toHaveProperty('name');
           expect(symbol).toHaveProperty('meaning');
           expect(symbol).toHaveProperty('shadow');

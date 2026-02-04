@@ -8,17 +8,19 @@ import { supabase } from '../supabase';
 // Get the mocked supabase module
 const mockedSupabase = supabase as jest.Mocked<typeof supabase>;
 
-// Valid mock reading fixture for tests
+// Valid mock reading fixture for tests (must have 3-7 symbols and 3-7 tags)
 const validReading = {
   title: 'The Wandering Moon',
   tldr: 'A journey of self-discovery awaits',
   symbols: [
     { name: 'Moon', meaning: 'Intuition', shadow: 'Confusion', guidance: 'Trust your instincts' },
+    { name: 'Path', meaning: 'Direction', shadow: 'Uncertainty', guidance: 'Keep walking' },
+    { name: 'Stars', meaning: 'Hope', shadow: 'Distance', guidance: 'Look up' },
   ],
   omen: 'Change approaches',
   ritual: 'Light a white candle at dusk',
   journal_prompt: 'What does the moon mean to you?',
-  tags: ['lunar', 'journey'],
+  tags: ['lunar', 'journey', 'transformation'],
 };
 
 describe('Dream Service', () => {
