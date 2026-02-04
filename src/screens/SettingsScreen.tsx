@@ -59,7 +59,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
 
       const { data: dreams, error } = await supabase
         .from('dreams')
-        .select('*')
+        .select('dream_text, mood, emotions, dream_type, reading, created_at')
         .eq('user_id', user.id)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
@@ -69,16 +69,39 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         return;
       }
 
+      // Format dreams for export (privacy-safe, no internal IDs)
+      const exportedDreams = (dreams || []).map((dream, index) => ({
+        entry_number: index + 1,
+        date: new Date(dream.created_at).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+        dream_text: dream.dream_text,
+        mood: dream.mood,
+        emotions: dream.emotions,
+        type: dream.dream_type,
+        reading: dream.reading ? {
+          title: dream.reading.title,
+          summary: dream.reading.tldr,
+          symbols: dream.reading.symbols,
+          omen: dream.reading.omen,
+          ritual: dream.reading.ritual,
+          reflection: dream.reading.journal_prompt,
+          themes: dream.reading.tags,
+        } : null,
+      }));
+
       const exportData = {
         exported_at: new Date().toISOString(),
-        user_email: user.email,
-        dream_count: dreams?.length || 0,
-        dreams: dreams,
+        app: 'Dreamz',
+        total_dreams: exportedDreams.length,
+        dreams: exportedDreams,
       };
 
       await Share.share({
         message: JSON.stringify(exportData, null, 2),
-        title: 'Dreamz Export',
+        title: 'My Dreamz Journal Export',
       });
     } catch (error: any) {
       Alert.alert('Export Error', error.message || 'Failed to export dreams');
@@ -88,46 +111,77 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   }
 
   async function handleDeleteAccount() {
+    // First confirmation
     Alert.alert(
       'Delete Account',
-      'This will permanently delete your account and all your dreams. This cannot be undone.',
+      'This will permanently delete your account and all your dreams. This action cannot be undone.\n\nAre you sure you want to continue?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Delete Forever',
+          text: 'Yes, Continue',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoading(true);
-              const { data: { user } } = await supabase.auth.getUser();
-
-              if (!user) return;
-
-              // Delete all user's dreams
-              await supabase
-                .from('dreams')
-                .delete()
-                .eq('user_id', user.id);
-
-              // Delete profile
-              await supabase
-                .from('profiles')
-                .delete()
-                .eq('id', user.id);
-
-              // Sign out (account deletion requires admin API)
-              await supabase.auth.signOut();
-
-              Alert.alert('Account Deleted', 'Your account has been deleted.');
-            } catch (error: any) {
-              Alert.alert('Error', error.message || 'Failed to delete account');
-            } finally {
-              setLoading(false);
-            }
+          onPress: () => {
+            // Second confirmation
+            Alert.alert(
+              'Final Confirmation',
+              'All your dreams, readings, and account data will be permanently erased.\n\nThis is your last chance to cancel.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete Everything',
+                  style: 'destructive',
+                  onPress: performAccountDeletion,
+                },
+              ]
+            );
           },
         },
       ]
     );
+  }
+
+  async function performAccountDeletion() {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        Alert.alert('Error', 'Not authenticated');
+        return;
+      }
+
+      // Delete all user's dreams first (due to foreign key)
+      const { error: dreamsError } = await supabase
+        .from('dreams')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (dreamsError) {
+        throw new Error(`Failed to delete dreams: ${dreamsError.message}`);
+      }
+
+      // Delete profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id);
+
+      if (profileError) {
+        throw new Error(`Failed to delete profile: ${profileError.message}`);
+      }
+
+      // Sign out (full auth user deletion requires admin API/edge function)
+      await supabase.auth.signOut();
+
+      Alert.alert(
+        'Farewell, Dreamer',
+        'Your account and all dreams have been deleted. May your waking hours be filled with wonder.'
+      );
+    } catch (error: any) {
+      Alert.alert('Deletion Error', error.message || 'Failed to delete account');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleSignOut() {
