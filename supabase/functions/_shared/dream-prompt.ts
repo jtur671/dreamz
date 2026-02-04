@@ -12,6 +12,8 @@
 export interface DreamSymbol {
   /** The symbol or element identified in the dream */
   name: string;
+  /** Plain English explanation of what this symbol means in YOUR dream */
+  interpretation: string;
   /** What this symbol traditionally or archetypally represents */
   meaning: string;
   /** The symbol's shadow aspect - its challenging or darker interpretation */
@@ -25,7 +27,7 @@ export interface DreamReadingSchema {
   title: string;
   /** Brief mystical summary, max 150 characters */
   tldr: string;
-  /** Array of 3-7 symbols identified in the dream */
+  /** The single most important symbol in the dream */
   symbols: DreamSymbol[];
   /** What the dream portends about the dreamer's current life phase (2-4 sentences) */
   omen: string;
@@ -33,7 +35,7 @@ export interface DreamReadingSchema {
   ritual: string;
   /** A reflective question for the dreamer to explore */
   journal_prompt: string;
-  /** 3-7 thematic tags in lowercase */
+  /** 3-5 thematic tags in lowercase */
   tags: string[];
   /** Content warnings if applicable, empty array if none */
   content_warnings: string[];
@@ -68,7 +70,8 @@ You MUST return ONLY valid JSON matching this exact schema. No markdown code fen
   "tldr": "string (mystical summary, max 150 chars)",
   "symbols": [
     {
-      "name": "string (the symbol from the dream)",
+      "name": "string (the key symbol from the dream)",
+      "interpretation": "string (2-3 sentences in plain English explaining what this symbol means specifically for THIS dream and dreamer)",
       "meaning": "string (archetypal/traditional meaning)",
       "shadow": "string (darker or challenging aspect)",
       "guidance": "string (how to work with this energy)"
@@ -82,8 +85,9 @@ You MUST return ONLY valid JSON matching this exact schema. No markdown code fen
 }
 
 ## Symbol Requirements
-- Include 3-7 symbols, each with all four fields (name, meaning, shadow, guidance)
-- Identify concrete elements (water, house, animal) AND abstract patterns (falling, being chased, transformation)
+- Include exactly ONE symbol - the most significant element from the dream
+- The "interpretation" field should be plain English, conversational, specific to this dream
+- Identify the most powerful symbol: could be concrete (water, house, animal) or abstract (falling, being chased)
 - Balance universal archetypal meanings with personal interpretation space
 
 ## Content Warnings
@@ -96,8 +100,8 @@ Before responding, verify:
 - No trailing commas
 - Arrays are properly formatted
 - JSON parses successfully
-- symbols array has 3-7 items
-- tags array has 3-7 items
+- symbols array has exactly 1 item
+- tags array has 3-5 items
 - tldr is under 150 characters`;
 
 // ============================================================================
@@ -109,18 +113,23 @@ Before responding, verify:
  *
  * @param dreamText - The dream narrative from the user
  * @param mood - Optional mood/emotion context (e.g., "anxious", "peaceful")
+ * @param zodiacSign - Optional zodiac sign for personalized interpretation
  * @returns Formatted user prompt string
  */
-export function buildUserPrompt(dreamText: string, mood?: string): string {
+export function buildUserPrompt(dreamText: string, mood?: string, zodiacSign?: string): string {
   const moodContext = mood
     ? `\n\nThe dreamer woke feeling: ${mood}`
+    : "";
+
+  const zodiacContext = zodiacSign
+    ? `\n\nThe dreamer is a ${zodiacSign}. Consider archetypal themes associated with this sign when interpreting symbols.`
     : "";
 
   return `Please interpret the following dream and return a JSON reading:
 
 ---
 ${dreamText.trim()}
----${moodContext}
+---${moodContext}${zodiacContext}
 
 Remember: Return ONLY valid JSON matching the schema. No markdown, no extra text.`;
 }
@@ -134,22 +143,11 @@ export const FALLBACK_READING: DreamReadingSchema = {
   tldr: "A dream awaits deeper remembering; the threshold holds wisdom still.",
   symbols: [
     {
-      name: "The Forgotten Dream",
-      meaning: "Messages from the unconscious that resist easy capture",
-      shadow: "Avoidance of inner knowledge, fear of what dreams reveal",
-      guidance: "Keep a dream journal by your bed; fragments are enough",
-    },
-    {
       name: "The Threshold",
+      interpretation: "Your dream is hovering at the edge of memory, like a word on the tip of your tongue. This isn't forgetfulness - it's your subconscious inviting you to slow down and listen more closely.",
       meaning: "The liminal space between knowing and not-knowing",
       shadow: "Impatience with mystery, forcing meaning before its time",
       guidance: "Sit with not-knowing as its own form of wisdom",
-    },
-    {
-      name: "The Mist",
-      meaning: "Transitions and the softening of boundaries",
-      shadow: "Confusion, lack of clarity, feeling lost",
-      guidance: "Trust that clarity will come; move slowly through uncertainty",
     },
   ],
   omen:
@@ -158,7 +156,7 @@ export const FALLBACK_READING: DreamReadingSchema = {
     "Before sleep tonight, place your hand on your heart and speak aloud: 'I am ready to remember.' Keep paper and pen within arm's reach.",
   journal_prompt:
     "What feelings lingered when you woke, even if images did not?",
-  tags: ["liminal", "memory", "invitation", "threshold", "mystery"],
+  tags: ["liminal", "memory", "threshold"],
   content_warnings: [],
 };
 
@@ -205,8 +203,8 @@ export function validateReading(reading: unknown): {
   if (!Array.isArray(r.symbols)) {
     return { isValid: false, error: "symbols must be an array" };
   }
-  if (r.symbols.length < 3 || r.symbols.length > 7) {
-    return { isValid: false, error: "symbols must have 3-7 items" };
+  if (r.symbols.length < 1 || r.symbols.length > 3) {
+    return { isValid: false, error: "symbols must have 1-3 items" };
   }
 
   // Validate each symbol
@@ -221,14 +219,15 @@ export function validateReading(reading: unknown): {
         };
       }
     }
+    // interpretation is optional for backwards compatibility
   }
 
   // Check tags array
   if (!Array.isArray(r.tags)) {
     return { isValid: false, error: "tags must be an array" };
   }
-  if (r.tags.length < 3 || r.tags.length > 7) {
-    return { isValid: false, error: "tags must have 3-7 items" };
+  if (r.tags.length < 3 || r.tags.length > 5) {
+    return { isValid: false, error: "tags must have 3-5 items" };
   }
   for (const tag of r.tags) {
     if (typeof tag !== "string") {

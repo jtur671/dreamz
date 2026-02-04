@@ -31,6 +31,7 @@ interface AnalyzeRequest {
   dream_text: string;
   mood?: string;
   dream_id?: string;
+  zodiac_sign?: string;
 }
 
 interface OpenAIMessage {
@@ -55,9 +56,12 @@ interface OpenAIResponse {
 // ============================================================================
 
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
-const OPENAI_MODEL = "gpt-5-mini";
+const OPENAI_IMAGE_URL = "https://api.openai.com/v1/images/generations";
+const OPENAI_MODEL = "gpt-5-mini-2025-08-07";
+const OPENAI_IMAGE_MODEL = "dall-e-3";
 const MAX_RETRIES = 2; // Initial attempt + 1 retry
 const REQUEST_TIMEOUT_MS = 30000;
+const IMAGE_TIMEOUT_MS = 60000;
 const MAX_DREAM_TEXT_LENGTH = 10000;
 const MIN_DREAM_TEXT_LENGTH = 10;
 
@@ -115,6 +119,63 @@ async function callOpenAI(
       throw new Error("OpenAI request timed out");
     }
     throw error;
+  }
+}
+
+/**
+ * Generates a dreamy image based on the actual dream content
+ */
+async function generateDreamImage(
+  dreamText: string,
+  reading: DreamReadingSchema,
+  apiKey: string
+): Promise<string | null> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), IMAGE_TIMEOUT_MS);
+
+  try {
+    // Extract key visual elements from the dream text (first 200 chars for safety)
+    const dreamSnippet = dreamText.slice(0, 200);
+    const symbolName = reading.symbols[0]?.name || "mysterious vision";
+
+    // Create an image prompt that closely matches the dream content
+    const imagePrompt = `Surreal dreamscape painting: ${dreamSnippet}. Central focus on ${symbolName}. Style: ethereal digital art, soft glowing light, dreamy atmosphere, muted purples and blues, magical realism. Painterly, atmospheric, evocative. No text, no words, no letters.`;
+
+    const response = await fetch(OPENAI_IMAGE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: OPENAI_IMAGE_MODEL,
+        prompt: imagePrompt,
+        n: 1,
+        size: "1024x1024",
+        quality: "standard",
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`Image generation failed (${response.status}): ${errorBody}`);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.data && data.data[0] && data.data[0].url) {
+      return data.data[0].url;
+    }
+
+    return null;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    console.error(`Image generation error: ${error instanceof Error ? error.message : "Unknown"}`);
+    return null;
   }
 }
 
@@ -203,12 +264,17 @@ function validateRequest(body: unknown): {
     return { valid: false, error: "dream_id must be a string if provided" };
   }
 
+  if (req.zodiac_sign !== undefined && typeof req.zodiac_sign !== "string") {
+    return { valid: false, error: "zodiac_sign must be a string if provided" };
+  }
+
   return {
     valid: true,
     data: {
       dream_text: dreamText,
       mood: req.mood as string | undefined,
       dream_id: req.dream_id as string | undefined,
+      zodiac_sign: req.zodiac_sign as string | undefined,
     },
   };
 }
@@ -319,12 +385,12 @@ Deno.serve(async (req: Request) => {
       return errorResponse("VALIDATION_ERROR", validation.error!, 400);
     }
 
-    const { dream_text, mood, dream_id } = validation.data;
+    const { dream_text, mood, dream_id, zodiac_sign } = validation.data;
 
     // Build messages for OpenAI
     const messages: OpenAIMessage[] = [
       { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: buildUserPrompt(dream_text, mood) },
+      { role: "user", content: buildUserPrompt(dream_text, mood, zodiac_sign) },
     ];
 
     // Attempt to get reading with retry
@@ -366,16 +432,31 @@ Deno.serve(async (req: Request) => {
       usedFallback = true;
     }
 
+    // Generate a dreamy image based on the actual dream content
+    console.log(`[${correlationId}] Generating dream image...`);
+    const imageUrl = await generateDreamImage(dream_text, reading, openaiApiKey);
+    if (imageUrl) {
+      console.log(`[${correlationId}] Image generated successfully`);
+    } else {
+      console.log(`[${correlationId}] Image generation skipped or failed`);
+    }
+
+    // Build final reading with image
+    const finalReading = {
+      ...reading,
+      ...(imageUrl && { image_url: imageUrl }),
+    };
+
     // Update dream record if dream_id provided
     if (dream_id) {
-      await updateDreamWithReading(supabase, dream_id, user.id, reading);
+      await updateDreamWithReading(supabase, dream_id, user.id, finalReading);
     }
 
     // Return successful response
     return jsonResponse({
       success: true,
-      data: {
-        ...reading,
+      reading: {
+        ...finalReading,
         timestamp: new Date().toISOString(),
         ...(usedFallback && { fallback: true }),
       },
