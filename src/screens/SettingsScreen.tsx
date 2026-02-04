@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { getProfile, updateZodiacSign } from '../lib/profileService';
+import { exportUserDreams, deleteUserAccount } from '../lib/accountService';
 import { ZODIAC_SIGNS } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -50,57 +51,15 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   async function handleExportDreams() {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      const result = await exportUserDreams();
 
-      if (!user) {
-        Alert.alert('Error', 'Not authenticated');
+      if (!result.success) {
+        Alert.alert('Export Error', result.error);
         return;
       }
-
-      const { data: dreams, error } = await supabase
-        .from('dreams')
-        .select('dream_text, mood, emotions, dream_type, reading, created_at')
-        .eq('user_id', user.id)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        Alert.alert('Error', error.message);
-        return;
-      }
-
-      // Format dreams for export (privacy-safe, no internal IDs)
-      const exportedDreams = (dreams || []).map((dream, index) => ({
-        entry_number: index + 1,
-        date: new Date(dream.created_at).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        }),
-        dream_text: dream.dream_text,
-        mood: dream.mood,
-        emotions: dream.emotions,
-        type: dream.dream_type,
-        reading: dream.reading ? {
-          title: dream.reading.title,
-          summary: dream.reading.tldr,
-          symbols: dream.reading.symbols,
-          omen: dream.reading.omen,
-          ritual: dream.reading.ritual,
-          reflection: dream.reading.journal_prompt,
-          themes: dream.reading.tags,
-        } : null,
-      }));
-
-      const exportData = {
-        exported_at: new Date().toISOString(),
-        app: 'Dreamz',
-        total_dreams: exportedDreams.length,
-        dreams: exportedDreams,
-      };
 
       await Share.share({
-        message: JSON.stringify(exportData, null, 2),
+        message: JSON.stringify(result.data, null, 2),
         title: 'My Dreamz Journal Export',
       });
     } catch (error: any) {
@@ -143,35 +102,12 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   async function performAccountDeletion() {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      const result = await deleteUserAccount();
 
-      if (!user) {
-        Alert.alert('Error', 'Not authenticated');
+      if (!result.success) {
+        Alert.alert('Deletion Error', result.error);
         return;
       }
-
-      // Delete all user's dreams first (due to foreign key)
-      const { error: dreamsError } = await supabase
-        .from('dreams')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (dreamsError) {
-        throw new Error(`Failed to delete dreams: ${dreamsError.message}`);
-      }
-
-      // Delete profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', user.id);
-
-      if (profileError) {
-        throw new Error(`Failed to delete profile: ${profileError.message}`);
-      }
-
-      // Sign out (full auth user deletion requires admin API/edge function)
-      await supabase.auth.signOut();
 
       Alert.alert(
         'Farewell, Dreamer',
