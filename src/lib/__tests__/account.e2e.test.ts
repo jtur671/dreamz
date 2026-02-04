@@ -24,31 +24,46 @@ interface TestUser {
 /**
  * Creates a test user with a unique email
  */
-async function createTestUser(): Promise<TestUser> {
+async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function createTestUser(retries = 3): Promise<TestUser> {
   const timestamp = Date.now();
   const email = `e2e-test-${timestamp}@dreamz.app`;
   const password = 'TestPassword123';
 
-  const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
-    method: 'POST',
-    headers: {
-      'apikey': SUPABASE_ANON_KEY,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ email, password }),
-  });
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
 
-  const data = await response.json();
+    const data = await response.json();
 
-  if (!data.access_token || !data.user?.id) {
+    if (data.access_token && data.user?.id) {
+      return {
+        id: data.user.id,
+        email,
+        accessToken: data.access_token,
+      };
+    }
+
+    // Rate limited - wait and retry
+    if (data.error_code === 'over_request_rate_limit') {
+      console.log(`Rate limited, waiting ${(attempt + 1) * 2}s before retry...`);
+      await sleep((attempt + 1) * 2000);
+      continue;
+    }
+
     throw new Error(`Failed to create test user: ${JSON.stringify(data)}`);
   }
 
-  return {
-    id: data.user.id,
-    email,
-    accessToken: data.access_token,
-  };
+  throw new Error('Failed to create test user after retries');
 }
 
 /**
