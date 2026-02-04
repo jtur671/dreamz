@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -6,50 +6,61 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  ActivityIndicator,
-  Alert,
+  Share,
+  Image,
+  Dimensions,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { DreamReading, DreamSymbol } from '../types';
-import { updateDreamWithReading } from '../lib/dreamService';
 
 type ReadingScreenParams = {
   reading: DreamReading;
   dreamId: string;
-  alreadySaved?: boolean;
+  fromGrimoire?: boolean;
 };
 
 export default function ReadingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const route = useRoute();
   const params = route.params as ReadingScreenParams;
-  const { reading, dreamId, alreadySaved = false } = params;
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(alreadySaved);
+  const { reading, fromGrimoire = false } = params;
 
-  async function handleSaveToGrimoire() {
-    if (saved) return;
-
-    setSaving(true);
-
-    const result = await updateDreamWithReading(dreamId, reading);
-
-    if (result.success) {
-      setSaved(true);
-      Alert.alert(
-        'Saved to Grimoire',
-        'Your dream reading has been preserved in your collection.'
-      );
-    } else {
-      Alert.alert('Error', result.error);
-    }
-
-    setSaving(false);
+  function handleViewInGrimoire() {
+    // Navigate to Grimoire tab - reset to top of stack first, then go to Grimoire
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'MainTabs', params: { screen: 'Grimoire' } }],
+    });
   }
 
   function handleBackToHome() {
     navigation.popToTop();
+  }
+
+  async function handleShare() {
+    // Share only the reading content - never the dream text (privacy)
+    const shareText = `${reading.title}
+
+"${reading.omen}"
+
+Ritual: ${reading.ritual}
+
+Reflect: ${reading.journal_prompt}
+
+#${reading.tags.join(' #')}
+
+---
+Interpreted with Dreamz`;
+
+    try {
+      await Share.share({
+        message: shareText,
+        title: reading.title,
+      });
+    } catch (error) {
+      // User cancelled or share failed silently
+    }
   }
 
   return (
@@ -70,6 +81,18 @@ export default function ReadingScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        {/* Dream Image */}
+        {reading.image_url && (
+          <View style={styles.imageContainer}>
+            <Image
+              source={{ uri: reading.image_url }}
+              style={styles.dreamImage}
+              resizeMode="cover"
+            />
+            <View style={styles.imageOverlay} />
+          </View>
+        )}
+
         {/* Title */}
         <Text style={styles.title}>{reading.title}</Text>
 
@@ -125,27 +148,25 @@ export default function ReadingScreen() {
 
         {/* Action Buttons */}
         <View style={styles.actionContainer}>
-          {!saved && (
+          {!fromGrimoire && (
             <TouchableOpacity
-              style={[styles.saveButton, saving && styles.buttonDisabled]}
-              onPress={handleSaveToGrimoire}
-              disabled={saving}
-              accessibilityLabel="Save reading to grimoire"
+              style={styles.viewGrimoireButton}
+              onPress={handleViewInGrimoire}
+              accessibilityLabel="View in Grimoire"
               accessibilityRole="button"
             >
-              {saving ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.saveButtonText}>Save to Grimoire</Text>
-              )}
+              <Text style={styles.viewGrimoireButtonText}>View in Grimoire</Text>
             </TouchableOpacity>
           )}
 
-          {saved && (
-            <View style={styles.savedIndicator}>
-              <Text style={styles.savedText}>Saved to your Grimoire</Text>
-            </View>
-          )}
+          <TouchableOpacity
+            style={styles.shareButton}
+            onPress={handleShare}
+            accessibilityLabel="Share reading"
+            accessibilityRole="button"
+          >
+            <Text style={styles.shareButtonText}>Share Reading</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.homeButton}
@@ -168,26 +189,49 @@ function SymbolCard({ symbol }: { symbol: DreamSymbol }) {
 
       <View style={styles.symbolSection}>
         <Text style={styles.symbolSectionLabel}>Meaning</Text>
-        <Text style={styles.symbolText}>{symbol.meaning}</Text>
+        <Text style={styles.symbolMeaning}>{symbol.meaning}</Text>
       </View>
 
       <View style={styles.symbolSection}>
         <Text style={styles.symbolSectionLabel}>Shadow</Text>
-        <Text style={styles.symbolText}>{symbol.shadow}</Text>
+        <Text style={styles.symbolShadow}>{symbol.shadow}</Text>
       </View>
 
       <View style={styles.symbolSection}>
         <Text style={styles.symbolSectionLabel}>Guidance</Text>
-        <Text style={styles.symbolText}>{symbol.guidance}</Text>
+        <Text style={styles.symbolGuidance}>{symbol.guidance}</Text>
       </View>
     </View>
   );
 }
 
+const { width: screenWidth } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#1a1a2e',
+  },
+  imageContainer: {
+    marginHorizontal: -24,
+    marginTop: -8,
+    marginBottom: 20,
+    position: 'relative',
+  },
+  dreamImage: {
+    width: screenWidth,
+    height: screenWidth * 0.75,
+    backgroundColor: '#252542',
+  },
+  imageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 60,
+    backgroundColor: 'transparent',
+    // Gradient fade effect at bottom
+    borderBottomWidth: 0,
   },
   header: {
     flexDirection: 'row',
@@ -237,34 +281,49 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   symbolCard: {
-    backgroundColor: '#2a2a4e',
+    backgroundColor: '#252542',
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    padding: 20,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#3a3a5e',
+    borderColor: '#4a4a6e',
   },
   symbolName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#d4c4f7',
-    marginBottom: 12,
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#f0e8ff',
+    marginBottom: 16,
+    letterSpacing: 0.5,
   },
   symbolSection: {
-    marginBottom: 10,
+    marginBottom: 14,
+    paddingLeft: 12,
+    borderLeftWidth: 2,
+    borderLeftColor: '#5a4a7e',
   },
   symbolSectionLabel: {
     fontSize: 11,
-    fontWeight: '600',
-    color: '#8b7fa8',
+    fontWeight: '700',
+    color: '#b8a8d8',
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 4,
+    letterSpacing: 1.2,
+    marginBottom: 6,
   },
-  symbolText: {
-    fontSize: 14,
-    color: '#c4b8e8',
-    lineHeight: 20,
+  symbolMeaning: {
+    fontSize: 15,
+    color: '#e8e0f8',
+    lineHeight: 22,
+  },
+  symbolShadow: {
+    fontSize: 15,
+    color: '#d8c8e8',
+    lineHeight: 22,
+    fontStyle: 'italic',
+  },
+  symbolGuidance: {
+    fontSize: 15,
+    color: '#c8f0d8',
+    lineHeight: 22,
   },
   omenCard: {
     backgroundColor: '#2e2545',
@@ -324,21 +383,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     gap: 12,
   },
-  saveButton: {
-    backgroundColor: '#6b4e9e',
-    borderRadius: 16,
-    padding: 18,
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  savedIndicator: {
+  viewGrimoireButton: {
     backgroundColor: '#2e4540',
     borderRadius: 16,
     padding: 18,
@@ -346,8 +391,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#4a7a6a',
   },
-  savedText: {
+  viewGrimoireButtonText: {
     color: '#8bc4a8',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  shareButton: {
+    backgroundColor: '#3a3a5e',
+    borderRadius: 16,
+    padding: 18,
+    alignItems: 'center',
+  },
+  shareButtonText: {
+    color: '#c4b8e8',
     fontSize: 16,
     fontWeight: '500',
   },

@@ -9,11 +9,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Modal,
 } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { supabase } from '../lib/supabase';
+import { updateZodiacSign } from '../lib/profileService';
+import { ZODIAC_SIGNS } from '../types';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -23,6 +26,8 @@ export default function AuthScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showZodiacPicker, setShowZodiacPicker] = useState(false);
+  const [isEmailSignup, setIsEmailSignup] = useState(false);
 
   async function handleEmailAuth() {
     const trimmedEmail = email.trim();
@@ -43,7 +48,8 @@ export default function AuthScreen() {
       if (error) {
         Alert.alert('Sign Up Error', error.message);
       } else {
-        Alert.alert('Success', 'Check your email for confirmation');
+        setIsEmailSignup(true);
+        setShowZodiacPicker(true);
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({
@@ -69,13 +75,21 @@ export default function AuthScreen() {
       });
 
       if (credential.identityToken) {
-        const { error } = await supabase.auth.signInWithIdToken({
+        const { data, error } = await supabase.auth.signInWithIdToken({
           provider: 'apple',
           token: credential.identityToken,
         });
 
         if (error) {
           Alert.alert('Apple Sign In Error', error.message);
+        } else if (data?.user?.created_at) {
+          // Check if this is a new user (created within last minute)
+          const createdAt = new Date(data.user.created_at);
+          const now = new Date();
+          const isNewUser = (now.getTime() - createdAt.getTime()) < 60000;
+          if (isNewUser) {
+            setShowZodiacPicker(true);
+          }
         }
       }
     } catch (error: any) {
@@ -122,10 +136,20 @@ export default function AuthScreen() {
           const refreshToken = urlParams.get('refresh_token');
 
           if (accessToken && refreshToken) {
-            await supabase.auth.setSession({
+            const { data: sessionData } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken,
             });
+
+            // Check if this is a new user (created within last minute)
+            if (sessionData?.user?.created_at) {
+              const createdAt = new Date(sessionData.user.created_at);
+              const now = new Date();
+              const isNewUser = (now.getTime() - createdAt.getTime()) < 60000;
+              if (isNewUser) {
+                setShowZodiacPicker(true);
+              }
+            }
           }
         }
       }
@@ -136,7 +160,52 @@ export default function AuthScreen() {
     }
   }
 
+  async function handleZodiacSelect(sign: string | null) {
+    if (sign) {
+      await updateZodiacSign(sign);
+    }
+    setShowZodiacPicker(false);
+
+    // Only show email confirmation message for email sign-ups
+    if (isEmailSignup) {
+      Alert.alert('Success', 'Check your email for confirmation');
+      setIsEmailSignup(false);
+    }
+  }
+
   return (
+    <>
+    <Modal
+      visible={showZodiacPicker}
+      transparent
+      animationType="fade"
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>What's your sign?</Text>
+          <Text style={styles.modalSubtitle}>
+            Your readings will be tailored to your celestial nature
+          </Text>
+          <ScrollView style={styles.zodiacList} showsVerticalScrollIndicator={false}>
+            {ZODIAC_SIGNS.map((sign) => (
+              <TouchableOpacity
+                key={sign}
+                style={styles.zodiacOption}
+                onPress={() => handleZodiacSelect(sign)}
+              >
+                <Text style={styles.zodiacText}>{sign}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => handleZodiacSelect(null)}
+          >
+            <Text style={styles.skipText}>Skip for now</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
@@ -229,6 +298,7 @@ export default function AuthScreen() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    </>
   );
 }
 
@@ -349,6 +419,60 @@ const styles = StyleSheet.create({
   switchText: {
     color: '#a89cc8',
     fontSize: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxHeight: '80%',
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#e0d4f7',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#a89cc8',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  zodiacList: {
+    maxHeight: 300,
+  },
+  zodiacOption: {
+    backgroundColor: '#2a2a4e',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
+  },
+  zodiacText: {
+    color: '#e0d4f7',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  skipButton: {
+    marginTop: 16,
+    padding: 12,
+  },
+  skipText: {
+    color: '#8b7fa8',
+    fontSize: 14,
+    textAlign: 'center',
   },
   privacyNote: {
     color: '#6b5b8a',

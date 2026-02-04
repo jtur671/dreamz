@@ -8,8 +8,11 @@ import {
   ScrollView,
   SafeAreaView,
   Share,
+  Modal,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
+import { getProfile, updateZodiacSign } from '../lib/profileService';
+import { ZODIAC_SIGNS } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type SettingsScreenProps = {
@@ -18,15 +21,30 @@ type SettingsScreenProps = {
 
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [zodiacSign, setZodiacSign] = useState<string | null>(null);
+  const [showZodiacPicker, setShowZodiacPicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchUser();
+    fetchUserData();
   }, []);
 
-  async function fetchUser() {
+  async function fetchUserData() {
     const { data: { user } } = await supabase.auth.getUser();
     setUserEmail(user?.email || null);
+
+    const profile = await getProfile();
+    if (profile?.zodiac_sign) {
+      setZodiacSign(profile.zodiac_sign);
+    }
+  }
+
+  async function handleZodiacSelect(sign: string) {
+    const success = await updateZodiacSign(sign);
+    if (success) {
+      setZodiacSign(sign);
+    }
+    setShowZodiacPicker(false);
   }
 
   async function handleExportDreams() {
@@ -43,6 +61,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         .from('dreams')
         .select('*')
         .eq('user_id', user.id)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -129,6 +148,43 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <Modal
+        visible={showZodiacPicker}
+        transparent
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Your Sign</Text>
+            <ScrollView style={styles.zodiacList} showsVerticalScrollIndicator={false}>
+              {ZODIAC_SIGNS.map((sign) => (
+                <TouchableOpacity
+                  key={sign}
+                  style={[
+                    styles.zodiacOption,
+                    zodiacSign === sign && styles.zodiacOptionSelected,
+                  ]}
+                  onPress={() => handleZodiacSelect(sign)}
+                >
+                  <Text style={[
+                    styles.zodiacText,
+                    zodiacSign === sign && styles.zodiacTextSelected,
+                  ]}>
+                    {sign}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowZodiacPicker(false)}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <ScrollView style={styles.container}>
         <Text style={styles.title}>Settings</Text>
 
@@ -138,6 +194,19 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             <Text style={styles.label}>Email</Text>
             <Text style={styles.value}>{userEmail || 'Loading...'}</Text>
           </View>
+
+          <TouchableOpacity
+            style={[styles.card, styles.cardButton]}
+            onPress={() => setShowZodiacPicker(true)}
+          >
+            <View>
+              <Text style={styles.label}>Zodiac Sign</Text>
+              <Text style={styles.value}>
+                {zodiacSign || 'Not set'}
+              </Text>
+            </View>
+            <Text style={styles.editText}>Edit</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
@@ -213,6 +282,16 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: '#3a3a5e',
+    marginBottom: 8,
+  },
+  cardButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  editText: {
+    color: '#9b7fd4',
+    fontSize: 14,
   },
   label: {
     fontSize: 12,
@@ -269,5 +348,60 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 8,
     marginBottom: 32,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxHeight: '70%',
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#e0d4f7',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  zodiacList: {
+    maxHeight: 350,
+  },
+  zodiacOption: {
+    backgroundColor: '#2a2a4e',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
+  },
+  zodiacOptionSelected: {
+    backgroundColor: '#3a3a6e',
+    borderColor: '#9b7fd4',
+  },
+  zodiacText: {
+    color: '#e0d4f7',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  zodiacTextSelected: {
+    fontWeight: '600',
+  },
+  cancelButton: {
+    marginTop: 12,
+    padding: 12,
+  },
+  cancelText: {
+    color: '#8b7fa8',
+    fontSize: 14,
+    textAlign: 'center',
   },
 });

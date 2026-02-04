@@ -45,6 +45,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
       .from('dreams')
       .select('*')
       .eq('user_id', user.id)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (!error && data) {
@@ -82,7 +83,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
     const title = dream.reading?.title || 'this dream';
     Alert.alert(
       'Delete Dream',
-      `Are you sure you want to delete "${title}"? This cannot be undone.`,
+      `Are you sure you want to delete "${title}"? It can be recovered within 30 days by contacting support.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -95,10 +96,20 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
   }
 
   async function deleteDream(dreamId: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      Alert.alert('Error', 'Not authenticated');
+      return;
+    }
+
+    // Soft delete - set deleted_at timestamp instead of hard delete
+    // Include user_id check for defense in depth (RLS also protects)
     const { error } = await supabase
       .from('dreams')
-      .delete()
-      .eq('id', dreamId);
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', dreamId)
+      .eq('user_id', user.id);
 
     if (error) {
       Alert.alert('Error', 'Failed to delete dream. Please try again.');
@@ -107,6 +118,26 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
 
     // Remove from local state
     setDreams(dreams.filter(d => d.id !== dreamId));
+  }
+
+  // Generate subtitle based on dream count and reading status
+  function getGrimoireSubtitle(dreamList: Dream[]): string {
+    const total = dreamList.length;
+    const withReadings = dreamList.filter(d => d.reading).length;
+
+    if (total === 0) {
+      return 'No dreams recorded yet';
+    }
+
+    if (withReadings === total) {
+      return `${total} dream${total !== 1 ? 's' : ''} with readings`;
+    }
+
+    if (withReadings === 0) {
+      return `${total} dream${total !== 1 ? 's' : ''} awaiting interpretation`;
+    }
+
+    return `${withReadings} of ${total} dreams interpreted`;
   }
 
   // Filter dreams based on search query
@@ -130,36 +161,66 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
   function renderDream({ item }: { item: Dream }) {
     const hasReading = !!item.reading;
     const title = item.reading?.title;
+    const isNightmare = item.dream_type === 'nightmare';
 
     return (
       <TouchableOpacity
-        style={styles.dreamCard}
+        style={[
+          styles.dreamCard,
+          isNightmare && styles.nightmareCard,
+        ]}
         onPress={() => handleDreamPress(item)}
         onLongPress={() => handleDeletePress(item)}
         disabled={!hasReading}
       >
-        <View style={styles.cardHeader}>
-          <View style={styles.cardHeaderText}>
-            {title && <Text style={styles.dreamTitle}>{title}</Text>}
-            <Text style={styles.dreamDate}>{formatDate(item.created_at)}</Text>
+        <View style={[
+          styles.cardAccent,
+          isNightmare && styles.nightmareAccent,
+        ]} />
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <View style={styles.cardHeaderText}>
+              <View style={styles.titleRow}>
+                <Text style={styles.typeIcon}>
+                  {isNightmare ? '\u{26A1}' : '\u{1F319}'}
+                </Text>
+                {title && (
+                  <Text style={[
+                    styles.dreamTitle,
+                    isNightmare && styles.nightmareTitle,
+                  ]}>
+                    {title}
+                  </Text>
+                )}
+              </View>
+              <Text style={styles.dreamDate}>{formatDate(item.created_at)}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => handleDeletePress(item)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Text style={styles.deleteButtonText}>✕</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => handleDeletePress(item)}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Text style={styles.deleteButtonText}>...</Text>
-          </TouchableOpacity>
+          {item.mood && <Text style={styles.dreamMood}>{item.mood}</Text>}
+          <Text style={[
+            styles.dreamText,
+            isNightmare && styles.nightmareText,
+          ]} numberOfLines={3}>
+            {item.dream_text}
+          </Text>
+          {hasReading ? (
+            <Text style={[
+              styles.readingIndicator,
+              isNightmare && styles.nightmareIndicator,
+            ]}>
+              Tap to view reading
+            </Text>
+          ) : (
+            <Text style={styles.noReadingIndicator}>No reading yet</Text>
+          )}
         </View>
-        {item.mood && <Text style={styles.dreamMood}>{item.mood}</Text>}
-        <Text style={styles.dreamText} numberOfLines={3}>
-          {item.dream_text}
-        </Text>
-        {hasReading ? (
-          <Text style={styles.readingIndicator}>Tap to view reading</Text>
-        ) : (
-          <Text style={styles.noReadingIndicator}>No reading yet</Text>
-        )}
       </TouchableOpacity>
     );
   }
@@ -177,7 +238,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
       <View style={styles.container}>
         <Text style={styles.title}>Your Grimoire</Text>
         <Text style={styles.subtitle}>
-          {dreams.length} dream{dreams.length !== 1 ? 's' : ''} recorded
+          {getGrimoireSubtitle(dreams)}
         </Text>
 
         {dreams.length > 0 && (
@@ -308,10 +369,26 @@ const styles = StyleSheet.create({
   dreamCard: {
     backgroundColor: '#2a2a4e',
     borderRadius: 16,
-    padding: 16,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#3a3a5e',
+    flexDirection: 'row',
+    overflow: 'hidden',
+  },
+  nightmareCard: {
+    backgroundColor: '#2e1a2a',
+    borderColor: '#5a2a4a',
+  },
+  cardAccent: {
+    width: 4,
+    backgroundColor: '#9b7fd4',
+  },
+  nightmareAccent: {
+    backgroundColor: '#8a3a5a',
+  },
+  cardContent: {
+    flex: 1,
+    padding: 16,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -320,6 +397,14 @@ const styles = StyleSheet.create({
   },
   cardHeaderText: {
     flex: 1,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  typeIcon: {
+    fontSize: 14,
   },
   deleteButton: {
     padding: 4,
@@ -334,6 +419,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#e0d4f7',
     marginBottom: 4,
+    flex: 1,
+  },
+  nightmareTitle: {
+    color: '#e8b8c8',
   },
   dreamDate: {
     fontSize: 12,
@@ -350,11 +439,17 @@ const styles = StyleSheet.create({
     color: '#a89cc8',
     lineHeight: 22,
   },
+  nightmareText: {
+    color: '#b89ca8',
+  },
   readingIndicator: {
     fontSize: 12,
     color: '#9b7fd4',
     marginTop: 12,
     fontStyle: 'italic',
+  },
+  nightmareIndicator: {
+    color: '#a87898',
   },
   noReadingIndicator: {
     fontSize: 12,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,8 @@ import {
 } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { saveDream, analyzeDream } from '../lib/dreamService';
+import { getProfile } from '../lib/profileService';
+import { saveDraft, loadDraft, clearDraft } from '../lib/draftService';
 
 type NewDreamScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -22,19 +24,80 @@ type NewDreamScreenProps = {
 type LoadingState = 'idle' | 'saving' | 'interpreting' | 'error';
 
 const LOADING_MESSAGES = {
-  saving: 'Recording your dream...',
-  interpreting: 'Consulting the dream oracle...',
+  saving: ['Recording your dream...', 'Preserving the vision...', 'Capturing the threads...'],
+  interpreting: [
+    'Consulting the dream oracle...',
+    'Reading the symbols...',
+    'Gazing into the depths...',
+    'Interpreting the signs...',
+    'Unraveling the mystery...',
+  ],
 };
+
+const LOADING_SUBTEXTS = [
+  'The mysteries of your subconscious are being revealed...',
+  'Every symbol holds a message for you...',
+  'The veil between worlds grows thin...',
+  'Ancient wisdom stirs in the depths...',
+  'Your dreams speak in riddles and metaphors...',
+];
 
 export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   const [dreamText, setDreamText] = useState('');
   const [mood, setMood] = useState('');
+  const [dreamType, setDreamType] = useState<'dream' | 'nightmare'>('dream');
+  const [zodiacSign, setZodiacSign] = useState<string | undefined>();
   const [loadingState, setLoadingState] = useState<LoadingState>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasDraftRecovered, setHasDraftRecovered] = useState(false);
+  const draftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const moods = ['Peaceful', 'Anxious', 'Excited', 'Confused', 'Fearful', 'Joyful'];
 
   const isLoading = loadingState === 'saving' || loadingState === 'interpreting';
+
+  // Load profile and draft on mount
+  useEffect(() => {
+    async function initialize() {
+      // Load profile
+      const profile = await getProfile();
+      if (profile?.zodiac_sign) {
+        setZodiacSign(profile.zodiac_sign);
+      }
+
+      // Load draft
+      const draft = await loadDraft();
+      if (draft && draft.dreamText.trim()) {
+        setDreamText(draft.dreamText);
+        setMood(draft.mood);
+        setDreamType(draft.dreamType);
+        setHasDraftRecovered(true);
+      }
+    }
+    initialize();
+  }, []);
+
+  // Auto-save draft with debounce
+  const autoSaveDraft = useCallback(() => {
+    if (draftTimeoutRef.current) {
+      clearTimeout(draftTimeoutRef.current);
+    }
+
+    draftTimeoutRef.current = setTimeout(() => {
+      if (dreamText.trim()) {
+        saveDraft({ dreamText, mood, dreamType });
+      }
+    }, 1000); // Save after 1 second of inactivity
+  }, [dreamText, mood, dreamType]);
+
+  useEffect(() => {
+    autoSaveDraft();
+    return () => {
+      if (draftTimeoutRef.current) {
+        clearTimeout(draftTimeoutRef.current);
+      }
+    };
+  }, [autoSaveDraft]);
 
   async function handleSubmit() {
     if (!dreamText.trim()) {
@@ -47,7 +110,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     // Step 1: Save the dream
     setLoadingState('saving');
 
-    const saveResult = await saveDream(dreamText.trim(), mood || undefined);
+    const saveResult = await saveDream(dreamText.trim(), mood || undefined, dreamType);
 
     if (!saveResult.success) {
       setLoadingState('error');
@@ -64,7 +127,8 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     const analyzeResult = await analyzeDream(
       dreamText.trim(),
       mood || undefined,
-      dream.id
+      dream.id,
+      zodiacSign
     );
 
     if (!analyzeResult.success) {
@@ -89,12 +153,14 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
       return;
     }
 
-    // Step 3: Navigate to reading screen
+    // Step 3: Clear draft and navigate to reading screen
+    // Note: The Edge Function auto-saves the reading to the dream record
+    await clearDraft();
     setLoadingState('idle');
     navigation.replace('Reading', {
       reading: analyzeResult.reading,
       dreamId: dream.id,
-      alreadySaved: false,
+      alreadySaved: true,
     });
   }
 
@@ -105,7 +171,8 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     const analyzeResult = await analyzeDream(
       dreamText.trim(),
       mood || undefined,
-      dreamId
+      dreamId,
+      zodiacSign
     );
 
     if (!analyzeResult.success) {
@@ -128,18 +195,24 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     navigation.replace('Reading', {
       reading: analyzeResult.reading,
       dreamId: dreamId,
-      alreadySaved: false,
+      alreadySaved: true,
     });
   }
 
+  const [loadingMessageIndex] = useState(() => Math.floor(Math.random() * 5));
+
   function getLoadingMessage(): string {
     if (loadingState === 'saving') {
-      return LOADING_MESSAGES.saving;
+      return LOADING_MESSAGES.saving[loadingMessageIndex % LOADING_MESSAGES.saving.length];
     }
     if (loadingState === 'interpreting') {
-      return LOADING_MESSAGES.interpreting;
+      return LOADING_MESSAGES.interpreting[loadingMessageIndex % LOADING_MESSAGES.interpreting.length];
     }
     return '';
+  }
+
+  function getLoadingSubtext(): string {
+    return LOADING_SUBTEXTS[loadingMessageIndex % LOADING_SUBTEXTS.length];
   }
 
   return (
@@ -166,9 +239,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#9b7fd4" />
             <Text style={styles.loadingText}>{getLoadingMessage()}</Text>
-            <Text style={styles.loadingSubtext}>
-              The mysteries of your subconscious are being revealed...
-            </Text>
+            <Text style={styles.loadingSubtext}>{getLoadingSubtext()}</Text>
           </View>
         ) : (
           <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
@@ -176,6 +247,64 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
             <Text style={styles.subtitle}>
               Describe what you remember from your dream...
             </Text>
+
+            {hasDraftRecovered && (
+              <View style={styles.draftBanner}>
+                <Text style={styles.draftBannerText}>Draft recovered</Text>
+                <TouchableOpacity onPress={() => {
+                  setDreamText('');
+                  setMood('');
+                  setDreamType('dream');
+                  setHasDraftRecovered(false);
+                  clearDraft();
+                }}>
+                  <Text style={styles.draftClearText}>Clear</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <View style={styles.dreamTypeContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.dreamTypeButton,
+                  dreamType === 'dream' && styles.dreamTypeButtonSelected,
+                ]}
+                onPress={() => setDreamType('dream')}
+                disabled={isLoading}
+              >
+                <Text style={styles.dreamTypeIcon}>
+                  {dreamType === 'dream' ? '\u{1F319}' : '\u{1F311}'}
+                </Text>
+                <Text
+                  style={[
+                    styles.dreamTypeText,
+                    dreamType === 'dream' && styles.dreamTypeTextSelected,
+                  ]}
+                >
+                  Dream
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.dreamTypeButton,
+                  dreamType === 'nightmare' && styles.nightmareTypeButtonSelected,
+                ]}
+                onPress={() => setDreamType('nightmare')}
+                disabled={isLoading}
+              >
+                <Text style={styles.dreamTypeIcon}>
+                  {dreamType === 'nightmare' ? '\u{26A1}' : '\u{1F329}'}
+                </Text>
+                <Text
+                  style={[
+                    styles.dreamTypeText,
+                    dreamType === 'nightmare' && styles.nightmareTypeTextSelected,
+                  ]}
+                >
+                  Nightmare
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             <TextInput
               style={styles.dreamInput}
@@ -272,7 +401,68 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: '#a89cc8',
-    marginBottom: 24,
+    marginBottom: 16,
+  },
+  draftBanner: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#2e3545',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#4a5568',
+  },
+  draftBannerText: {
+    fontSize: 13,
+    color: '#a8b8c8',
+  },
+  draftClearText: {
+    fontSize: 13,
+    color: '#9b7fd4',
+    fontWeight: '500',
+  },
+  dreamTypeContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  dreamTypeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2a2a4e',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
+    gap: 8,
+  },
+  dreamTypeButtonSelected: {
+    backgroundColor: '#3a3a6e',
+    borderColor: '#9b7fd4',
+  },
+  nightmareTypeButtonSelected: {
+    backgroundColor: '#3e2a3a',
+    borderColor: '#8a3a5a',
+  },
+  dreamTypeIcon: {
+    fontSize: 18,
+  },
+  dreamTypeText: {
+    fontSize: 15,
+    color: '#a89cc8',
+    fontWeight: '500',
+  },
+  dreamTypeTextSelected: {
+    color: '#e0d4f7',
+  },
+  nightmareTypeTextSelected: {
+    color: '#e8b8c8',
   },
   dreamInput: {
     backgroundColor: '#2a2a4e',

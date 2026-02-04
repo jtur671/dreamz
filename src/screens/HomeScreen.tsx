@@ -4,9 +4,8 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Alert,
+  SafeAreaView,
 } from 'react-native';
-import { supabase } from '../lib/supabase';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type HomeScreenProps = {
@@ -14,63 +13,75 @@ type HomeScreenProps = {
 };
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
-  async function handleSignOut() {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      Alert.alert('Error', error.message);
-    }
-  }
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.greeting}>Welcome, Dreamer</Text>
-      <Text style={styles.subtitle}>What did you dream last night?</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.moonIcon}>{'\u{1F319}'}</Text>
+          <Text style={styles.greeting}>Welcome, Dreamer</Text>
+          <Text style={styles.subtitle}>What did you dream last night?</Text>
+        </View>
 
-      <TouchableOpacity
-        style={styles.newDreamButton}
-        onPress={() => navigation.navigate('NewDream')}
-      >
-        <Text style={styles.newDreamButtonText}>Record a Dream</Text>
-      </TouchableOpacity>
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={styles.newDreamButton}
+            onPress={() => navigation.navigate('NewDream')}
+          >
+            <Text style={styles.newDreamButtonText}>Record a Dream</Text>
+          </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.grimoireButton}
-        onPress={() => navigation.navigate('Grimoire')}
-      >
-        <Text style={styles.grimoireButtonText}>View Grimoire</Text>
-      </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.grimoireButton}
+            onPress={() => navigation.navigate('Grimoire')}
+          >
+            <Text style={styles.grimoireButtonText}>View Your Grimoire</Text>
+          </TouchableOpacity>
+        </View>
 
-      <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-        <Text style={styles.signOutText}>Sign Out</Text>
-      </TouchableOpacity>
-    </View>
+        <Text style={styles.tagline}>Your dreams are private. Always.</Text>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#1a1a2e',
+  },
+  container: {
+    flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 60,
+    justifyContent: 'space-between',
+  },
+  header: {
+    alignItems: 'center',
+    paddingTop: 48,
+  },
+  moonIcon: {
+    fontSize: 48,
+    marginBottom: 16,
   },
   greeting: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#e0d4f7',
     marginBottom: 8,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 18,
     color: '#a89cc8',
-    marginBottom: 48,
+    textAlign: 'center',
+  },
+  actions: {
+    gap: 16,
   },
   newDreamButton: {
     backgroundColor: '#6b4e9e',
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
-    marginBottom: 16,
   },
   newDreamButtonText: {
     color: '#fff',
@@ -90,15 +101,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  signOutButton: {
-    position: 'absolute',
-    bottom: 40,
-    left: 24,
-    right: 24,
-    alignItems: 'center',
-  },
-  signOutText: {
-    color: '#8b7fa8',
-    fontSize: 14,
+  tagline: {
+    color: '#5a5a7a',
+    fontSize: 12,
+    textAlign: 'center',
+    paddingBottom: 24,
   },
 });
