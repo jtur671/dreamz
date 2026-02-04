@@ -194,9 +194,11 @@ describe('Account Service', () => {
   });
 
   describe('deleteUserAccount', () => {
+    const mockSession = { access_token: 'test-token' };
+
     it('should return error when user is not authenticated', async () => {
-      (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
-        data: { user: null },
+      (mockedSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: null },
         error: null,
       });
 
@@ -208,19 +210,15 @@ describe('Account Service', () => {
       }
     });
 
-    it('should delete dreams, profile, and sign out successfully', async () => {
-      (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
-        data: { user: { id: 'user-123' } },
+    it('should call edge function and sign out on success', async () => {
+      (mockedSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: mockSession },
         error: null,
       });
 
-      const mockDelete = jest.fn().mockReturnThis();
-      const mockEq = jest.fn().mockResolvedValue({ error: null });
-
-      const mockFrom = mockedSupabase.from as jest.Mock;
-      mockFrom.mockReturnValue({
-        delete: mockDelete,
-        eq: mockEq,
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ success: true }),
       });
 
       (mockedSupabase.auth.signOut as jest.Mock).mockResolvedValueOnce({
@@ -230,22 +228,29 @@ describe('Account Service', () => {
       const result = await deleteUserAccount();
 
       expect(result.success).toBe(true);
-      expect(mockFrom).toHaveBeenCalledWith('dreams');
-      expect(mockFrom).toHaveBeenCalledWith('profiles');
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('delete-account'),
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            Authorization: `Bearer ${mockSession.access_token}`,
+          }),
+        })
+      );
       expect(mockedSupabase.auth.signOut).toHaveBeenCalled();
     });
 
-    it('should return error when dreams deletion fails', async () => {
-      (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
-        data: { user: { id: 'user-123' } },
+    it('should return error when edge function fails', async () => {
+      (mockedSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: mockSession },
         error: null,
       });
 
-      const mockFrom = mockedSupabase.from as jest.Mock;
-      mockFrom.mockReturnValue({
-        delete: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({
-          error: { message: 'Foreign key violation' },
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        json: jest.fn().mockResolvedValue({
+          success: false,
+          error: { message: 'Failed to delete dreams' },
         }),
       });
 
@@ -253,42 +258,33 @@ describe('Account Service', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error).toContain('Failed to delete dreams');
+        expect(result.error).toBe('Failed to delete dreams');
       }
     });
 
-    it('should return error when profile deletion fails', async () => {
-      (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
-        data: { user: { id: 'user-123' } },
+    it('should return error when response is not ok', async () => {
+      (mockedSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: mockSession },
         error: null,
       });
 
-      let callCount = 0;
-      const mockFrom = mockedSupabase.from as jest.Mock;
-      mockFrom.mockImplementation(() => ({
-        delete: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockImplementation(() => {
-          callCount++;
-          if (callCount === 1) {
-            // Dreams delete succeeds
-            return Promise.resolve({ error: null });
-          } else {
-            // Profile delete fails
-            return Promise.resolve({ error: { message: 'Profile not found' } });
-          }
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        json: jest.fn().mockResolvedValue({
+          error: 'Server error',
         }),
-      }));
+      });
 
       const result = await deleteUserAccount();
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error).toContain('Failed to delete profile');
+        expect(result.error).toBe('Server error');
       }
     });
 
     it('should handle unexpected exceptions', async () => {
-      (mockedSupabase.auth.getUser as jest.Mock).mockRejectedValueOnce(
+      (mockedSupabase.auth.getSession as jest.Mock).mockRejectedValueOnce(
         new Error('Connection lost')
       );
 
@@ -301,7 +297,7 @@ describe('Account Service', () => {
     });
 
     it('should handle non-Error exceptions with fallback message', async () => {
-      (mockedSupabase.auth.getUser as jest.Mock).mockRejectedValueOnce({ code: 500 });
+      (mockedSupabase.auth.getSession as jest.Mock).mockRejectedValueOnce({ code: 500 });
 
       const result = await deleteUserAccount();
 

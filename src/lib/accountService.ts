@@ -93,37 +93,37 @@ export async function exportUserDreams(): Promise<ExportResult> {
 }
 
 /**
- * Permanently deletes all user data (dreams and profile)
+ * Permanently deletes all user data via edge function
+ * (dreams, profile, and auth user)
  */
 export async function deleteUserAccount(): Promise<DeleteAccountResult> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
 
-    if (!user) {
+    if (!session) {
       return { success: false, error: 'Not authenticated' };
     }
 
-    // Delete all user's dreams first (due to foreign key)
-    const { error: dreamsError } = await supabase
-      .from('dreams')
-      .delete()
-      .eq('user_id', user.id);
+    // Call the delete-account edge function (handles full deletion including auth user)
+    const response = await fetch(
+      `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-account`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      }
+    );
 
-    if (dreamsError) {
-      return { success: false, error: `Failed to delete dreams: ${dreamsError.message}` };
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      const errorMessage = data.error?.message || data.error || 'Failed to delete account';
+      return { success: false, error: errorMessage };
     }
 
-    // Delete profile
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', user.id);
-
-    if (profileError) {
-      return { success: false, error: `Failed to delete profile: ${profileError.message}` };
-    }
-
-    // Sign out (full auth user deletion requires admin API)
+    // Sign out locally after successful server-side deletion
     await supabase.auth.signOut();
 
     return { success: true };
