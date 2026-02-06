@@ -173,7 +173,7 @@ describe('Dream Service', () => {
         error: null,
       });
 
-      const result = await analyzeDream('Test dream', undefined, undefined);
+      const result = await analyzeDream('Test dream');
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -209,7 +209,7 @@ describe('Dream Service', () => {
         json: jest.fn().mockResolvedValue({ success: true, data: mockReading }),
       });
 
-      const result = await analyzeDream('Test dream', 'Happy', undefined);
+      const result = await analyzeDream('Test dream', { mood: 'Happy' });
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('analyze-dream'),
@@ -237,7 +237,7 @@ describe('Dream Service', () => {
         json: jest.fn().mockResolvedValue({ error: 'Dream text too short' }),
       });
 
-      const result = await analyzeDream('Hi', undefined, undefined);
+      const result = await analyzeDream('Hi');
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -260,7 +260,7 @@ describe('Dream Service', () => {
         json: jest.fn().mockRejectedValue(new Error('Invalid JSON')),
       });
 
-      const result = await analyzeDream('Test dream', undefined, undefined);
+      const result = await analyzeDream('Test dream');
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -283,7 +283,7 @@ describe('Dream Service', () => {
         json: jest.fn().mockResolvedValue({ message: 'Service unavailable' }),
       });
 
-      const result = await analyzeDream('Test dream', undefined, undefined);
+      const result = await analyzeDream('Test dream');
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -305,7 +305,7 @@ describe('Dream Service', () => {
         json: jest.fn().mockResolvedValue(validReading),
       });
 
-      const result = await analyzeDream('Test dream', 'Peaceful', undefined);
+      const result = await analyzeDream('Test dream', { mood: 'Peaceful' });
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -327,7 +327,7 @@ describe('Dream Service', () => {
         json: jest.fn().mockResolvedValue({ reading: validReading }),
       });
 
-      const result = await analyzeDream('Test dream', undefined, 'dream-123');
+      const result = await analyzeDream('Test dream', { dreamId: 'dream-123' });
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -354,7 +354,7 @@ describe('Dream Service', () => {
         json: jest.fn().mockResolvedValue(invalidReading),
       });
 
-      const result = await analyzeDream('Test dream', undefined, undefined);
+      const result = await analyzeDream('Test dream');
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -375,7 +375,7 @@ describe('Dream Service', () => {
         new Error('Network request failed')
       );
 
-      const result = await analyzeDream('Test dream', undefined, undefined);
+      const result = await analyzeDream('Test dream');
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -394,7 +394,7 @@ describe('Dream Service', () => {
 
       (global.fetch as jest.Mock).mockRejectedValueOnce('Connection refused');
 
-      const result = await analyzeDream('Test dream', undefined, undefined);
+      const result = await analyzeDream('Test dream');
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -417,7 +417,7 @@ describe('Dream Service', () => {
         json: jest.fn().mockResolvedValue(null),
       });
 
-      const result = await analyzeDream('Test dream', undefined, undefined);
+      const result = await analyzeDream('Test dream');
 
       expect(result.success).toBe(false);
       // The null access throws an error that gets caught in the catch block
@@ -441,7 +441,7 @@ describe('Dream Service', () => {
         json: jest.fn().mockResolvedValue({ reading: undefined }),
       });
 
-      const result = await analyzeDream('Test dream', undefined, undefined);
+      const result = await analyzeDream('Test dream');
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -468,7 +468,7 @@ describe('Dream Service', () => {
         json: jest.fn().mockResolvedValue(readingWithEmptySymbols),
       });
 
-      const result = await analyzeDream('Test dream', undefined, undefined);
+      const result = await analyzeDream('Test dream');
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -495,7 +495,7 @@ describe('Dream Service', () => {
         json: jest.fn().mockResolvedValue(readingWithInvalidSymbols),
       });
 
-      const result = await analyzeDream('Test dream', undefined, undefined);
+      const result = await analyzeDream('Test dream');
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -522,7 +522,7 @@ describe('Dream Service', () => {
         json: jest.fn().mockResolvedValue(readingWithInvalidTags),
       });
 
-      const result = await analyzeDream('Test dream', undefined, undefined);
+      const result = await analyzeDream('Test dream');
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -549,7 +549,7 @@ describe('Dream Service', () => {
         json: jest.fn().mockResolvedValue(readingWithInvalidTitle),
       });
 
-      const result = await analyzeDream('Test dream', undefined, undefined);
+      const result = await analyzeDream('Test dream');
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -572,7 +572,7 @@ describe('Dream Service', () => {
         json: jest.fn().mockResolvedValue('just a string'),
       });
 
-      const result = await analyzeDream('Test dream', undefined, undefined);
+      const result = await analyzeDream('Test dream');
 
       expect(result.success).toBe(false);
       if (!result.success) {

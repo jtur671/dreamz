@@ -108,28 +108,49 @@ Before responding, verify:
 // User Prompt Builder - Constructs the dream interpretation request
 // ============================================================================
 
+export interface DreamerContext {
+  mood?: string;
+  zodiacSign?: string;
+  gender?: string;
+  ageRange?: string;
+}
+
 /**
  * Builds the user message for the dream interpretation request
  *
  * @param dreamText - The dream narrative from the user
- * @param mood - Optional mood/emotion context (e.g., "anxious", "peaceful")
- * @param zodiacSign - Optional zodiac sign for personalized interpretation
+ * @param context - Optional context about the dreamer (mood, zodiac, gender, age)
  * @returns Formatted user prompt string
  */
-export function buildUserPrompt(dreamText: string, mood?: string, zodiacSign?: string): string {
-  const moodContext = mood
-    ? `\n\nThe dreamer woke feeling: ${mood}`
-    : "";
+export function buildUserPrompt(dreamText: string, context?: DreamerContext): string {
+  const contextParts: string[] = [];
 
-  const zodiacContext = zodiacSign
-    ? `\n\nThe dreamer is a ${zodiacSign}. Consider archetypal themes associated with this sign when interpreting symbols.`
+  if (context?.mood) {
+    contextParts.push(`The dreamer woke feeling: ${context.mood}`);
+  }
+
+  if (context?.zodiacSign) {
+    contextParts.push(`Zodiac sign: ${context.zodiacSign}. Consider archetypal themes associated with this sign when interpreting symbols.`);
+  }
+
+  if (context?.gender) {
+    const genderDisplay = context.gender.replace(/-/g, ' ');
+    contextParts.push(`Gender identity: ${genderDisplay}. Be mindful of how symbols may resonate differently based on gender experience.`);
+  }
+
+  if (context?.ageRange) {
+    contextParts.push(`Life stage: ${context.ageRange} years. Consider how this life phase may inform the dream's themes and symbols.`);
+  }
+
+  const contextSection = contextParts.length > 0
+    ? `\n\nDreamer context:\n${contextParts.map(p => `- ${p}`).join('\n')}`
     : "";
 
   return `Please interpret the following dream and return a JSON reading:
 
 ---
 ${dreamText.trim()}
----${moodContext}${zodiacContext}
+---${contextSection}
 
 Remember: Return ONLY valid JSON matching the schema. No markdown, no extra text.`;
 }

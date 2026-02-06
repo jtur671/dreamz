@@ -21,6 +21,7 @@ import {
   validateReading,
   FALLBACK_READING,
   type DreamReadingSchema,
+  type DreamerContext,
 } from "../_shared/dream-prompt.ts";
 
 // ============================================================================
@@ -32,6 +33,8 @@ interface AnalyzeRequest {
   mood?: string;
   dream_id?: string;
   zodiac_sign?: string;
+  gender?: string;
+  age_range?: string;
 }
 
 interface OpenAIMessage {
@@ -268,6 +271,14 @@ function validateRequest(body: unknown): {
     return { valid: false, error: "zodiac_sign must be a string if provided" };
   }
 
+  if (req.gender !== undefined && typeof req.gender !== "string") {
+    return { valid: false, error: "gender must be a string if provided" };
+  }
+
+  if (req.age_range !== undefined && typeof req.age_range !== "string") {
+    return { valid: false, error: "age_range must be a string if provided" };
+  }
+
   return {
     valid: true,
     data: {
@@ -275,6 +286,8 @@ function validateRequest(body: unknown): {
       mood: req.mood as string | undefined,
       dream_id: req.dream_id as string | undefined,
       zodiac_sign: req.zodiac_sign as string | undefined,
+      gender: req.gender as string | undefined,
+      age_range: req.age_range as string | undefined,
     },
   };
 }
@@ -385,12 +398,20 @@ Deno.serve(async (req: Request) => {
       return errorResponse("VALIDATION_ERROR", validation.error!, 400);
     }
 
-    const { dream_text, mood, dream_id, zodiac_sign } = validation.data;
+    const { dream_text, mood, dream_id, zodiac_sign, gender, age_range } = validation.data;
+
+    // Build dreamer context for personalized interpretation
+    const dreamerContext: DreamerContext = {
+      mood,
+      zodiacSign: zodiac_sign,
+      gender,
+      ageRange: age_range,
+    };
 
     // Build messages for OpenAI
     const messages: OpenAIMessage[] = [
       { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: buildUserPrompt(dream_text, mood, zodiac_sign) },
+      { role: "user", content: buildUserPrompt(dream_text, dreamerContext) },
     ];
 
     // Attempt to get reading with retry

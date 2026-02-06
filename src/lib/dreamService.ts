@@ -52,14 +52,20 @@ export async function saveDream(
   }
 }
 
+export interface AnalyzeDreamContext {
+  mood?: string;
+  dreamId?: string;
+  zodiacSign?: string;
+  gender?: string;
+  ageRange?: string;
+}
+
 /**
  * Calls the Edge Function to analyze a dream and generate a reading
  */
 export async function analyzeDream(
   dreamText: string,
-  mood?: string,
-  dreamId?: string,
-  zodiacSign?: string
+  context?: AnalyzeDreamContext
 ): Promise<AnalyzeDreamResult> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -76,9 +82,11 @@ export async function analyzeDream(
       },
       body: JSON.stringify({
         dream_text: dreamText,
-        mood: mood || undefined,
-        dream_id: dreamId || undefined,
-        zodiac_sign: zodiacSign || undefined,
+        mood: context?.mood || undefined,
+        dream_id: context?.dreamId || undefined,
+        zodiac_sign: context?.zodiacSign || undefined,
+        gender: context?.gender || undefined,
+        age_range: context?.ageRange || undefined,
       }),
     });
 

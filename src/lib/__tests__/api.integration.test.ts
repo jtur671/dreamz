@@ -110,16 +110,13 @@ describe('API Integration Tests', () => {
         json: jest.fn().mockResolvedValue({ success: true, reading: VALID_READING }),
       });
 
-      await analyzeDream('I dreamed of flying', 'Peaceful');
+      await analyzeDream('I dreamed of flying', { mood: 'Peaceful' });
 
       const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
       const requestBody = JSON.parse(fetchCall[1].body);
 
-      expect(requestBody).toEqual({
-        dream_text: 'I dreamed of flying',
-        mood: 'Peaceful',
-        dream_id: undefined,
-      });
+      expect(requestBody.dream_text).toEqual('I dreamed of flying');
+      expect(requestBody.mood).toEqual('Peaceful');
     });
 
     it('should accept valid request with dream_text, mood, and dream_id', async () => {
@@ -135,16 +132,46 @@ describe('API Integration Tests', () => {
         json: jest.fn().mockResolvedValue({ success: true, reading: VALID_READING }),
       });
 
-      await analyzeDream('I dreamed of flying', 'Peaceful', 'dream-uuid-123');
+      await analyzeDream('I dreamed of flying', { mood: 'Peaceful', dreamId: 'dream-uuid-123' });
 
       const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
       const requestBody = JSON.parse(fetchCall[1].body);
 
-      expect(requestBody).toEqual({
-        dream_text: 'I dreamed of flying',
-        mood: 'Peaceful',
-        dream_id: 'dream-uuid-123',
+      expect(requestBody.dream_text).toEqual('I dreamed of flying');
+      expect(requestBody.mood).toEqual('Peaceful');
+      expect(requestBody.dream_id).toEqual('dream-uuid-123');
+    });
+
+    it('should pass all profile context to the edge function', async () => {
+      const { analyzeDream } = require('../dreamService');
+
+      (mockedSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: MOCK_SESSION },
+        error: null,
       });
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ success: true, reading: VALID_READING }),
+      });
+
+      await analyzeDream('I dreamed of flying', {
+        mood: 'Peaceful',
+        dreamId: 'dream-uuid-123',
+        zodiacSign: 'Pisces',
+        gender: 'non-binary',
+        ageRange: '25-34',
+      });
+
+      const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
+      const requestBody = JSON.parse(fetchCall[1].body);
+
+      expect(requestBody.dream_text).toEqual('I dreamed of flying');
+      expect(requestBody.mood).toEqual('Peaceful');
+      expect(requestBody.dream_id).toEqual('dream-uuid-123');
+      expect(requestBody.zodiac_sign).toEqual('Pisces');
+      expect(requestBody.gender).toEqual('non-binary');
+      expect(requestBody.age_range).toEqual('25-34');
     });
 
     it('should require Authorization header', async () => {
