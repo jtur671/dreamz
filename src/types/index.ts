@@ -37,8 +37,27 @@ export interface Profile {
   reading_count: number;
   subscription_tier: 'free' | 'premium';
   zodiac_sign?: string;
+  gender?: Gender;
+  age_range?: AgeRange;
+  onboarding_completed?: boolean;
   created_at: string;
 }
+
+export const GENDER_OPTIONS = [
+  { value: 'female', label: 'Female' },
+  { value: 'male', label: 'Male' },
+  { value: 'non-binary', label: 'Non-binary' },
+  { value: 'other', label: 'Other' },
+  { value: 'prefer-not-to-say', label: 'Prefer not to say' },
+] as const;
+
+export type Gender = typeof GENDER_OPTIONS[number]['value'];
+
+export const AGE_RANGES = [
+  '18-24', '25-34', '35-44', '45-54', '55-64', '65+'
+] as const;
+
+export type AgeRange = typeof AGE_RANGES[number];
 
 export const ZODIAC_SIGNS = [
   'Aries', 'Taurus', 'Gemini', 'Cancer',
