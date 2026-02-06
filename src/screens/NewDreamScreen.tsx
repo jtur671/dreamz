@@ -13,9 +13,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { saveDream, analyzeDream } from '../lib/dreamService';
+import { saveDream, analyzeDream, AnalyzeDreamContext } from '../lib/dreamService';
 import { getProfile } from '../lib/profileService';
 import { saveDraft, loadDraft, clearDraft } from '../lib/draftService';
+import type { Profile } from '../types';
 
 type NewDreamScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -46,7 +47,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   const [dreamText, setDreamText] = useState('');
   const [mood, setMood] = useState('');
   const [dreamType, setDreamType] = useState<'dream' | 'nightmare'>('dream');
-  const [zodiacSign, setZodiacSign] = useState<string | undefined>();
+  const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [loadingState, setLoadingState] = useState<LoadingState>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasDraftRecovered, setHasDraftRecovered] = useState(false);
@@ -59,10 +60,10 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   // Load profile and draft on mount
   useEffect(() => {
     async function initialize() {
-      // Load profile
+      // Load profile (includes zodiac, gender, age_range for personalized readings)
       const profile = await getProfile();
-      if (profile?.zodiac_sign) {
-        setZodiacSign(profile.zodiac_sign);
+      if (profile) {
+        setUserProfile(profile);
       }
 
       // Load draft
@@ -121,15 +122,18 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
     const dream = saveResult.dream;
 
-    // Step 2: Analyze the dream
+    // Step 2: Analyze the dream with user profile context
     setLoadingState('interpreting');
 
-    const analyzeResult = await analyzeDream(
-      dreamText.trim(),
-      mood || undefined,
-      dream.id,
-      zodiacSign
-    );
+    const analyzeContext: AnalyzeDreamContext = {
+      mood: mood || undefined,
+      dreamId: dream.id,
+      zodiacSign: userProfile?.zodiac_sign,
+      gender: userProfile?.gender,
+      ageRange: userProfile?.age_range,
+    };
+
+    const analyzeResult = await analyzeDream(dreamText.trim(), analyzeContext);
 
     if (!analyzeResult.success) {
       setLoadingState('error');
@@ -168,12 +172,15 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     setLoadingState('interpreting');
     setErrorMessage(null);
 
-    const analyzeResult = await analyzeDream(
-      dreamText.trim(),
-      mood || undefined,
+    const analyzeContext: AnalyzeDreamContext = {
+      mood: mood || undefined,
       dreamId,
-      zodiacSign
-    );
+      zodiacSign: userProfile?.zodiac_sign,
+      gender: userProfile?.gender,
+      ageRange: userProfile?.age_range,
+    };
+
+    const analyzeResult = await analyzeDream(dreamText.trim(), analyzeContext);
 
     if (!analyzeResult.success) {
       setLoadingState('error');
