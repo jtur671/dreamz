@@ -401,10 +401,10 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
   },
   typeIcon: {
     fontSize: 14,
+    marginRight: 6,
   },
   deleteButton: {
     padding: 4,

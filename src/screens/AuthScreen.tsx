@@ -330,12 +330,12 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   socialButtons: {
-    gap: 12,
     marginBottom: 24,
   },
   appleButton: {
     height: 50,
     width: '100%',
+    marginBottom: 12,
   },
   googleButton: {
     backgroundColor: '#fff',
@@ -366,7 +366,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   form: {
-    gap: 16,
   },
   input: {
     backgroundColor: '#2a2a4e',
@@ -376,6 +375,7 @@ const styles = StyleSheet.create({
     color: '#e0d4f7',
     borderWidth: 1,
     borderColor: '#3a3a5e',
+    marginBottom: 16,
   },
   passwordContainer: {
     flexDirection: 'row',
@@ -384,6 +384,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#3a3a5e',
+    marginBottom: 16,
   },
   passwordInput: {
     flex: 1,

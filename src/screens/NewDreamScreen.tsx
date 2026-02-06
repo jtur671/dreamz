@@ -426,7 +426,6 @@ const styles = StyleSheet.create({
   },
   dreamTypeContainer: {
     flexDirection: 'row',
-    gap: 12,
     marginBottom: 16,
   },
   dreamTypeButton: {
@@ -440,7 +439,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderWidth: 1,
     borderColor: '#3a3a5e',
-    gap: 8,
+    marginRight: 12,
   },
   dreamTypeButtonSelected: {
     backgroundColor: '#3a3a6e',
@@ -452,6 +451,7 @@ const styles = StyleSheet.create({
   },
   dreamTypeIcon: {
     fontSize: 18,
+    marginRight: 8,
   },
   dreamTypeText: {
     fontSize: 15,
@@ -483,7 +483,6 @@ const styles = StyleSheet.create({
   moodContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
   },
   moodChip: {
     backgroundColor: '#2a2a4e',
@@ -492,6 +491,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderWidth: 1,
     borderColor: '#3a3a5e',
+    marginRight: 8,
+    marginBottom: 8,
   },
   moodChipSelected: {
     backgroundColor: '#6b4e9e',

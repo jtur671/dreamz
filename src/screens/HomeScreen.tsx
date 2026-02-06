@@ -75,13 +75,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   actions: {
-    gap: 16,
+    // gap: 16 removed - causes Android type casting issues
   },
   newDreamButton: {
     backgroundColor: '#6b4e9e',
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
+    marginBottom: 16,
   },
   newDreamButtonText: {
     color: '#fff',

@@ -367,13 +367,14 @@ const styles = StyleSheet.create({
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
   },
   tag: {
     backgroundColor: '#3a3a5e',
     borderRadius: 20,
     paddingVertical: 6,
     paddingHorizontal: 14,
+    marginRight: 8,
+    marginBottom: 8,
   },
   tagText: {
     fontSize: 13,
@@ -381,7 +382,6 @@ const styles = StyleSheet.create({
   },
   actionContainer: {
     marginTop: 16,
-    gap: 12,
   },
   viewGrimoireButton: {
     backgroundColor: '#2e4540',
@@ -390,6 +390,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#4a7a6a',
+    marginBottom: 12,
   },
   viewGrimoireButtonText: {
     color: '#8bc4a8',
@@ -401,6 +402,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 18,
     alignItems: 'center',
+    marginBottom: 12,
   },
   shareButtonText: {
     color: '#c4b8e8',
