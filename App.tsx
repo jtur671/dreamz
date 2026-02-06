@@ -8,12 +8,14 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './src/lib/supabase';
 
-import AuthScreen from './src/screens/AuthScreen';
+import AuthScreen, { setOnNewUserSignup } from './src/screens/AuthScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import NewDreamScreen from './src/screens/NewDreamScreen';
 import GrimoireScreen from './src/screens/GrimoireScreen';
 import ReadingScreen from './src/screens/ReadingScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import OnboardingScreen from './src/screens/OnboardingScreen';
+import { getProfile } from './src/lib/profileService';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -76,22 +78,47 @@ function MainTabs() {
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   useEffect(() => {
+    // Set up callback for new user signup
+    setOnNewUserSignup(() => {
+      setNeedsOnboarding(true);
+    });
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
+
+      // Check if user needs onboarding
+      if (session) {
+        const profile = await getProfile();
+        // Only show onboarding if explicitly false (new users)
+        // Existing users with null or true skip onboarding
+        if (profile?.onboarding_completed === false) {
+          setNeedsOnboarding(true);
+        }
+      }
+
       setLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setSession(session);
+
+        // Reset onboarding state on sign out
+        if (!session) {
+          setNeedsOnboarding(false);
+        }
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      setOnNewUserSignup(null);
+    };
   }, []);
 
   if (loading) {
@@ -114,6 +141,18 @@ export default function App() {
               contentStyle: { backgroundColor: '#1a1a2e' },
             }}
           >
+            {needsOnboarding ? (
+              <Stack.Screen
+                name="Onboarding"
+                component={OnboardingScreen}
+                listeners={{
+                  beforeRemove: () => {
+                    // When leaving onboarding, mark as complete
+                    setNeedsOnboarding(false);
+                  },
+                }}
+              />
+            ) : null}
             <Stack.Screen name="MainTabs" component={MainTabs} />
             <Stack.Screen name="NewDream" component={NewDreamScreen} />
             <Stack.Screen name="Reading" component={ReadingScreen} />
