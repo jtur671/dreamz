@@ -34,7 +34,7 @@ export default function ReadingScreen() {
     });
   }
 
-  function handleBackToHome() {
+  function handleBackToGrimoire() {
     navigation.popToTop();
   }
 
@@ -68,11 +68,11 @@ Interpreted with Dreamz`;
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={handleBackToHome}
-          accessibilityLabel="Back to home"
+          onPress={handleBackToGrimoire}
+          accessibilityLabel="Back to Grimoire"
           accessibilityRole="button"
         >
-          <Text style={styles.backButtonText}>Home</Text>
+          <Text style={styles.backButtonText}>Grimoire</Text>
         </TouchableOpacity>
       </View>
 
@@ -170,11 +170,11 @@ Interpreted with Dreamz`;
 
           <TouchableOpacity
             style={styles.homeButton}
-            onPress={handleBackToHome}
-            accessibilityLabel="Return to home"
+            onPress={handleBackToGrimoire}
+            accessibilityLabel="Return to Grimoire"
             accessibilityRole="button"
           >
-            <Text style={styles.homeButtonText}>Back to Home</Text>
+            <Text style={styles.homeButtonText}>Back to Grimoire</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
