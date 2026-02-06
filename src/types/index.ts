@@ -47,7 +47,10 @@ export const GENDER_OPTIONS = [
   { value: 'female', label: 'Female' },
   { value: 'male', label: 'Male' },
   { value: 'non-binary', label: 'Non-binary' },
-  { value: 'other', label: 'Other' },
+  { value: 'genderfluid', label: 'Genderfluid' },
+  { value: 'genderqueer', label: 'Genderqueer' },
+  { value: 'agender', label: 'Agender' },
+  { value: 'two-spirit', label: 'Two-spirit' },
   { value: 'prefer-not-to-say', label: 'Prefer not to say' },
 ] as const;
 

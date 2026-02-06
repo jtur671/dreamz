@@ -4,7 +4,7 @@
 -- Add gender column with predefined values
 ALTER TABLE profiles
 ADD COLUMN IF NOT EXISTS gender text
-CHECK (gender IN ('female', 'male', 'non-binary', 'other', 'prefer-not-to-say'));
+CHECK (gender IN ('female', 'male', 'non-binary', 'genderfluid', 'genderqueer', 'agender', 'two-spirit', 'prefer-not-to-say'));
 
 -- Add age_range column with predefined values
 ALTER TABLE profiles
