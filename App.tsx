@@ -4,6 +4,7 @@ import { ActivityIndicator, View, StyleSheet, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './src/lib/supabase';
 
@@ -34,11 +35,17 @@ function TabIcon({ name, focused }: { name: string; focused: boolean }) {
 
 // Main tabs navigator
 function MainTabs() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: {
+          ...styles.tabBar,
+          paddingBottom: Math.max(insets.bottom, 8),
+          height: 62 + Math.max(insets.bottom, 8),
+        },
         tabBarActiveTintColor: '#e0d4f7',
         tabBarInactiveTintColor: '#6b5b8a',
         tabBarIcon: ({ focused }) => (
@@ -97,30 +104,32 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <StatusBar style="light" />
-      {session ? (
-        <Stack.Navigator
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: '#1a1a2e' },
-          }}
-        >
-          <Stack.Screen name="MainTabs" component={MainTabs} />
-          <Stack.Screen name="NewDream" component={NewDreamScreen} />
-          <Stack.Screen name="Reading" component={ReadingScreen} />
-        </Stack.Navigator>
-      ) : (
-        <Stack.Navigator
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: '#1a1a2e' },
-          }}
-        >
-          <Stack.Screen name="Auth" component={AuthScreen} />
-        </Stack.Navigator>
-      )}
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <StatusBar style="light" />
+        {session ? (
+          <Stack.Navigator
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: '#1a1a2e' },
+            }}
+          >
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+            <Stack.Screen name="NewDream" component={NewDreamScreen} />
+            <Stack.Screen name="Reading" component={ReadingScreen} />
+          </Stack.Navigator>
+        ) : (
+          <Stack.Navigator
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: '#1a1a2e' },
+            }}
+          >
+            <Stack.Screen name="Auth" component={AuthScreen} />
+          </Stack.Navigator>
+        )}
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
 
@@ -136,8 +145,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#2a2a4e',
     borderTopWidth: 1,
     paddingTop: 8,
-    paddingBottom: 8,
-    height: 70,
+    // paddingBottom and height are set dynamically based on safe area insets
   },
   tabIcon: {
     fontSize: 24,
