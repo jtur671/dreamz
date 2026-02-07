@@ -8,6 +8,7 @@ export interface DreamSymbol {
 export interface DreamReading {
   title: string;
   tldr: string;
+  plain_english?: string;  // Conversational interpretation in simple terms
   symbols: DreamSymbol[];
   omen: string;
   ritual: string;
