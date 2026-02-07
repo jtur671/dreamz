@@ -43,9 +43,18 @@ const LOADING_SUBTEXTS = [
   'Your dreams speak in riddles and metaphors...',
 ];
 
+// Moon mood labels for accessibility and display
+const MOOD_LABELS: Record<number, string> = {
+  1: 'Troubled',
+  2: 'Uneasy',
+  3: 'Neutral',
+  4: 'Pleasant',
+  5: 'Blissful',
+};
+
 export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   const [dreamText, setDreamText] = useState('');
-  const [mood, setMood] = useState('');
+  const [moodValue, setMoodValue] = useState<number>(3); // 1-5 scale, default 3
   const [dreamType, setDreamType] = useState<'dream' | 'nightmare'>('dream');
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [loadingState, setLoadingState] = useState<LoadingState>('idle');
@@ -53,9 +62,13 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   const [hasDraftRecovered, setHasDraftRecovered] = useState(false);
   const draftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const moods = ['Peaceful', 'Anxious', 'Excited', 'Confused', 'Fearful', 'Joyful'];
-
   const isLoading = loadingState === 'saving' || loadingState === 'interpreting';
+
+  // Convert mood label to value (for loading drafts)
+  function moodLabelToValue(label: string): number {
+    const entry = Object.entries(MOOD_LABELS).find(([_, l]) => l === label);
+    return entry ? parseInt(entry[0]) : 3;
+  }
 
   // Load profile and draft on mount
   useEffect(() => {
@@ -70,7 +83,9 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
       const draft = await loadDraft();
       if (draft && draft.dreamText.trim()) {
         setDreamText(draft.dreamText);
-        setMood(draft.mood);
+        if (draft.mood) {
+          setMoodValue(moodLabelToValue(draft.mood));
+        }
         setDreamType(draft.dreamType);
         setHasDraftRecovered(true);
       }
@@ -86,10 +101,10 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
     draftTimeoutRef.current = setTimeout(() => {
       if (dreamText.trim()) {
-        saveDraft({ dreamText, mood, dreamType });
+        saveDraft({ dreamText, mood: MOOD_LABELS[moodValue], dreamType });
       }
     }, 1000); // Save after 1 second of inactivity
-  }, [dreamText, mood, dreamType]);
+  }, [dreamText, moodValue, dreamType]);
 
   useEffect(() => {
     autoSaveDraft();
@@ -111,7 +126,8 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     // Step 1: Save the dream
     setLoadingState('saving');
 
-    const saveResult = await saveDream(dreamText.trim(), mood || undefined, dreamType);
+    const moodLabel = MOOD_LABELS[moodValue];
+    const saveResult = await saveDream(dreamText.trim(), moodLabel, dreamType);
 
     if (!saveResult.success) {
       setLoadingState('error');
@@ -126,7 +142,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     setLoadingState('interpreting');
 
     const analyzeContext: AnalyzeDreamContext = {
-      mood: mood || undefined,
+      mood: moodLabel,
       dreamId: dream.id,
       zodiacSign: userProfile?.zodiac_sign,
       gender: userProfile?.gender,
@@ -172,15 +188,15 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     setLoadingState('interpreting');
     setErrorMessage(null);
 
-    const analyzeContext: AnalyzeDreamContext = {
-      mood: mood || undefined,
+    const retryContext: AnalyzeDreamContext = {
+      mood: MOOD_LABELS[moodValue],
       dreamId,
       zodiacSign: userProfile?.zodiac_sign,
       gender: userProfile?.gender,
       ageRange: userProfile?.age_range,
     };
 
-    const analyzeResult = await analyzeDream(dreamText.trim(), analyzeContext);
+    const analyzeResult = await analyzeDream(dreamText.trim(), retryContext);
 
     if (!analyzeResult.success) {
       setLoadingState('error');
@@ -260,7 +276,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                 <Text style={styles.draftBannerText}>Draft recovered</Text>
                 <TouchableOpacity onPress={() => {
                   setDreamText('');
-                  setMood('');
+                  setMoodValue(3);
                   setDreamType('dream');
                   setHasDraftRecovered(false);
                   clearDraft();
@@ -324,25 +340,26 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
               editable={!isLoading}
             />
 
-            <Text style={styles.moodLabel}>How did you feel?</Text>
+            <Text style={styles.moodLabel}>How did you feel upon waking?</Text>
             <View style={styles.moodContainer}>
-              {moods.map((m) => (
-                <TouchableOpacity
-                  key={m}
-                  style={[styles.moodChip, mood === m && styles.moodChipSelected]}
-                  onPress={() => setMood(mood === m ? '' : m)}
-                  disabled={isLoading}
-                >
-                  <Text
-                    style={[
-                      styles.moodChipText,
-                      mood === m && styles.moodChipTextSelected,
-                    ]}
+              <View style={styles.moonRow}>
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <TouchableOpacity
+                    key={value}
+                    style={styles.moonButton}
+                    onPress={() => setMoodValue(value)}
+                    disabled={isLoading}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Set mood to ${MOOD_LABELS[value]}`}
+                    accessibilityState={{ selected: value <= moodValue }}
                   >
-                    {m}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text style={styles.moonIcon}>
+                      {value <= moodValue ? '☽' : '○'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text style={styles.moodValueLabel}>{MOOD_LABELS[moodValue]}</Text>
             </View>
 
             {errorMessage && (
@@ -488,29 +505,29 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   moodContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
   },
-  moodChip: {
-    backgroundColor: '#2a2a4e',
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
-    marginRight: 8,
+  moonRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     marginBottom: 8,
   },
-  moodChipSelected: {
-    backgroundColor: '#6b4e9e',
-    borderColor: '#6b4e9e',
+  moonButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  moodChipText: {
-    color: '#a89cc8',
+  moonIcon: {
+    fontSize: 32,
+    color: '#e0d4f7',
+  },
+  moodValueLabel: {
     fontSize: 14,
-  },
-  moodChipTextSelected: {
-    color: '#fff',
+    color: '#9b7fd4',
+    fontStyle: 'italic',
   },
   errorContainer: {
     backgroundColor: '#3e2a2a',
