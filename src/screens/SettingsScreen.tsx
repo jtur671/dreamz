@@ -9,11 +9,15 @@ import {
   SafeAreaView,
   Share,
   Modal,
+  FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { getProfile, updateZodiacSign } from '../lib/profileService';
 import { exportUserDreams, deleteUserAccount } from '../lib/accountService';
+import { fetchUserDreams, deleteDream } from '../lib/dreamService';
 import { ZODIAC_SIGNS } from '../types';
+import type { Dream } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type SettingsScreenProps = {
@@ -24,6 +28,9 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [zodiacSign, setZodiacSign] = useState<string | null>(null);
   const [showZodiacPicker, setShowZodiacPicker] = useState(false);
+  const [showDreamPicker, setShowDreamPicker] = useState(false);
+  const [dreams, setDreams] = useState<Dream[]>([]);
+  const [loadingDreams, setLoadingDreams] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -46,6 +53,56 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       setZodiacSign(sign);
     }
     setShowZodiacPicker(false);
+  }
+
+  async function handleOpenDreamPicker() {
+    setShowDreamPicker(true);
+    setLoadingDreams(true);
+
+    const result = await fetchUserDreams();
+    if (result.success) {
+      setDreams(result.dreams);
+    } else {
+      Alert.alert('Error', result.error);
+    }
+    setLoadingDreams(false);
+  }
+
+  function handleDeleteDreamPress(dream: Dream) {
+    const title = dream.reading?.title || 'this dream';
+    Alert.alert(
+      'Delete Dream',
+      `Are you sure you want to delete "${title}"?\n\nIt can be recovered within 30 days by contacting support.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => performDreamDeletion(dream.id),
+        },
+      ]
+    );
+  }
+
+  async function performDreamDeletion(dreamId: string) {
+    const result = await deleteDream(dreamId);
+    if (result.success) {
+      setDreams(dreams.filter(d => d.id !== dreamId));
+      if (dreams.length === 1) {
+        setShowDreamPicker(false);
+      }
+    } else {
+      Alert.alert('Error', result.error);
+    }
+  }
+
+  function formatDate(dateString: string) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   }
 
   async function handleExportDreams() {
@@ -142,6 +199,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         visible={showZodiacPicker}
         transparent
         animationType="fade"
+        accessibilityViewIsModal={true}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -170,6 +228,63 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
               onPress={() => setShowZodiacPicker(false)}
             >
               <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showDreamPicker}
+        transparent
+        animationType="fade"
+        accessibilityViewIsModal={true}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Dream to Delete</Text>
+            {loadingDreams ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#9b7fd4" />
+              </View>
+            ) : dreams.length === 0 ? (
+              <View style={styles.emptyDreamsContainer}>
+                <Text style={styles.emptyDreamsText}>No dreams to delete</Text>
+                <Text style={styles.emptyDreamsSubtext}>Your grimoire is empty</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={dreams}
+                keyExtractor={(item) => item.id}
+                style={styles.dreamList}
+                showsVerticalScrollIndicator={false}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.dreamItem}
+                    onPress={() => handleDeleteDreamPress(item)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Delete dream: ${item.reading?.title || 'Untitled Dream'}, ${formatDate(item.created_at)}`}
+                  >
+                    <View style={styles.dreamItemContent}>
+                      <Text style={styles.dreamItemTitle}>
+                        {item.reading?.title || 'Untitled Dream'}
+                      </Text>
+                      <Text style={styles.dreamItemDate}>
+                        {formatDate(item.created_at)}
+                      </Text>
+                      <Text style={styles.dreamItemPreview} numberOfLines={2}>
+                        {item.dream_text}
+                      </Text>
+                    </View>
+                    <Text style={styles.dreamItemDelete}>✕</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowDreamPicker(false)}
+            >
+              <Text style={styles.cancelText}>Done</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -209,6 +324,15 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           >
             <Text style={styles.menuItemText}>Gather Your Dreams</Text>
             <Text style={styles.menuItemSubtext}>Export all dreams as JSON</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={handleOpenDreamPicker}
+            disabled={loading}
+          >
+            <Text style={styles.menuItemText}>Release a Dream</Text>
+            <Text style={styles.menuItemSubtext}>Delete individual dreams from your grimoire</Text>
           </TouchableOpacity>
         </View>
 
@@ -393,5 +517,59 @@ const styles = StyleSheet.create({
     color: '#8b7fa8',
     fontSize: 14,
     textAlign: 'center',
+  },
+  loadingContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  emptyDreamsContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  emptyDreamsText: {
+    fontSize: 16,
+    color: '#e0d4f7',
+    marginBottom: 4,
+  },
+  emptyDreamsSubtext: {
+    fontSize: 14,
+    color: '#8b7fa8',
+  },
+  dreamList: {
+    maxHeight: 350,
+  },
+  dreamItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2a2a4e',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
+  },
+  dreamItemContent: {
+    flex: 1,
+  },
+  dreamItemTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#e0d4f7',
+    marginBottom: 2,
+  },
+  dreamItemDate: {
+    fontSize: 12,
+    color: '#8b7fa8',
+    marginBottom: 4,
+  },
+  dreamItemPreview: {
+    fontSize: 13,
+    color: '#a89cc8',
+    lineHeight: 18,
+  },
+  dreamItemDelete: {
+    fontSize: 18,
+    color: '#e07a7a',
+    paddingLeft: 12,
   },
 });

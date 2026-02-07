@@ -15,6 +15,14 @@ export type UpdateDreamResult =
   | { success: true; dream: Dream }
   | { success: false; error: string };
 
+export type DeleteDreamResult =
+  | { success: true }
+  | { success: false; error: string };
+
+export type FetchDreamsResult =
+  | { success: true; dreams: Dream[] }
+  | { success: false; error: string };
+
 /**
  * Saves a new dream entry to the database
  */
@@ -167,4 +175,61 @@ function isValidReading(reading: unknown): reading is DreamReading {
     r.tags.length >= 3 &&
     r.tags.length <= 7
   );
+}
+
+/**
+ * Fetches all dreams for the current user
+ */
+export async function fetchUserDreams(): Promise<FetchDreamsResult> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const { data, error } = await supabase
+      .from('dreams')
+      .select('*')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, dreams: data as Dream[] };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to fetch dreams';
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * Soft deletes a dream (sets deleted_at timestamp)
+ */
+export async function deleteDream(dreamId: string): Promise<DeleteDreamResult> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const { error } = await supabase
+      .from('dreams')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', dreamId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to delete dream';
+    return { success: false, error: message };
+  }
 }

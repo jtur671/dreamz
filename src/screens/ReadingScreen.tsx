@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,12 @@ import {
   Share,
   Image,
   Dimensions,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import ViewShot from 'react-native-view-shot';
 import type { DreamReading, DreamSymbol } from '../types';
 
 type ReadingScreenParams = {
@@ -26,6 +29,10 @@ export default function ReadingScreen() {
   const params = route.params as ReadingScreenParams;
   const { reading, fromGrimoire = false } = params;
 
+  const viewShotRef = useRef<ViewShot>(null);
+  const [showShareCard, setShowShareCard] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
+
   function handleViewInGrimoire() {
     // Navigate to Grimoire tab - reset to top of stack first, then go to Grimoire
     navigation.reset({
@@ -39,32 +46,121 @@ export default function ReadingScreen() {
   }
 
   async function handleShare() {
-    // Share only the reading content - never the dream text (privacy)
-    const shareText = `${reading.title}
+    setShowShareCard(true);
+  }
+
+  async function captureAndShare() {
+    if (!viewShotRef.current) return;
+
+    setIsCapturing(true);
+    try {
+      const uri = await viewShotRef.current.capture?.();
+      if (uri) {
+        await Share.share({
+          url: uri,
+          title: reading.title,
+        });
+      }
+    } catch (error) {
+      // Fallback to text share if image capture fails
+      const tagsText = reading.tags.length > 0 ? `\n\n#${reading.tags.join(' #')}` : '';
+      const shareText = `✧ ${reading.title} ✧
 
 "${reading.omen}"
 
 Ritual: ${reading.ritual}
 
-Reflect: ${reading.journal_prompt}
-
-#${reading.tags.join(' #')}
+Reflect: ${reading.journal_prompt}${tagsText}
 
 ---
 Interpreted with Dreamz`;
 
-    try {
       await Share.share({
         message: shareText,
         title: reading.title,
       });
-    } catch (error) {
-      // User cancelled or share failed silently
+    } finally {
+      setIsCapturing(false);
+      setShowShareCard(false);
     }
   }
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* Share Card Modal */}
+      <Modal
+        visible={showShareCard}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowShareCard(false)}
+        accessibilityViewIsModal={true}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.shareModalContent}>
+            <Text style={styles.shareModalTitle}>Share Your Reading</Text>
+
+            {/* Capturable Card */}
+            <ViewShot
+              ref={viewShotRef}
+              options={{ format: 'png', quality: 1.0 }}
+              style={styles.shareCardContainer}
+            >
+              <View style={styles.shareCard}>
+                {/* Dream Image in Card */}
+                {reading.image_url && (
+                  <Image
+                    source={{ uri: reading.image_url }}
+                    style={styles.shareCardImage}
+                    resizeMode="cover"
+                  />
+                )}
+
+                {/* Card Content */}
+                <View style={styles.shareCardContent}>
+                  <Text style={styles.shareCardTitle}>{reading.title}</Text>
+
+                  <View style={styles.shareCardOmen}>
+                    <Text style={styles.shareCardOmenText}>"{reading.omen}"</Text>
+                  </View>
+
+                  <View style={styles.shareCardTags}>
+                    {reading.tags.slice(0, 4).map((tag, index) => (
+                      <View key={index} style={styles.shareCardTag}>
+                        <Text style={styles.shareCardTagText}>#{tag}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  <Text style={styles.shareCardBranding}>✧ dreamz ✧</Text>
+                </View>
+              </View>
+            </ViewShot>
+
+            {/* Share Button */}
+            <TouchableOpacity
+              style={styles.shareImageButton}
+              onPress={captureAndShare}
+              disabled={isCapturing}
+            >
+              {isCapturing ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.shareImageButtonText}>Share as Image</Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Cancel Button */}
+            <TouchableOpacity
+              style={styles.shareCancelButton}
+              onPress={() => setShowShareCard(false)}
+              disabled={isCapturing}
+            >
+              <Text style={styles.shareCancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -421,5 +517,110 @@ const styles = StyleSheet.create({
     color: '#a89cc8',
     fontSize: 16,
     fontWeight: '500',
+  },
+  // Share Card Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  shareModalContent: {
+    width: '100%',
+    maxWidth: 360,
+    alignItems: 'center',
+  },
+  shareModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#e0d4f7',
+    marginBottom: 20,
+  },
+  shareCardContainer: {
+    width: '100%',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  shareCard: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  shareCardImage: {
+    width: '100%',
+    height: 180,
+    backgroundColor: '#252542',
+  },
+  shareCardContent: {
+    padding: 20,
+  },
+  shareCardTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#e0d4f7',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  shareCardOmen: {
+    backgroundColor: '#2e2545',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderLeftWidth: 3,
+    borderLeftColor: '#9b7fd4',
+  },
+  shareCardOmenText: {
+    fontSize: 15,
+    color: '#d4c4f7',
+    fontStyle: 'italic',
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  shareCardTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  shareCardTag: {
+    backgroundColor: '#3a3a5e',
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    marginRight: 6,
+    marginBottom: 6,
+  },
+  shareCardTagText: {
+    fontSize: 12,
+    color: '#b8a8d8',
+  },
+  shareCardBranding: {
+    fontSize: 14,
+    color: '#6b5b8a',
+    textAlign: 'center',
+    letterSpacing: 2,
+  },
+  shareImageButton: {
+    backgroundColor: '#6b4e9e',
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    marginTop: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  shareImageButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  shareCancelButton: {
+    paddingVertical: 12,
+    marginTop: 8,
+  },
+  shareCancelButtonText: {
+    color: '#8b7fa8',
+    fontSize: 14,
   },
 });
