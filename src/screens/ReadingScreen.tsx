@@ -20,6 +20,7 @@ import type { DreamReading, DreamSymbol } from '../types';
 type ReadingScreenParams = {
   reading: DreamReading;
   dreamId: string;
+  dreamText?: string;
   fromGrimoire?: boolean;
 };
 
@@ -27,11 +28,12 @@ export default function ReadingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const route = useRoute();
   const params = route.params as ReadingScreenParams;
-  const { reading, fromGrimoire = false } = params;
+  const { reading, dreamText, fromGrimoire = false } = params;
 
   const viewShotRef = useRef<ViewShot>(null);
   const [showShareCard, setShowShareCard] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [showDreamText, setShowDreamText] = useState(false);
 
   function handleViewInGrimoire() {
     // Navigate to Grimoire tab - reset to top of stack first, then go to Grimoire
@@ -191,6 +193,37 @@ Interpreted with Dreamz`;
 
         {/* Title */}
         <Text style={styles.title}>{reading.title}</Text>
+
+        {/* Expandable Dream Text */}
+        {dreamText && (
+          <View style={styles.dreamTextSection}>
+            <TouchableOpacity
+              style={styles.dreamTextToggle}
+              onPress={() => setShowDreamText(!showDreamText)}
+              accessibilityRole="button"
+              accessibilityLabel={showDreamText ? 'Hide your dream' : 'View your dream'}
+            >
+              <Text style={styles.dreamTextToggleText}>
+                {showDreamText ? '▼ Hide Your Dream' : '▶ View Your Dream'}
+              </Text>
+            </TouchableOpacity>
+            {showDreamText && (
+              <View style={styles.dreamTextCard}>
+                <Text style={styles.dreamTextContent}>{dreamText}</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Plain English Interpretation */}
+        {reading.plain_english && (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>In Simple Terms</Text>
+            <View style={styles.plainEnglishCard}>
+              <Text style={styles.plainEnglishText}>{reading.plain_english}</Text>
+            </View>
+          </View>
+        )}
 
         {/* TLDR Summary */}
         <View style={styles.section}>
@@ -359,8 +392,49 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: 'center',
   },
+  dreamTextSection: {
+    marginBottom: 24,
+  },
+  dreamTextToggle: {
+    backgroundColor: '#252542',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
+  },
+  dreamTextToggleText: {
+    color: '#9b7fd4',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  dreamTextCard: {
+    backgroundColor: '#1e1e38',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
+  },
+  dreamTextContent: {
+    color: '#c4b8e8',
+    fontSize: 15,
+    lineHeight: 24,
+    fontStyle: 'italic',
+  },
   section: {
     marginBottom: 28,
+  },
+  plainEnglishCard: {
+    backgroundColor: '#252545',
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#4a4a6e',
+  },
+  plainEnglishText: {
+    fontSize: 16,
+    color: '#e8e0f8',
+    lineHeight: 26,
   },
   sectionLabel: {
     fontSize: 12,

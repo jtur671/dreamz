@@ -27,6 +27,8 @@ export interface DreamReadingSchema {
   title: string;
   /** Brief mystical summary, max 150 characters */
   tldr: string;
+  /** Plain English interpretation - conversational, friendly, no mystical language (3-5 sentences) */
+  plain_english: string;
   /** The single most important symbol in the dream */
   symbols: DreamSymbol[];
   /** What the dream portends about the dreamer's current life phase (2-4 sentences) */
@@ -68,6 +70,7 @@ You MUST return ONLY valid JSON matching this exact schema. No markdown code fen
 {
   "title": "string (evocative 3-7 word title)",
   "tldr": "string (mystical summary, max 150 chars)",
+  "plain_english": "string (3-5 sentence conversational explanation in simple everyday language - no mystical terms, just friendly accessible interpretation using 'might', 'may', 'could suggest')",
   "symbols": [
     {
       "name": "string (the key symbol from the dream)",
@@ -84,6 +87,13 @@ You MUST return ONLY valid JSON matching this exact schema. No markdown code fen
   "content_warnings": ["if applicable, otherwise empty array"]
 }
 
+## Plain English Field Guidelines
+The plain_english field should read like advice from a thoughtful friend:
+- Use everyday language, no mystical vocabulary
+- Frame as possibilities: "might signify", "could represent", "may indicate"
+- Explain the dream's potential meaning in practical, relatable terms
+- Example: "The dream might signify that you are longing for comfort and taking things slow in your life. The turtle typically represents patience, resilience and longevity whereas pizza is usually affiliated with pleasure and comfort food."
+
 ## Symbol Requirements
 - Include exactly ONE symbol - the most significant element from the dream
 - The "interpretation" field should be plain English, conversational, specific to this dream
@@ -95,14 +105,15 @@ Include when dreams contain: violence, death imagery, sexual content, self-harm 
 
 ## Validation
 Before responding, verify:
-- All required fields are present
+- All required fields are present (including plain_english)
 - Strings are properly escaped
 - No trailing commas
 - Arrays are properly formatted
 - JSON parses successfully
 - symbols array has exactly 1 item
 - tags array has 3-5 items
-- tldr is under 150 characters`;
+- tldr is under 150 characters
+- plain_english is 3-5 conversational sentences`;
 
 // ============================================================================
 // User Prompt Builder - Constructs the dream interpretation request
@@ -162,6 +173,7 @@ Remember: Return ONLY valid JSON matching the schema. No markdown, no extra text
 export const FALLBACK_READING: DreamReadingSchema = {
   title: "The Veiled Message",
   tldr: "A dream awaits deeper remembering; the threshold holds wisdom still.",
+  plain_english: "Your dream seems to be hovering just out of reach of your memory, which is actually quite common and meaningful. This often happens when we're processing something important but aren't quite ready to face it directly. It might be worth paying closer attention to your dreams over the next few nights, as the message may become clearer with time.",
   symbols: [
     {
       name: "The Threshold",
@@ -213,6 +225,11 @@ export function validateReading(reading: unknown): {
     if (typeof r[field] !== "string" || !r[field]) {
       return { isValid: false, error: `Missing or invalid field: ${field}` };
     }
+  }
+
+  // Check plain_english (optional but should be string if present)
+  if (r.plain_english !== undefined && typeof r.plain_english !== "string") {
+    return { isValid: false, error: "plain_english must be a string" };
   }
 
   // Check tldr length

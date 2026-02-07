@@ -43,18 +43,8 @@ const LOADING_SUBTEXTS = [
   'Your dreams speak in riddles and metaphors...',
 ];
 
-// Moon mood labels for accessibility and display
-const MOOD_LABELS: Record<number, string> = {
-  1: 'Troubled',
-  2: 'Uneasy',
-  3: 'Neutral',
-  4: 'Pleasant',
-  5: 'Blissful',
-};
-
 export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   const [dreamText, setDreamText] = useState('');
-  const [moodValue, setMoodValue] = useState<number>(3); // 1-5 scale, default 3
   const [dreamType, setDreamType] = useState<'dream' | 'nightmare'>('dream');
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [loadingState, setLoadingState] = useState<LoadingState>('idle');
@@ -63,12 +53,6 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   const draftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isLoading = loadingState === 'saving' || loadingState === 'interpreting';
-
-  // Convert mood label to value (for loading drafts)
-  function moodLabelToValue(label: string): number {
-    const entry = Object.entries(MOOD_LABELS).find(([_, l]) => l === label);
-    return entry ? parseInt(entry[0]) : 3;
-  }
 
   // Load profile and draft on mount
   useEffect(() => {
@@ -83,9 +67,6 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
       const draft = await loadDraft();
       if (draft && draft.dreamText.trim()) {
         setDreamText(draft.dreamText);
-        if (draft.mood) {
-          setMoodValue(moodLabelToValue(draft.mood));
-        }
         setDreamType(draft.dreamType);
         setHasDraftRecovered(true);
       }
@@ -101,10 +82,10 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
     draftTimeoutRef.current = setTimeout(() => {
       if (dreamText.trim()) {
-        saveDraft({ dreamText, mood: MOOD_LABELS[moodValue], dreamType });
+        saveDraft({ dreamText, dreamType });
       }
     }, 1000); // Save after 1 second of inactivity
-  }, [dreamText, moodValue, dreamType]);
+  }, [dreamText, dreamType]);
 
   useEffect(() => {
     autoSaveDraft();
@@ -126,8 +107,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     // Step 1: Save the dream
     setLoadingState('saving');
 
-    const moodLabel = MOOD_LABELS[moodValue];
-    const saveResult = await saveDream(dreamText.trim(), moodLabel, dreamType);
+    const saveResult = await saveDream(dreamText.trim(), undefined, dreamType);
 
     if (!saveResult.success) {
       setLoadingState('error');
@@ -142,7 +122,6 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     setLoadingState('interpreting');
 
     const analyzeContext: AnalyzeDreamContext = {
-      mood: moodLabel,
       dreamId: dream.id,
       zodiacSign: userProfile?.zodiac_sign,
       gender: userProfile?.gender,
@@ -180,6 +159,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     navigation.replace('Reading', {
       reading: analyzeResult.reading,
       dreamId: dream.id,
+      dreamText: dreamText.trim(),
       alreadySaved: true,
     });
   }
@@ -189,7 +169,6 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     setErrorMessage(null);
 
     const retryContext: AnalyzeDreamContext = {
-      mood: MOOD_LABELS[moodValue],
       dreamId,
       zodiacSign: userProfile?.zodiac_sign,
       gender: userProfile?.gender,
@@ -218,6 +197,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     navigation.replace('Reading', {
       reading: analyzeResult.reading,
       dreamId: dreamId,
+      dreamText: dreamText.trim(),
       alreadySaved: true,
     });
   }
@@ -276,7 +256,6 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                 <Text style={styles.draftBannerText}>Draft recovered</Text>
                 <TouchableOpacity onPress={() => {
                   setDreamText('');
-                  setMoodValue(3);
                   setDreamType('dream');
                   setHasDraftRecovered(false);
                   clearDraft();
@@ -339,28 +318,6 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
               textAlignVertical="top"
               editable={!isLoading}
             />
-
-            <Text style={styles.moodLabel}>How did you feel upon waking?</Text>
-            <View style={styles.moodContainer}>
-              <View style={styles.moonRow}>
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <TouchableOpacity
-                    key={value}
-                    style={styles.moonButton}
-                    onPress={() => setMoodValue(value)}
-                    disabled={isLoading}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Set mood to ${MOOD_LABELS[value]}`}
-                    accessibilityState={{ selected: value <= moodValue }}
-                  >
-                    <Text style={styles.moonIcon}>
-                      {value <= moodValue ? '☽' : '○'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <Text style={styles.moodValueLabel}>{MOOD_LABELS[moodValue]}</Text>
-            </View>
 
             {errorMessage && (
               <View style={styles.errorContainer}>
@@ -497,37 +454,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#3a3a5e',
     minHeight: 200,
-  },
-  moodLabel: {
-    fontSize: 16,
-    color: '#e0d4f7',
-    marginTop: 24,
-    marginBottom: 12,
-  },
-  moodContainer: {
-    alignItems: 'center',
-  },
-  moonRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  moonButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  moonIcon: {
-    fontSize: 32,
-    color: '#e0d4f7',
-  },
-  moodValueLabel: {
-    fontSize: 14,
-    color: '#9b7fd4',
-    fontStyle: 'italic',
   },
   errorContainer: {
     backgroundColor: '#3e2a2a',

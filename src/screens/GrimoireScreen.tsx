@@ -74,6 +74,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
       navigation.navigate('Reading', {
         reading: dream.reading,
         dreamId: dream.id,
+        dreamText: dream.dream_text,
         fromGrimoire: true,
       });
     }
