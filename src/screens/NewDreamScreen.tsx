@@ -16,6 +16,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { saveDream, analyzeDream, AnalyzeDreamContext } from '../lib/dreamService';
 import { getProfile } from '../lib/profileService';
 import { saveDraft, loadDraft, clearDraft } from '../lib/draftService';
+import VoiceRecorder from '../components/VoiceRecorder';
 import type { Profile } from '../types';
 
 type NewDreamScreenProps = {
@@ -218,6 +219,15 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     return LOADING_SUBTEXTS[loadingMessageIndex % LOADING_SUBTEXTS.length];
   }
 
+  function handleVoiceTranscription(text: string) {
+    // Append transcribed text to existing dream text
+    if (dreamText.trim()) {
+      setDreamText(dreamText + ' ' + text);
+    } else {
+      setDreamText(text);
+    }
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -306,6 +316,15 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                   Nightmare
                 </Text>
               </TouchableOpacity>
+            </View>
+
+            {/* Voice Recorder */}
+            <View style={styles.voiceRecorderContainer}>
+              <Text style={styles.voiceLabel}>Or speak your dream</Text>
+              <VoiceRecorder
+                onTranscription={handleVoiceTranscription}
+                disabled={isLoading}
+              />
             </View>
 
             <TextInput
@@ -404,6 +423,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#9b7fd4',
     fontWeight: '500',
+  },
+  voiceRecorderContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingVertical: 16,
+    backgroundColor: '#252542',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
+  },
+  voiceLabel: {
+    fontSize: 14,
+    color: '#8b7fa8',
+    marginBottom: 12,
   },
   dreamTypeContainer: {
     flexDirection: 'row',
