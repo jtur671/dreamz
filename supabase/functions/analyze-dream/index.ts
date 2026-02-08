@@ -60,7 +60,7 @@ interface OpenAIResponse {
 
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 const OPENAI_IMAGE_URL = "https://api.openai.com/v1/images/generations";
-const OPENAI_MODEL = "gpt-5-mini-2025-08-07";
+const OPENAI_MODEL = "gpt-5-mini";
 const OPENAI_IMAGE_MODEL = "dall-e-3";
 const MAX_RETRIES = 2; // Initial attempt + 1 retry
 const REQUEST_TIMEOUT_MS = 30000;
@@ -92,8 +92,7 @@ async function callOpenAI(
       body: JSON.stringify({
         model: OPENAI_MODEL,
         messages,
-        temperature: 0.7,
-        max_tokens: 2000,
+        max_completion_tokens: 2000,
       }),
       signal: controller.signal,
     });
