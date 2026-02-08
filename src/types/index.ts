@@ -1,5 +1,6 @@
 export interface DreamSymbol {
   name: string;
+  interpretation?: string;  // Plain English interpretation specific to this dream
   meaning: string;
   shadow: string;
   guidance: string;

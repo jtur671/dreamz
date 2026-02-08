@@ -121,6 +121,7 @@ Before responding, verify:
 
 export interface DreamerContext {
   mood?: string;
+  emotions?: string[];
   zodiacSign?: string;
   gender?: string;
   ageRange?: string;
@@ -138,6 +139,10 @@ export function buildUserPrompt(dreamText: string, context?: DreamerContext): st
 
   if (context?.mood) {
     contextParts.push(`The dreamer woke feeling: ${context.mood}`);
+  }
+
+  if (context?.emotions && context.emotions.length > 0) {
+    contextParts.push(`Emotions present in the dream: ${context.emotions.join(', ')}`);
   }
 
   if (context?.zodiacSign) {

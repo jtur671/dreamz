@@ -74,26 +74,53 @@ Deno.serve(async (req: Request) => {
       return errorResponse("Invalid or expired token", 401);
     }
 
-    // Parse form data
-    const formData = await req.formData();
-    const audioFile = formData.get("audio");
+    // Parse request body (JSON with base64 audio)
+    const contentType = req.headers.get("Content-Type") || "";
+    let audioBlob: Blob;
+    let filename = "recording.m4a";
 
-    if (!audioFile || !(audioFile instanceof File)) {
-      return errorResponse("Missing audio file", 400);
+    if (contentType.includes("application/json")) {
+      // Handle base64 JSON payload from React Native
+      const body = await req.json();
+
+      if (!body.audio) {
+        return errorResponse("Missing audio data", 400);
+      }
+
+      // Decode base64 to binary
+      const binaryString = atob(body.audio);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      const mimeType = body.mimeType || "audio/m4a";
+      filename = body.filename || "recording.m4a";
+      audioBlob = new Blob([bytes], { type: mimeType });
+
+      console.log(`Received base64 audio: ${filename}, type: ${mimeType}, size: ${audioBlob.size}`);
+    } else {
+      // Handle FormData (web uploads)
+      const formData = await req.formData();
+      const audioFile = formData.get("audio");
+
+      if (!audioFile || !(audioFile instanceof File)) {
+        return errorResponse("Missing audio file", 400);
+      }
+
+      audioBlob = audioFile;
+      filename = audioFile.name || "recording.m4a";
+      console.log(`Received form audio: ${filename}, type: ${audioFile.type}, size: ${audioFile.size}`);
     }
 
     // Validate file size
-    if (audioFile.size > MAX_FILE_SIZE) {
+    if (audioBlob.size > MAX_FILE_SIZE) {
       return errorResponse("File too large. Maximum size is 25MB.", 400);
     }
 
-    // Validate file type (be lenient - Whisper accepts many formats)
-    const fileType = audioFile.type || "audio/m4a";
-    console.log(`Received audio file: ${audioFile.name}, type: ${fileType}, size: ${audioFile.size}`);
-
     // Prepare request to OpenAI Whisper API
     const whisperFormData = new FormData();
-    whisperFormData.append("file", audioFile, audioFile.name || "recording.m4a");
+    whisperFormData.append("file", audioBlob, filename);
     whisperFormData.append("model", "whisper-1");
     whisperFormData.append("language", "en");
     whisperFormData.append("response_format", "json");

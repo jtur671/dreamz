@@ -284,6 +284,7 @@ function validateRequest(body: unknown): {
     data: {
       dream_text: dreamText,
       mood: req.mood as string | undefined,
+      emotions: req.emotions as string[] | undefined,
       dream_id: req.dream_id as string | undefined,
       zodiac_sign: req.zodiac_sign as string | undefined,
       gender: req.gender as string | undefined,
@@ -398,11 +399,12 @@ Deno.serve(async (req: Request) => {
       return errorResponse("VALIDATION_ERROR", validation.error!, 400);
     }
 
-    const { dream_text, mood, dream_id, zodiac_sign, gender, age_range } = validation.data;
+    const { dream_text, mood, emotions, dream_id, zodiac_sign, gender, age_range } = validation.data;
 
     // Build dreamer context for personalized interpretation
     const dreamerContext: DreamerContext = {
       mood,
+      emotions,
       zodiacSign: zodiac_sign,
       gender,
       ageRange: age_range,
