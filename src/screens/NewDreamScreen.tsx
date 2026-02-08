@@ -44,9 +44,12 @@ const LOADING_SUBTEXTS = [
   'Your dreams speak in riddles and metaphors...',
 ];
 
+const MOOD_OPTIONS = ['Peaceful', 'Curious', 'Inspired', 'Confused', 'Anxious', 'Fearful'];
+
 export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   const [dreamText, setDreamText] = useState('');
   const [dreamType, setDreamType] = useState<'dream' | 'nightmare'>('dream');
+  const [mood, setMood] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [loadingState, setLoadingState] = useState<LoadingState>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -69,6 +72,9 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
       if (draft && draft.dreamText.trim()) {
         setDreamText(draft.dreamText);
         setDreamType(draft.dreamType);
+        if (draft.mood) {
+          setMood(draft.mood);
+        }
         setHasDraftRecovered(true);
       }
     }
@@ -83,10 +89,10 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
     draftTimeoutRef.current = setTimeout(() => {
       if (dreamText.trim()) {
-        saveDraft({ dreamText, dreamType });
+        saveDraft({ dreamText, dreamType, mood: mood || undefined });
       }
     }, 1000); // Save after 1 second of inactivity
-  }, [dreamText, dreamType]);
+  }, [dreamText, dreamType, mood]);
 
   useEffect(() => {
     autoSaveDraft();
@@ -98,8 +104,18 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   }, [autoSaveDraft]);
 
   async function handleSubmit() {
+    console.log('[SUBMIT] handleSubmit() called');
+    console.log('[SUBMIT] dreamText length:', dreamText.trim().length);
+    console.log('[SUBMIT] dreamType:', dreamType);
+    console.log('[SUBMIT] mood:', mood);
+
     if (!dreamText.trim()) {
       Alert.alert('Error', 'Please describe your dream');
+      return;
+    }
+
+    if (!mood) {
+      Alert.alert('Error', 'Please select how your dream felt');
       return;
     }
 
@@ -108,9 +124,12 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     // Step 1: Save the dream
     setLoadingState('saving');
 
-    const saveResult = await saveDream(dreamText.trim(), undefined, dreamType);
+    console.log('[SUBMIT] Calling saveDream()...');
+    const saveResult = await saveDream(dreamText.trim(), mood || undefined, dreamType);
+    console.log('[SUBMIT] saveDream result:', saveResult);
 
     if (!saveResult.success) {
+      console.log('[SUBMIT] Save failed:', saveResult.error);
       setLoadingState('error');
       setErrorMessage(saveResult.error);
       Alert.alert('Error', saveResult.error);
@@ -118,20 +137,27 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     }
 
     const dream = saveResult.dream;
+    console.log('[SUBMIT] Dream saved, ID:', dream.id);
 
     // Step 2: Analyze the dream with user profile context
     setLoadingState('interpreting');
 
+    console.log('[SUBMIT] Loading profile for context...');
     const analyzeContext: AnalyzeDreamContext = {
       dreamId: dream.id,
+      mood: mood || undefined,
       zodiacSign: userProfile?.zodiac_sign,
       gender: userProfile?.gender,
       ageRange: userProfile?.age_range,
     };
+    console.log('[SUBMIT] Analyze context:', analyzeContext);
 
+    console.log('[SUBMIT] Calling analyzeDream()...');
     const analyzeResult = await analyzeDream(dreamText.trim(), analyzeContext);
+    console.log('[SUBMIT] analyzeDream result:', analyzeResult);
 
     if (!analyzeResult.success) {
+      console.log('[SUBMIT] Analysis failed:', analyzeResult.error);
       setLoadingState('error');
       setErrorMessage(analyzeResult.error);
       // Dream was saved but analysis failed - offer to continue or retry
@@ -171,6 +197,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
     const retryContext: AnalyzeDreamContext = {
       dreamId,
+      mood: mood || undefined,
       zodiacSign: userProfile?.zodiac_sign,
       gender: userProfile?.gender,
       ageRange: userProfile?.age_range,
@@ -267,6 +294,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                 <TouchableOpacity onPress={() => {
                   setDreamText('');
                   setDreamType('dream');
+                  setMood(null);
                   setHasDraftRecovered(false);
                   clearDraft();
                 }}>
@@ -316,6 +344,39 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                   Nightmare
                 </Text>
               </TouchableOpacity>
+            </View>
+
+            <View style={styles.moodContainer}>
+              <Text style={styles.moodLabel}>How did it feel?</Text>
+              <View style={styles.moodChips}>
+                {MOOD_OPTIONS.map((option) => {
+                  const selected = mood === option;
+                  return (
+                    <TouchableOpacity
+                      key={option}
+                      style={[
+                        styles.moodChip,
+                        selected && styles.moodChipSelected,
+                      ]}
+                      onPress={() =>
+                        setMood((current) => (current === option ? null : option))
+                      }
+                      disabled={isLoading}
+                      accessibilityLabel={`Mood ${option}`}
+                      accessibilityRole="button"
+                    >
+                      <Text
+                        style={[
+                          styles.moodChipText,
+                          selected && styles.moodChipTextSelected,
+                        ]}
+                      >
+                        {option}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
 
             {/* Voice Recorder */}
@@ -423,6 +484,41 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#9b7fd4',
     fontWeight: '500',
+  },
+  moodContainer: {
+    marginBottom: 16,
+  },
+  moodLabel: {
+    fontSize: 14,
+    color: '#a89cc8',
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  moodChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  moodChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
+    backgroundColor: '#2a2a4e',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  moodChipSelected: {
+    borderColor: '#9b7fd4',
+    backgroundColor: '#3a3a6e',
+  },
+  moodChipText: {
+    color: '#a89cc8',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  moodChipTextSelected: {
+    color: '#e0d4f7',
   },
   voiceRecorderContainer: {
     alignItems: 'center',

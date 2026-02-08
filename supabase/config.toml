@@ -323,6 +323,23 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# ============================================================================
+# Edge Functions Configuration
+# ============================================================================
+# Disable gateway-level JWT verification for all functions.
+# Each function handles auth internally via supabase.auth.getUser(),
+# which is the recommended pattern for the new sb_publishable_ API keys.
+# See: https://supabase.com/docs/guides/functions/auth
+
+[functions.analyze-dream]
+verify_jwt = false
+
+[functions.delete-account]
+verify_jwt = false
+
+[functions.transcribe-audio]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

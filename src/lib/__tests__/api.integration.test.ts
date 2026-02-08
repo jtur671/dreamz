@@ -9,11 +9,13 @@
  * contract that the Edge Function must satisfy.
  */
 
-import { supabase } from '../supabase';
+import { supabase, getFreshAccessToken } from '../supabase';
 import type { DreamReading } from '../../types';
 
 // Get mocked supabase
 const mockedSupabase = supabase as jest.Mocked<typeof supabase>;
+const mockedGetFreshAccessToken = getFreshAccessToken as jest.MockedFunction<typeof getFreshAccessToken>;
+const invokeMock = mockedSupabase.functions.invoke as unknown as jest.Mock;
 
 // Valid reading that matches the AI Reading Contract
 const VALID_READING: DreamReading = {
@@ -60,35 +62,30 @@ const MOCK_SESSION = {
 describe('API Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (global.fetch as jest.Mock).mockReset();
+    invokeMock.mockReset();
   });
 
   describe('analyze-dream Edge Function Contract', () => {
     it('should accept valid request with dream_text only', async () => {
       const { analyzeDream } = require('../dreamService');
 
-      (mockedSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
-        data: { session: MOCK_SESSION },
-        error: null,
-      });
+      mockedGetFreshAccessToken.mockResolvedValueOnce(MOCK_SESSION.access_token);
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValue({ success: true, reading: VALID_READING }),
+      invokeMock.mockResolvedValueOnce({
+        data: { reading: VALID_READING },
+        error: null,
+        status: 200,
       });
 
       const result = await analyzeDream('I dreamed of walking through a moonlit forest');
 
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('analyze-dream'),
+      // No explicit Authorization header — the Supabase client sets it
+      // automatically via the session. We only verify body contents.
+      expect(invokeMock).toHaveBeenCalledWith(
+        'analyze-dream',
         expect.objectContaining({
-          method: 'POST',
-          headers: expect.objectContaining({
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${MOCK_SESSION.access_token}`,
-          }),
-          body: expect.stringContaining('dream_text'),
-        })
+          body: expect.objectContaining({ dream_text: 'I dreamed of walking through a moonlit forest' }),
+        }),
       );
 
       expect(result.success).toBe(true);
@@ -100,20 +97,18 @@ describe('API Integration Tests', () => {
     it('should accept valid request with dream_text and mood', async () => {
       const { analyzeDream } = require('../dreamService');
 
-      (mockedSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
-        data: { session: MOCK_SESSION },
-        error: null,
-      });
+      mockedGetFreshAccessToken.mockResolvedValueOnce(MOCK_SESSION.access_token);
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValue({ success: true, reading: VALID_READING }),
+      invokeMock.mockResolvedValueOnce({
+        data: { reading: VALID_READING },
+        error: null,
+        status: 200,
       });
 
       await analyzeDream('I dreamed of flying', { mood: 'Peaceful' });
 
-      const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
-      const requestBody = JSON.parse(fetchCall[1].body);
+      const request = invokeMock.mock.calls[0][1];
+      const requestBody = request.body;
 
       expect(requestBody.dream_text).toEqual('I dreamed of flying');
       expect(requestBody.mood).toEqual('Peaceful');
@@ -122,20 +117,18 @@ describe('API Integration Tests', () => {
     it('should accept valid request with dream_text, mood, and dream_id', async () => {
       const { analyzeDream } = require('../dreamService');
 
-      (mockedSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
-        data: { session: MOCK_SESSION },
-        error: null,
-      });
+      mockedGetFreshAccessToken.mockResolvedValueOnce(MOCK_SESSION.access_token);
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValue({ success: true, reading: VALID_READING }),
+      invokeMock.mockResolvedValueOnce({
+        data: { reading: VALID_READING },
+        error: null,
+        status: 200,
       });
 
       await analyzeDream('I dreamed of flying', { mood: 'Peaceful', dreamId: 'dream-uuid-123' });
 
-      const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
-      const requestBody = JSON.parse(fetchCall[1].body);
+      const request = invokeMock.mock.calls[0][1];
+      const requestBody = request.body;
 
       expect(requestBody.dream_text).toEqual('I dreamed of flying');
       expect(requestBody.mood).toEqual('Peaceful');
@@ -145,14 +138,12 @@ describe('API Integration Tests', () => {
     it('should pass all profile context to the edge function', async () => {
       const { analyzeDream } = require('../dreamService');
 
-      (mockedSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
-        data: { session: MOCK_SESSION },
-        error: null,
-      });
+      mockedGetFreshAccessToken.mockResolvedValueOnce(MOCK_SESSION.access_token);
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValue({ success: true, reading: VALID_READING }),
+      invokeMock.mockResolvedValueOnce({
+        data: { reading: VALID_READING },
+        error: null,
+        status: 200,
       });
 
       await analyzeDream('I dreamed of flying', {
@@ -163,8 +154,8 @@ describe('API Integration Tests', () => {
         ageRange: '25-34',
       });
 
-      const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
-      const requestBody = JSON.parse(fetchCall[1].body);
+      const request = invokeMock.mock.calls[0][1];
+      const requestBody = request.body;
 
       expect(requestBody.dream_text).toEqual('I dreamed of flying');
       expect(requestBody.mood).toEqual('Peaceful');
@@ -177,14 +168,12 @@ describe('API Integration Tests', () => {
     it('should require Authorization header', async () => {
       const { analyzeDream } = require('../dreamService');
 
-      (mockedSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
-        data: { session: null },
-        error: null,
-      });
+      // getFreshAccessToken returns null when not authenticated
+      mockedGetFreshAccessToken.mockResolvedValueOnce(null);
 
       const result = await analyzeDream('Test dream');
 
-      expect(global.fetch).not.toHaveBeenCalled();
+      expect(invokeMock).not.toHaveBeenCalled();
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error).toBe('Not authenticated');
@@ -194,18 +183,17 @@ describe('API Integration Tests', () => {
 
   describe('analyze-dream Response Contract', () => {
     beforeEach(() => {
-      (mockedSupabase.auth.getSession as jest.Mock).mockResolvedValue({
-        data: { session: MOCK_SESSION },
-        error: null,
-      });
+      // Mock authenticated state for all tests in this block
+      mockedGetFreshAccessToken.mockResolvedValue(MOCK_SESSION.access_token);
     });
 
     it('should return valid DreamReading with all required fields', async () => {
       const { analyzeDream } = require('../dreamService');
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValue({ success: true, reading: VALID_READING }),
+      invokeMock.mockResolvedValueOnce({
+        data: { reading: VALID_READING },
+        error: null,
+        status: 200,
       });
 
       const result = await analyzeDream('Test dream');
@@ -235,9 +223,10 @@ describe('API Integration Tests', () => {
     it('should have symbols with required structure', async () => {
       const { analyzeDream } = require('../dreamService');
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValue({ success: true, reading: VALID_READING }),
+      invokeMock.mockResolvedValueOnce({
+        data: { reading: VALID_READING },
+        error: null,
+        status: 200,
       });
 
       const result = await analyzeDream('Test dream');
@@ -262,9 +251,10 @@ describe('API Integration Tests', () => {
     it('should have 3-7 symbols per reading (MVP spec)', async () => {
       const { analyzeDream } = require('../dreamService');
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValue({ success: true, reading: VALID_READING }),
+      invokeMock.mockResolvedValueOnce({
+        data: { reading: VALID_READING },
+        error: null,
+        status: 200,
       });
 
       const result = await analyzeDream('Test dream');
@@ -279,10 +269,10 @@ describe('API Integration Tests', () => {
     it('should handle 401 Unauthorized response', async () => {
       const { analyzeDream } = require('../dreamService');
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
+      invokeMock.mockResolvedValueOnce({
+        data: null,
+        error: { message: 'Invalid or expired token' },
         status: 401,
-        json: jest.fn().mockResolvedValue({ error: 'Invalid or expired token' }),
       });
 
       const result = await analyzeDream('Test dream');
@@ -296,10 +286,10 @@ describe('API Integration Tests', () => {
     it('should handle 429 Rate Limit response', async () => {
       const { analyzeDream } = require('../dreamService');
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
+      invokeMock.mockResolvedValueOnce({
+        data: null,
+        error: { message: 'Rate limit exceeded' },
         status: 429,
-        json: jest.fn().mockResolvedValue({ error: 'Rate limit exceeded' }),
       });
 
       const result = await analyzeDream('Test dream');
@@ -313,10 +303,10 @@ describe('API Integration Tests', () => {
     it('should handle 500 Internal Server Error response', async () => {
       const { analyzeDream } = require('../dreamService');
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
+      invokeMock.mockResolvedValueOnce({
+        data: null,
+        error: { message: 'Internal server error' },
         status: 500,
-        json: jest.fn().mockResolvedValue({ error: 'Internal server error' }),
       });
 
       const result = await analyzeDream('Test dream');
@@ -330,10 +320,7 @@ describe('API Integration Tests', () => {
     it('should handle malformed JSON response gracefully', async () => {
       const { analyzeDream } = require('../dreamService');
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockRejectedValue(new Error('Invalid JSON')),
-      });
+      invokeMock.mockRejectedValueOnce(new Error('Invalid JSON'));
 
       const result = await analyzeDream('Test dream');
 
@@ -346,9 +333,10 @@ describe('API Integration Tests', () => {
       const invalidReading = { ...VALID_READING };
       delete (invalidReading as any).title;
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValue({ success: true, reading: invalidReading }),
+      invokeMock.mockResolvedValueOnce({
+        data: { reading: invalidReading },
+        error: null,
+        status: 200,
       });
 
       const result = await analyzeDream('Test dream');
@@ -364,9 +352,10 @@ describe('API Integration Tests', () => {
 
       const invalidReading = { ...VALID_READING, symbols: [] };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValue({ success: true, reading: invalidReading }),
+      invokeMock.mockResolvedValueOnce({
+        data: { reading: invalidReading },
+        error: null,
+        status: 200,
       });
 
       const result = await analyzeDream('Test dream');

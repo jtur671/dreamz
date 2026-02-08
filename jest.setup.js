@@ -33,6 +33,9 @@ jest.mock('./src/lib/supabase', () => ({
         data: { subscription: { unsubscribe: jest.fn() } },
       })),
     },
+    functions: {
+      invoke: jest.fn().mockResolvedValue({ data: null, error: null, status: 200 }),
+    },
     from: jest.fn(() => ({
       select: jest.fn().mockReturnThis(),
       insert: jest.fn().mockReturnThis(),
@@ -43,6 +46,8 @@ jest.mock('./src/lib/supabase', () => ({
       single: jest.fn().mockResolvedValue({ data: null, error: null }),
     })),
   },
+  // Mock getFreshAccessToken - returns null by default, tests can override
+  getFreshAccessToken: jest.fn().mockResolvedValue(null),
 }));
 
 // Global fetch mock

@@ -4,7 +4,7 @@ const DRAFT_KEY = 'dreamz_draft';
 
 export interface DreamDraft {
   dreamText: string;
-  mood?: string;  // Optional - kept for backwards compatibility with old drafts
+  mood?: string;
   dreamType: 'dream' | 'nightmare';
   savedAt: string;
 }
