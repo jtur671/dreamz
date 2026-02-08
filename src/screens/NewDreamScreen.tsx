@@ -54,6 +54,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   const [loadingState, setLoadingState] = useState<LoadingState>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasDraftRecovered, setHasDraftRecovered] = useState(false);
+  const [savedDreamId, setSavedDreamId] = useState<string | null>(null);
   const draftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isLoading = loadingState === 'saving' || loadingState === 'interpreting';
@@ -121,30 +122,37 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
     setErrorMessage(null);
 
-    // Step 1: Save the dream
-    setLoadingState('saving');
+    // Step 1: Save the dream (skip if already saved from a previous attempt)
+    let dreamId = savedDreamId;
 
-    console.log('[SUBMIT] Calling saveDream()...');
-    const saveResult = await saveDream(dreamText.trim(), mood || undefined, dreamType);
-    console.log('[SUBMIT] saveDream result:', saveResult);
+    if (!dreamId) {
+      setLoadingState('saving');
 
-    if (!saveResult.success) {
-      console.log('[SUBMIT] Save failed:', saveResult.error);
-      setLoadingState('error');
-      setErrorMessage(saveResult.error);
-      Alert.alert('Error', saveResult.error);
-      return;
+      console.log('[SUBMIT] Calling saveDream()...');
+      const saveResult = await saveDream(dreamText.trim(), mood || undefined, dreamType);
+      console.log('[SUBMIT] saveDream result:', saveResult);
+
+      if (!saveResult.success) {
+        console.log('[SUBMIT] Save failed:', saveResult.error);
+        setLoadingState('error');
+        setErrorMessage(saveResult.error);
+        Alert.alert('Error', saveResult.error);
+        return;
+      }
+
+      dreamId = saveResult.dream.id;
+      setSavedDreamId(dreamId);
+      console.log('[SUBMIT] Dream saved, ID:', dreamId);
+    } else {
+      console.log('[SUBMIT] Reusing existing dream ID:', dreamId);
     }
-
-    const dream = saveResult.dream;
-    console.log('[SUBMIT] Dream saved, ID:', dream.id);
 
     // Step 2: Analyze the dream with user profile context
     setLoadingState('interpreting');
 
     console.log('[SUBMIT] Loading profile for context...');
     const analyzeContext: AnalyzeDreamContext = {
-      dreamId: dream.id,
+      dreamId,
       mood: mood || undefined,
       zodiacSign: userProfile?.zodiac_sign,
       gender: userProfile?.gender,
@@ -167,12 +175,16 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
         [
           {
             text: 'Return Home',
-            onPress: () => navigation.goBack(),
+            onPress: async () => {
+              await clearDraft();
+              setSavedDreamId(null);
+              navigation.goBack();
+            },
             style: 'cancel',
           },
           {
             text: 'Try Again',
-            onPress: () => retryAnalysis(dream.id),
+            onPress: () => retryAnalysis(dreamId),
           },
         ]
       );
@@ -182,10 +194,11 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     // Step 3: Clear draft and navigate to reading screen
     // Note: The Edge Function auto-saves the reading to the dream record
     await clearDraft();
+    setSavedDreamId(null);
     setLoadingState('idle');
     navigation.replace('Reading', {
       reading: analyzeResult.reading,
-      dreamId: dream.id,
+      dreamId,
       dreamText: dreamText.trim(),
       alreadySaved: true,
     });
@@ -214,7 +227,11 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
         [
           {
             text: 'Return Home',
-            onPress: () => navigation.goBack(),
+            onPress: async () => {
+              await clearDraft();
+              setSavedDreamId(null);
+              navigation.goBack();
+            },
           },
         ]
       );
@@ -296,6 +313,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                   setDreamType('dream');
                   setMood(null);
                   setHasDraftRecovered(false);
+                  setSavedDreamId(null);
                   clearDraft();
                 }}>
                   <Text style={styles.draftClearText}>Clear</Text>
