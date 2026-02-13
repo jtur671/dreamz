@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,12 @@ import {
   RefreshControl,
   TextInput,
   Alert,
+  ScrollView,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
+import { useDreams } from '../hooks/useDreams';
 import type { Dream } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -21,43 +24,43 @@ type GrimoireScreenProps = {
 };
 
 export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
-  const [dreams, setDreams] = useState<Dream[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { dreams, loading, refresh } = useDreams();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activePill, setActivePill] = useState<string | null>(null);
+
+  // Compute recurring symbol pills (threshold: 4+ dreams containing the symbol)
+  const symbolPills = useMemo(() => {
+    const symbolCounts = new Map<string, number>();
+    for (const dream of dreams) {
+      if (!dream.reading?.symbols) continue;
+      const seen = new Set<string>();
+      for (const symbol of dream.reading.symbols) {
+        const name = symbol.name.toLowerCase();
+        if (!seen.has(name)) {
+          seen.add(name);
+          symbolCounts.set(name, (symbolCounts.get(name) || 0) + 1);
+        }
+      }
+    }
+
+    return Array.from(symbolCounts.entries())
+      .filter(([, count]) => count >= 4)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => ({ name, count }));
+  }, [dreams]);
 
   // Refresh when tab is focused
   useFocusEffect(
     useCallback(() => {
-      fetchDreams();
-    }, [])
+      refresh();
+    }, [refresh])
   );
 
-  async function fetchDreams() {
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from('dreams')
-      .select('*')
-      .eq('user_id', user.id)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false });
-
-    if (!error && data) {
-      setDreams(data);
-    }
-    setLoading(false);
-    setRefreshing(false);
-  }
-
-  function handleRefresh() {
+  async function handleRefresh() {
     setRefreshing(true);
-    fetchDreams();
+    await refresh();
+    setRefreshing(false);
   }
 
   function formatDate(dateString: string) {
@@ -117,8 +120,48 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
       return;
     }
 
-    // Remove from local state
-    setDreams(dreams.filter(d => d.id !== dreamId));
+    // Refresh shared dream context
+    await refresh();
+  }
+
+  // Calculate consecutive-day dream streak
+  function calculateStreak(dreamList: Dream[]): number {
+    if (dreamList.length === 0) return 0;
+
+    // Get unique dates (local timezone) sorted descending
+    const dates = [...new Set(
+      dreamList.map(d => {
+        const dt = new Date(d.created_at);
+        return `${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}`;
+      })
+    )].map(key => {
+      const [y, m, d] = key.split('-').map(Number);
+      return new Date(y, m, d);
+    }).sort((a, b) => b.getTime() - a.getTime());
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // Streak must include today or yesterday
+    const first = dates[0];
+    first.setHours(0, 0, 0, 0);
+    if (first.getTime() !== today.getTime() && first.getTime() !== yesterday.getTime()) {
+      return 0;
+    }
+
+    let streak = 1;
+    for (let i = 1; i < dates.length; i++) {
+      const diff = dates[i - 1].getTime() - dates[i].getTime();
+      const oneDay = 86400000;
+      if (diff === oneDay) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
   }
 
   // Generate subtitle based on dream count and reading status
@@ -141,23 +184,38 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
     return `${withReadings} of ${total} dreams interpreted`;
   }
 
-  // Filter dreams based on search query
-  const filteredDreams = dreams.filter(dream => {
-    if (!searchQuery.trim()) return true;
+  // Filter dreams based on pill selection + search query (additive)
+  const filteredDreams = useMemo(() => {
+    return dreams.filter(dream => {
+      // Pill filter
+      if (activePill) {
+        const hasSymbol = dream.reading?.symbols?.some(
+          s => s.name.toLowerCase() === activePill
+        );
+        if (!hasSymbol) return false;
+      }
 
-    const query = searchQuery.toLowerCase();
-    const title = dream.reading?.title?.toLowerCase() || '';
-    const text = dream.dream_text.toLowerCase();
-    const tags = dream.reading?.tags?.join(' ').toLowerCase() || '';
-    const omen = dream.reading?.omen?.toLowerCase() || '';
+      // Text search filter
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const title = dream.reading?.title?.toLowerCase() || '';
+        const text = dream.dream_text.toLowerCase();
+        const tags = dream.reading?.tags?.join(' ').toLowerCase() || '';
+        const omen = dream.reading?.omen?.toLowerCase() || '';
 
-    return (
-      title.includes(query) ||
-      text.includes(query) ||
-      tags.includes(query) ||
-      omen.includes(query)
-    );
-  });
+        if (
+          !title.includes(query) &&
+          !text.includes(query) &&
+          !tags.includes(query) &&
+          !omen.includes(query)
+        ) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [dreams, activePill, searchQuery]);
 
   function renderDream({ item }: { item: Dream }) {
     const hasReading = !!item.reading;
@@ -236,11 +294,54 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+      <LinearGradient
+        colors={['#1a1a2e', '#16213e']}
+        style={styles.gradient}
+      >
         <Text style={styles.title}>Your Grimoire</Text>
         <Text style={styles.subtitle}>
           {getGrimoireSubtitle(dreams)}
         </Text>
+
+        {(() => {
+          const streak = calculateStreak(dreams);
+          return streak >= 2 ? (
+            <View style={styles.streakBadge}>
+              <Text style={styles.streakText}>
+                {streak}-day streak
+              </Text>
+            </View>
+          ) : null;
+        })()}
+
+        {dreams.length > 0 && symbolPills.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.pillRow}
+            contentContainerStyle={styles.pillRowContent}
+          >
+            <TouchableOpacity
+              style={[styles.pill, !activePill && styles.pillActive]}
+              onPress={() => setActivePill(null)}
+            >
+              <Text style={[styles.pillText, !activePill && styles.pillTextActive]}>
+                All ({dreams.length})
+              </Text>
+            </TouchableOpacity>
+            {symbolPills.map(({ name, count }) => (
+              <TouchableOpacity
+                key={name}
+                style={[styles.pill, activePill === name && styles.pillActive]}
+                onPress={() => setActivePill(activePill === name ? null : name)}
+              >
+                <Text style={[styles.pillText, activePill === name && styles.pillTextActive]}>
+                  {name.charAt(0).toUpperCase() + name.slice(1)} ({count})
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
 
         {dreams.length > 0 && (
           <View style={styles.searchContainer}>
@@ -306,7 +407,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
             }
           />
         )}
-      </View>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
@@ -316,9 +417,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1a1a2e',
   },
-  container: {
+  gradient: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
     paddingHorizontal: 24,
     paddingTop: 20,
   },
@@ -337,7 +437,54 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: '#8b7fa8',
-    marginBottom: 16,
+    marginBottom: 12,
+  },
+  streakBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#3a2a5e',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#6b4e9e',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  streakText: {
+    color: '#c9b8f0',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  pillRow: {
+    maxHeight: 44,
+    marginBottom: 12,
+  },
+  pillRowContent: {
+    gap: 8,
+  },
+  pill: {
+    backgroundColor: '#2a2a4e',
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
+  },
+  pillActive: {
+    backgroundColor: '#3a3a6e',
+    borderColor: '#9b7fd4',
+  },
+  pillText: {
+    color: '#8b7fa8',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  pillTextActive: {
+    color: '#e0d4f7',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -375,6 +522,11 @@ const styles = StyleSheet.create({
     borderColor: '#3a3a5e',
     flexDirection: 'row',
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   nightmareCard: {
     backgroundColor: '#2e1a2a',

@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Animated,
 } from 'react-native';
 import { useAudioRecorder, AudioModule, RecordingPresets, RecordingStatus } from 'expo-audio';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -360,6 +361,10 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
 
   return (
     <View style={styles.container}>
+      {recordingState === 'recording' && (
+        <WaveformBars />
+      )}
+
       <TouchableOpacity
         style={[
           styles.button,
@@ -404,10 +409,70 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
   );
 }
 
+const BAR_COUNT = 5;
+
+function WaveformBars() {
+  const bars = useRef(
+    Array.from({ length: BAR_COUNT }, () => new Animated.Value(0.3))
+  ).current;
+
+  useEffect(() => {
+    const animations = bars.map((bar, i) => {
+      const delay = i * 120;
+      return Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(bar, {
+            toValue: 0.6 + Math.random() * 0.4,
+            duration: 300 + Math.random() * 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(bar, {
+            toValue: 0.2 + Math.random() * 0.2,
+            duration: 300 + Math.random() * 200,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+    });
+
+    animations.forEach((a) => a.start());
+    return () => animations.forEach((a) => a.stop());
+  }, [bars]);
+
+  return (
+    <View style={styles.waveformContainer}>
+      {bars.map((bar, i) => (
+        <Animated.View
+          key={i}
+          style={[
+            styles.waveformBar,
+            { transform: [{ scaleY: bar }] },
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     marginBottom: 16,
+  },
+  waveformContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 32,
+    marginBottom: 12,
+    gap: 4,
+  },
+  waveformBar: {
+    width: 4,
+    height: 28,
+    borderRadius: 2,
+    backgroundColor: '#e07a7a',
   },
   button: {
     width: 56,
