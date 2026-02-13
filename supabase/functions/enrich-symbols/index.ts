@@ -17,7 +17,7 @@ import {
 
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 const OPENAI_MODEL = "gpt-5-nano";
-const REQUEST_TIMEOUT_MS = 60000;
+const REQUEST_TIMEOUT_MS = 120000;
 const MAX_BATCH_SIZE = 20;
 
 interface SymbolInput {
@@ -79,7 +79,7 @@ async function callOpenAI(
             content: `Enrich these ${symbols.length} dream symbols:\n\n${userPrompt}`,
           },
         ],
-        max_completion_tokens: 4000,
+        max_completion_tokens: 16000,
       }),
       signal: controller.signal,
     });
@@ -95,7 +95,12 @@ async function callOpenAI(
     const content = data.choices?.[0]?.message?.content;
 
     if (!content) {
-      throw new Error("No content in OpenAI response");
+      const finishReason = data.choices?.[0]?.finish_reason;
+      throw new Error(
+        finishReason === "length"
+          ? "Response truncated (token limit exceeded)"
+          : "No content in OpenAI response"
+      );
     }
 
     // Parse JSON from response (handle markdown code blocks)

@@ -340,6 +340,12 @@ verify_jwt = false
 [functions.transcribe-audio]
 verify_jwt = false
 
+[functions.enrich-symbols]
+verify_jwt = false
+
+[functions.generate-dream-image]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

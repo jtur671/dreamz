@@ -4,7 +4,7 @@ export interface ExportedDream {
   entry_number: number;
   date: string;
   dream_text: string;
-  mood: number | null;
+  mood: string | null;
   emotions: string[] | null;
   type: string;
   reading: {
@@ -98,29 +98,31 @@ export async function exportUserDreams(): Promise<ExportResult> {
  */
 export async function deleteUserAccount(): Promise<DeleteAccountResult> {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       return { success: false, error: 'Not authenticated' };
     }
 
-    // Call the delete-account edge function (handles full deletion including auth user)
-    const response = await fetch(
-      `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-account`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+    const { data, error } = await supabase.functions.invoke('delete-account', {
+      body: {},
+    });
+
+    if (error) {
+      let errorBody: any = null;
+      try {
+        if ((error as any).context && typeof (error as any).context.json === 'function') {
+          errorBody = await (error as any).context.json();
+        }
+      } catch {
+        // ignore parse failure
       }
-    );
+      const message = errorBody?.error?.message || errorBody?.error || (error as any)?.message || 'Failed to delete account';
+      return { success: false, error: message };
+    }
 
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
-      const errorMessage = data.error?.message || data.error || 'Failed to delete account';
-      return { success: false, error: errorMessage };
+    const responseData = data as Record<string, unknown> | null;
+    if (!responseData?.success) {
+      return { success: false, error: 'Failed to delete account' };
     }
 
     // Sign out locally after successful server-side deletion

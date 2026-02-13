@@ -49,7 +49,7 @@ export default function ReadingScreen() {
         setImageUrl(result.image_url);
       }
     });
-  }, []);
+  }, [imageUrl, fromGrimoire, dreamText, params.dreamId, reading.symbols]);
 
   function handleViewInGrimoire() {
     // Navigate to Grimoire tab - reset to top of stack first, then go to Grimoire
@@ -77,7 +77,7 @@ export default function ReadingScreen() {
       }
     } catch (error) {
       // Fallback to text share if image capture fails
-      const tagsText = reading.tags.length > 0 ? `\n\n#${reading.tags.join(' #')}` : '';
+      const tagsText = reading.tags?.length > 0 ? `\n\n#${reading.tags.join(' #')}` : '';
       const shareText = `✧ ${reading.title} ✧
 
 "${reading.omen}"
@@ -142,7 +142,7 @@ Interpreted with Dreamz`;
                   </View>
 
                   <View style={styles.shareCardTags}>
-                    {reading.tags.slice(0, 4).map((tag, index) => (
+                    {(reading.tags || []).slice(0, 4).map((tag, index) => (
                       <View key={index} style={styles.shareCardTag}>
                         <Text style={styles.shareCardTagText}>#{tag}</Text>
                       </View>
@@ -258,12 +258,14 @@ Interpreted with Dreamz`;
         <View style={styles.sectionDivider} />
 
         {/* Symbols */}
+        {reading.symbols?.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Symbols Revealed</Text>
           {reading.symbols.map((symbol, index) => (
             <SymbolCard key={index} symbol={symbol} />
           ))}
         </View>
+        )}
 
         <View style={styles.sectionDivider} />
 
@@ -298,6 +300,7 @@ Interpreted with Dreamz`;
         <View style={styles.sectionDivider} />
 
         {/* Tags */}
+        {reading.tags?.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Themes</Text>
           <View style={styles.tagsContainer}>
@@ -308,6 +311,7 @@ Interpreted with Dreamz`;
             ))}
           </View>
         </View>
+        )}
 
         {/* Action Buttons */}
         <View style={styles.actionContainer}>

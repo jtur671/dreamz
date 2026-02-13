@@ -36,7 +36,7 @@ const OUTPUT_PATH = path.join(
 );
 const PROGRESS_PATH = path.join(__dirname, "..", ".enrich-progress.json");
 
-const BATCH_SIZE = 15;
+const BATCH_SIZE = 5;
 const DELAY_BETWEEN_BATCHES_MS = 1500; // Rate limit friendly
 
 interface RawSymbol {
@@ -224,6 +224,7 @@ function generateMigration(results: EnrichedSymbol[]): void {
 `;
 
   for (const sym of results) {
+    if (!sym.name) continue;
     const name = escapeSql(sym.name);
     const shadow = escapeSql(sym.shadow_meaning || "");
     const guidance = escapeSql(sym.guidance || "");

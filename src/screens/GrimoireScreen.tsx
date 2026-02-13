@@ -14,8 +14,9 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
-import { supabase } from '../lib/supabase';
 import { useDreams } from '../hooks/useDreams';
+import { deleteDream as deleteDreamService } from '../lib/dreamService';
+import { getDreamStats } from '../lib/insightsService';
 import type { Dream } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -93,75 +94,19 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => deleteDream(dream.id),
+          onPress: () => handleDeleteDream(dream.id),
         },
       ]
     );
   }
 
-  async function deleteDream(dreamId: string) {
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      Alert.alert('Error', 'Not authenticated');
+  async function handleDeleteDream(dreamId: string) {
+    const result = await deleteDreamService(dreamId);
+    if (!result.success) {
+      Alert.alert('Error', result.error);
       return;
     }
-
-    // Soft delete - set deleted_at timestamp instead of hard delete
-    // Include user_id check for defense in depth (RLS also protects)
-    const { error } = await supabase
-      .from('dreams')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', dreamId)
-      .eq('user_id', user.id);
-
-    if (error) {
-      Alert.alert('Error', 'Failed to delete dream. Please try again.');
-      return;
-    }
-
-    // Refresh shared dream context
     await refresh();
-  }
-
-  // Calculate consecutive-day dream streak
-  function calculateStreak(dreamList: Dream[]): number {
-    if (dreamList.length === 0) return 0;
-
-    // Get unique dates (local timezone) sorted descending
-    const dates = [...new Set(
-      dreamList.map(d => {
-        const dt = new Date(d.created_at);
-        return `${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}`;
-      })
-    )].map(key => {
-      const [y, m, d] = key.split('-').map(Number);
-      return new Date(y, m, d);
-    }).sort((a, b) => b.getTime() - a.getTime());
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    // Streak must include today or yesterday
-    const first = dates[0];
-    first.setHours(0, 0, 0, 0);
-    if (first.getTime() !== today.getTime() && first.getTime() !== yesterday.getTime()) {
-      return 0;
-    }
-
-    let streak = 1;
-    for (let i = 1; i < dates.length; i++) {
-      const diff = dates[i - 1].getTime() - dates[i].getTime();
-      const oneDay = 86400000;
-      if (diff === oneDay) {
-        streak++;
-      } else {
-        break;
-      }
-    }
-    return streak;
   }
 
   // Generate subtitle based on dream count and reading status
@@ -304,7 +249,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
         </Text>
 
         {(() => {
-          const streak = calculateStreak(dreams);
+          const { streak } = getDreamStats(dreams);
           return streak >= 2 ? (
             <View style={styles.streakBadge}>
               <Text style={styles.streakText}>

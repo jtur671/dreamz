@@ -74,31 +74,14 @@ export async function analyzeDream(
   dreamText: string,
   context?: AnalyzeDreamContext
 ): Promise<AnalyzeDreamResult> {
-  console.log('[ANALYZE] analyzeDream() called with:', {
-    dreamTextLength: dreamText.length,
-    hasContext: !!context,
-    contextKeys: context ? Object.keys(context) : []
-  });
-
   try {
     // Use getFreshAccessToken to ensure token is refreshed before API call
-    console.log('[ANALYZE] Getting fresh access token...');
     const accessToken = await getFreshAccessToken();
 
-    console.log('[ANALYZE] Token result:', {
-      hasToken: !!accessToken,
-      tokenLength: accessToken?.length
-    });
-
     if (!accessToken) {
-      console.log('[ANALYZE] No token, returning auth error');
       return { success: false, error: 'Not authenticated' };
     }
 
-    // Let the Supabase client handle auth headers automatically.
-    // functions.invoke uses the session token set via onAuthStateChange.
-    // Manually overriding Authorization conflicts with the gateway's JWT validation.
-    console.log('[ANALYZE] Invoking analyze-dream edge function');
     const { data, error } = await supabase.functions.invoke('analyze-dream', {
       body: {
         dream_text: dreamText,
@@ -121,10 +104,6 @@ export async function analyzeDream(
         // ignore parse failure
       }
 
-      console.log('[ANALYZE] Error name:', (error as any)?.name);
-      console.log('[ANALYZE] Error message:', (error as any)?.message);
-      console.log('[ANALYZE] Error body:', JSON.stringify(errorBody));
-
       const message =
         errorBody?.error?.message ||
         errorBody?.message ||
@@ -133,37 +112,18 @@ export async function analyzeDream(
       return { success: false, error: message };
     }
 
-    console.log('[ANALYZE] Success response keys:', data ? Object.keys(data as object) : []);
-
     // data is auto-parsed JSON from supabase.functions.invoke
     const responseData = data as Record<string, unknown> | null;
     const candidateReading = responseData?.reading || responseData;
 
-    // Log candidate reading shape for debugging
-    if (candidateReading && typeof candidateReading === 'object') {
-      const cr = candidateReading as Record<string, unknown>;
-      console.log('[ANALYZE] Reading keys:', Object.keys(cr));
-      console.log('[ANALYZE] Reading shape:', {
-        title: typeof cr.title,
-        tldr: typeof cr.tldr,
-        symbols: Array.isArray(cr.symbols) ? cr.symbols.length : typeof cr.symbols,
-        omen: typeof cr.omen,
-        ritual: typeof cr.ritual,
-        journal_prompt: typeof cr.journal_prompt,
-        tags: Array.isArray(cr.tags) ? cr.tags.length : typeof cr.tags,
-      });
-    }
-
     // Validate the reading structure
     if (!isValidReading(candidateReading)) {
-      console.log('[ANALYZE] Invalid reading format, data keys:', responseData ? Object.keys(responseData) : 'null');
       return { success: false, error: 'Invalid reading format received' };
     }
 
     const reading = candidateReading;
     return { success: true, reading };
   } catch (err) {
-    console.log('[ANALYZE] Exception:', err);
     const message = err instanceof Error ? err.message : 'Failed to analyze dream';
     return { success: false, error: message };
   }
@@ -204,9 +164,9 @@ export async function updateDreamWithReading(
 
 /**
  * Validates that a reading object has the required structure.
- * Aligned with server-side validateReading in dream-prompt.ts:
- *   - symbols: 1-3 items (prompt asks for exactly 1)
- *   - tags: 3-5 items
+ * Client accepts a wider range to be lenient with model output:
+ *   - symbols: 1-7 items (prompt asks for 3-7)
+ *   - tags: 1-10 items (prompt asks for 3-5)
  *   - content_warnings: optional array
  */
 function isValidReading(reading: unknown): reading is DreamReading {
