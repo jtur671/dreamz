@@ -261,6 +261,38 @@ export async function fetchUserDreams(): Promise<FetchDreamsResult> {
 }
 
 /**
+ * Generates a dream image via DALL-E (called async after reading is shown)
+ */
+export async function generateDreamImage(
+  dreamId: string,
+  dreamText: string,
+  symbolName?: string
+): Promise<{ success: true; image_url: string } | { success: false; error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('generate-dream-image', {
+      body: {
+        dream_id: dreamId,
+        dream_text: dreamText,
+        symbol_name: symbolName,
+      },
+    });
+
+    if (error) {
+      return { success: false, error: 'Image generation failed' };
+    }
+
+    const responseData = data as Record<string, unknown> | null;
+    if (responseData?.image_url && typeof responseData.image_url === 'string') {
+      return { success: true, image_url: responseData.image_url };
+    }
+
+    return { success: false, error: 'No image URL returned' };
+  } catch (err) {
+    return { success: false, error: 'Image generation failed' };
+  }
+}
+
+/**
  * Soft deletes a dream (sets deleted_at timestamp)
  */
 export async function deleteDream(dreamId: string): Promise<DeleteDreamResult> {

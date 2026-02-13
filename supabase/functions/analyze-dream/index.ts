@@ -60,10 +60,10 @@ interface OpenAIResponse {
 
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 const OPENAI_IMAGE_URL = "https://api.openai.com/v1/images/generations";
-const OPENAI_MODEL = "gpt-5-mini";
+const OPENAI_MODEL = "gpt-5-nano";
 const OPENAI_IMAGE_MODEL = "dall-e-3";
 const MAX_RETRIES = 2; // Initial attempt + 1 retry
-const REQUEST_TIMEOUT_MS = 30000;
+const REQUEST_TIMEOUT_MS = 20000;
 const IMAGE_TIMEOUT_MS = 60000;
 const MAX_DREAM_TEXT_LENGTH = 10000;
 const MIN_DREAM_TEXT_LENGTH = 10;
@@ -92,7 +92,7 @@ async function callOpenAI(
       body: JSON.stringify({
         model: OPENAI_MODEL,
         messages,
-        max_completion_tokens: 2000,
+        max_completion_tokens: 1200,
       }),
       signal: controller.signal,
     });
@@ -454,33 +454,18 @@ Deno.serve(async (req: Request) => {
       usedFallback = true;
     }
 
-    // Generate a dreamy image based on the actual dream content
-    console.log(`[${correlationId}] Generating dream image...`);
-    const imageUrl = await generateDreamImage(dream_text, reading, openaiApiKey);
-    if (imageUrl) {
-      console.log(`[${correlationId}] Image generated successfully`);
-    } else {
-      console.log(`[${correlationId}] Image generation skipped or failed`);
-    }
-
-    // Build final reading with image
-    const finalReading = {
-      ...reading,
-      ...(imageUrl && { image_url: imageUrl }),
-    };
-
     // Update dream record if dream_id provided
     if (dream_id) {
-      await updateDreamWithReading(supabase, dream_id, user.id, finalReading);
+      await updateDreamWithReading(supabase, dream_id, user.id, reading);
     }
 
-    // Return successful response
+    // Return reading immediately (image generated separately via generate-dream-image)
     return jsonResponse({
       success: true,
       reading: {
-        ...finalReading,
+        ...reading,
         timestamp: new Date().toISOString(),
-        ...(usedFallback && { fallback: true }),
+        ...(usedFallback && { fallback: true, debug_error: lastError }),
       },
     });
   } catch (error) {

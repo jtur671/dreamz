@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,12 @@ import {
   Modal,
   ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import ViewShot from 'react-native-view-shot';
 import type { DreamReading, DreamSymbol } from '../types';
+import { generateDreamImage } from '../lib/dreamService';
 
 type ReadingScreenParams = {
   reading: DreamReading;
@@ -29,11 +31,25 @@ export default function ReadingScreen() {
   const route = useRoute();
   const params = route.params as ReadingScreenParams;
   const { reading, dreamText, fromGrimoire = false } = params;
+  const [imageFailed, setImageFailed] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(reading.image_url || null);
 
   const viewShotRef = useRef<ViewShot>(null);
   const [showShareCard, setShowShareCard] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [showDreamText, setShowDreamText] = useState(false);
+
+  // Lazy-load dream image if not already present
+  useEffect(() => {
+    if (imageUrl || fromGrimoire || !dreamText || !params.dreamId) return;
+
+    const symbolName = reading.symbols?.[0]?.name;
+    generateDreamImage(params.dreamId, dreamText, symbolName).then((result) => {
+      if (result.success) {
+        setImageUrl(result.image_url);
+      }
+    });
+  }, []);
 
   function handleViewInGrimoire() {
     // Navigate to Grimoire tab - reset to top of stack first, then go to Grimoire
@@ -41,10 +57,6 @@ export default function ReadingScreen() {
       index: 0,
       routes: [{ name: 'MainTabs', params: { screen: 'Grimoire' } }],
     });
-  }
-
-  function handleBackToGrimoire() {
-    navigation.popToTop();
   }
 
   async function handleShare() {
@@ -89,6 +101,10 @@ Interpreted with Dreamz`;
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <LinearGradient
+        colors={['#1a1a2e', '#1e1a3a', '#16213e']}
+        style={styles.gradient}
+      >
       {/* Share Card Modal */}
       <Modal
         visible={showShareCard}
@@ -109,9 +125,9 @@ Interpreted with Dreamz`;
             >
               <View style={styles.shareCard}>
                 {/* Dream Image in Card */}
-                {reading.image_url && (
+                {imageUrl && (
                   <Image
-                    source={{ uri: reading.image_url }}
+                    source={{ uri: imageUrl }}
                     style={styles.shareCardImage}
                     resizeMode="cover"
                   />
@@ -166,11 +182,11 @@ Interpreted with Dreamz`;
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={handleBackToGrimoire}
-          accessibilityLabel="Back to Grimoire"
+          onPress={() => navigation.goBack()}
+          accessibilityLabel="Go back"
           accessibilityRole="button"
         >
-          <Text style={styles.backButtonText}>Grimoire</Text>
+          <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
       </View>
 
@@ -179,17 +195,25 @@ Interpreted with Dreamz`;
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Dream Image */}
-        {reading.image_url && (
+        {/* Dream Image (lazy-loaded) */}
+        {!imageFailed && (imageUrl ? (
           <View style={styles.imageContainer}>
             <Image
-              source={{ uri: reading.image_url }}
+              source={{ uri: imageUrl }}
               style={styles.dreamImage}
               resizeMode="cover"
+              onError={() => setImageFailed(true)}
             />
             <View style={styles.imageOverlay} />
           </View>
-        )}
+        ) : !fromGrimoire && dreamText ? (
+          <View style={styles.imageContainer}>
+            <View style={[styles.dreamImage, styles.imagePlaceholder]}>
+              <ActivityIndicator size="small" color="#6b4e9e" />
+              <Text style={styles.imagePlaceholderText}>Painting your dream...</Text>
+            </View>
+          </View>
+        ) : null)}
 
         {/* Title */}
         <Text style={styles.title}>{reading.title}</Text>
@@ -231,6 +255,8 @@ Interpreted with Dreamz`;
           <Text style={styles.tldr}>{reading.tldr}</Text>
         </View>
 
+        <View style={styles.sectionDivider} />
+
         {/* Symbols */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Symbols Revealed</Text>
@@ -238,6 +264,8 @@ Interpreted with Dreamz`;
             <SymbolCard key={index} symbol={symbol} />
           ))}
         </View>
+
+        <View style={styles.sectionDivider} />
 
         {/* Omen */}
         <View style={styles.section}>
@@ -247,6 +275,8 @@ Interpreted with Dreamz`;
           </View>
         </View>
 
+        <View style={styles.sectionDivider} />
+
         {/* Ritual */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Suggested Ritual</Text>
@@ -255,6 +285,8 @@ Interpreted with Dreamz`;
           </View>
         </View>
 
+        <View style={styles.sectionDivider} />
+
         {/* Journal Prompt */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>For Your Journal</Text>
@@ -262,6 +294,8 @@ Interpreted with Dreamz`;
             <Text style={styles.promptText}>{reading.journal_prompt}</Text>
           </View>
         </View>
+
+        <View style={styles.sectionDivider} />
 
         {/* Tags */}
         <View style={styles.section}>
@@ -296,17 +330,9 @@ Interpreted with Dreamz`;
           >
             <Text style={styles.shareButtonText}>Share Reading</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.homeButton}
-            onPress={handleBackToGrimoire}
-            accessibilityLabel="Return to Grimoire"
-            accessibilityRole="button"
-          >
-            <Text style={styles.homeButtonText}>Back to Grimoire</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
@@ -341,6 +367,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1a1a2e',
   },
+  gradient: {
+    flex: 1,
+  },
   imageContainer: {
     marginHorizontal: -24,
     marginTop: -8,
@@ -351,6 +380,17 @@ const styles = StyleSheet.create({
     width: screenWidth,
     height: screenWidth * 0.75,
     backgroundColor: '#252542',
+  },
+  imagePlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1e1e3a',
+  },
+  imagePlaceholderText: {
+    color: '#6b5b8a',
+    fontSize: 13,
+    marginTop: 8,
+    fontStyle: 'italic',
   },
   imageOverlay: {
     position: 'absolute',
@@ -424,6 +464,11 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 28,
   },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: '#2a2a4e',
+    marginBottom: 16,
+  },
   plainEnglishCard: {
     backgroundColor: '#252545',
     borderRadius: 16,
@@ -457,6 +502,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: '#4a4a6e',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   symbolName: {
     fontSize: 20,
@@ -496,11 +546,16 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   omenCard: {
-    backgroundColor: '#2e2545',
+    backgroundColor: '#2a2a52',
     borderRadius: 16,
     padding: 20,
     borderLeftWidth: 3,
     borderLeftColor: '#9b7fd4',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   omenText: {
     fontSize: 16,
@@ -514,6 +569,11 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: '#3a3a5e',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   ritualText: {
     fontSize: 15,
@@ -545,6 +605,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     marginRight: 8,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#4a4a6e',
   },
   tagText: {
     fontSize: 13,
@@ -576,19 +638,6 @@ const styles = StyleSheet.create({
   },
   shareButtonText: {
     color: '#c4b8e8',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  homeButton: {
-    backgroundColor: 'transparent',
-    borderRadius: 16,
-    padding: 18,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
-  },
-  homeButtonText: {
-    color: '#a89cc8',
     fontSize: 16,
     fontWeight: '500',
   },

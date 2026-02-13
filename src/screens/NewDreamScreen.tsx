@@ -10,13 +10,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
-  ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { saveDream, analyzeDream, AnalyzeDreamContext } from '../lib/dreamService';
 import { getProfile } from '../lib/profileService';
 import { saveDraft, loadDraft, clearDraft } from '../lib/draftService';
 import VoiceRecorder from '../components/VoiceRecorder';
+import DreamLoadingAnimation from '../components/DreamLoadingAnimation';
 import type { Profile } from '../types';
 
 type NewDreamScreenProps = {
@@ -25,26 +26,8 @@ type NewDreamScreenProps = {
 
 type LoadingState = 'idle' | 'saving' | 'interpreting' | 'error';
 
-const LOADING_MESSAGES = {
-  saving: ['Recording your dream...', 'Preserving the vision...', 'Capturing the threads...'],
-  interpreting: [
-    'Consulting the dream oracle...',
-    'Reading the symbols...',
-    'Gazing into the depths...',
-    'Interpreting the signs...',
-    'Unraveling the mystery...',
-  ],
-};
-
-const LOADING_SUBTEXTS = [
-  'The mysteries of your subconscious are being revealed...',
-  'Every symbol holds a message for you...',
-  'The veil between worlds grows thin...',
-  'Ancient wisdom stirs in the depths...',
-  'Your dreams speak in riddles and metaphors...',
-];
-
-const MOOD_OPTIONS = ['Peaceful', 'Curious', 'Inspired', 'Confused', 'Anxious', 'Fearful'];
+const DREAM_MOODS = ['Peaceful', 'Curious', 'Inspired', 'Joyful', 'Confused', 'Nostalgic', 'Vivid', 'Surreal'];
+const NIGHTMARE_MOODS = ['Anxious', 'Fearful', 'Trapped', 'Chased', 'Confused', 'Helpless', 'Disturbed', 'Unsettled'];
 
 export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   const [dreamText, setDreamText] = useState('');
@@ -247,22 +230,6 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     });
   }
 
-  const [loadingMessageIndex] = useState(() => Math.floor(Math.random() * 5));
-
-  function getLoadingMessage(): string {
-    if (loadingState === 'saving') {
-      return LOADING_MESSAGES.saving[loadingMessageIndex % LOADING_MESSAGES.saving.length];
-    }
-    if (loadingState === 'interpreting') {
-      return LOADING_MESSAGES.interpreting[loadingMessageIndex % LOADING_MESSAGES.interpreting.length];
-    }
-    return '';
-  }
-
-  function getLoadingSubtext(): string {
-    return LOADING_SUBTEXTS[loadingMessageIndex % LOADING_SUBTEXTS.length];
-  }
-
   function handleVoiceTranscription(text: string) {
     // Append transcribed text to existing dream text
     if (dreamText.trim()) {
@@ -274,6 +241,10 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <LinearGradient
+        colors={['#1a1a2e', '#1e1a3a']}
+        style={styles.gradient}
+      >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
@@ -293,11 +264,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
         </View>
 
         {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#9b7fd4" />
-            <Text style={styles.loadingText}>{getLoadingMessage()}</Text>
-            <Text style={styles.loadingSubtext}>{getLoadingSubtext()}</Text>
-          </View>
+          <DreamLoadingAnimation phase={loadingState === 'saving' ? 'saving' : 'interpreting'} />
         ) : (
           <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
             <Text style={styles.title}>Record Your Dream</Text>
@@ -327,7 +294,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                   styles.dreamTypeButton,
                   dreamType === 'dream' && styles.dreamTypeButtonSelected,
                 ]}
-                onPress={() => setDreamType('dream')}
+                onPress={() => { setDreamType('dream'); setMood(null); }}
                 disabled={isLoading}
               >
                 <Text style={styles.dreamTypeIcon}>
@@ -347,7 +314,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                   styles.dreamTypeButton,
                   dreamType === 'nightmare' && styles.nightmareTypeButtonSelected,
                 ]}
-                onPress={() => setDreamType('nightmare')}
+                onPress={() => { setDreamType('nightmare'); setMood(null); }}
                 disabled={isLoading}
               >
                 <Text style={styles.dreamTypeIcon}>
@@ -367,14 +334,15 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
             <View style={styles.moodContainer}>
               <Text style={styles.moodLabel}>How did it feel?</Text>
               <View style={styles.moodChips}>
-                {MOOD_OPTIONS.map((option) => {
+                {(dreamType === 'nightmare' ? NIGHTMARE_MOODS : DREAM_MOODS).map((option) => {
                   const selected = mood === option;
                   return (
                     <TouchableOpacity
                       key={option}
                       style={[
                         styles.moodChip,
-                        selected && styles.moodChipSelected,
+                        dreamType === 'nightmare' && styles.nightmareMoodChip,
+                        selected && (dreamType === 'nightmare' ? styles.nightmareMoodChipSelected : styles.moodChipSelected),
                       ]}
                       onPress={() =>
                         setMood((current) => (current === option ? null : option))
@@ -386,7 +354,8 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                       <Text
                         style={[
                           styles.moodChipText,
-                          selected && styles.moodChipTextSelected,
+                          dreamType === 'nightmare' && styles.nightmareMoodChipText,
+                          selected && (dreamType === 'nightmare' ? styles.nightmareMoodChipTextSelected : styles.moodChipTextSelected),
                         ]}
                       >
                         {option}
@@ -427,12 +396,21 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
               style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
               onPress={handleSubmit}
               disabled={isLoading}
+              activeOpacity={0.8}
             >
-              <Text style={styles.submitButtonText}>Interpret Dream</Text>
+              <LinearGradient
+                colors={['#6b4e9e', '#8b6cc1']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.ctaGradient}
+              >
+                <Text style={styles.submitButtonText}>Interpret Dream</Text>
+              </LinearGradient>
             </TouchableOpacity>
           </ScrollView>
         )}
       </KeyboardAvoidingView>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
@@ -442,9 +420,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1a1a2e',
   },
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
   },
   header: {
     flexDirection: 'row',
@@ -529,14 +509,33 @@ const styles = StyleSheet.create({
   moodChipSelected: {
     borderColor: '#9b7fd4',
     backgroundColor: '#3a3a6e',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  nightmareMoodChip: {
+    borderColor: '#4a2a3e',
+    backgroundColor: '#2e1a2a',
+  },
+  nightmareMoodChipSelected: {
+    borderColor: '#8a3a5a',
+    backgroundColor: '#3e2a3a',
   },
   moodChipText: {
     color: '#a89cc8',
     fontSize: 13,
     fontWeight: '500',
   },
+  nightmareMoodChipText: {
+    color: '#b89ca8',
+  },
   moodChipTextSelected: {
     color: '#e0d4f7',
+  },
+  nightmareMoodChipTextSelected: {
+    color: '#e8b8c8',
   },
   voiceRecorderContainer: {
     alignItems: 'center',
@@ -601,6 +600,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#3a3a5e',
     minHeight: 200,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   errorContainer: {
     backgroundColor: '#3e2a2a',
@@ -616,38 +620,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   submitButton: {
-    backgroundColor: '#6b4e9e',
     borderRadius: 16,
-    padding: 18,
-    alignItems: 'center',
     marginTop: 32,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   submitButtonDisabled: {
     opacity: 0.6,
+  },
+  ctaGradient: {
+    borderRadius: 16,
+    padding: 18,
+    alignItems: 'center',
   },
   submitButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  loadingText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#e0d4f7',
-    marginTop: 24,
-    textAlign: 'center',
-  },
-  loadingSubtext: {
-    fontSize: 14,
-    color: '#8b7fa8',
-    marginTop: 12,
-    textAlign: 'center',
-    fontStyle: 'italic',
   },
 });
