@@ -397,6 +397,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#3a3a5e',
     marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   cardButton: {
     flexDirection: 'row',
@@ -423,6 +428,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#3a3a5e',
     marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   menuItemText: {
     fontSize: 16,

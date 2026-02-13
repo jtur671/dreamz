@@ -194,11 +194,9 @@ describe('Account Service', () => {
   });
 
   describe('deleteUserAccount', () => {
-    const mockSession = { access_token: 'test-token' };
-
     it('should return error when user is not authenticated', async () => {
-      (mockedSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
-        data: { session: null },
+      (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+        data: { user: null },
         error: null,
       });
 
@@ -211,14 +209,14 @@ describe('Account Service', () => {
     });
 
     it('should call edge function and sign out on success', async () => {
-      (mockedSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
-        data: { session: mockSession },
+      (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+        data: { user: { id: 'user-123' } },
         error: null,
       });
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValue({ success: true }),
+      (mockedSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+        data: { success: true },
+        error: null,
       });
 
       (mockedSupabase.auth.signOut as jest.Mock).mockResolvedValueOnce({
@@ -228,30 +226,22 @@ describe('Account Service', () => {
       const result = await deleteUserAccount();
 
       expect(result.success).toBe(true);
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('delete-account'),
-        expect.objectContaining({
-          method: 'POST',
-          headers: expect.objectContaining({
-            Authorization: `Bearer ${mockSession.access_token}`,
-          }),
-        })
+      expect(mockedSupabase.functions.invoke).toHaveBeenCalledWith(
+        'delete-account',
+        expect.objectContaining({ body: {} })
       );
       expect(mockedSupabase.auth.signOut).toHaveBeenCalled();
     });
 
-    it('should return error when edge function fails', async () => {
-      (mockedSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
-        data: { session: mockSession },
+    it('should return error when edge function returns error', async () => {
+      (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+        data: { user: { id: 'user-123' } },
         error: null,
       });
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-        json: jest.fn().mockResolvedValue({
-          success: false,
-          error: { message: 'Failed to delete dreams' },
-        }),
+      (mockedSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+        data: null,
+        error: { message: 'Failed to delete dreams' },
       });
 
       const result = await deleteUserAccount();
@@ -262,29 +252,27 @@ describe('Account Service', () => {
       }
     });
 
-    it('should return error when response is not ok', async () => {
-      (mockedSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
-        data: { session: mockSession },
+    it('should return error when response has no success flag', async () => {
+      (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+        data: { user: { id: 'user-123' } },
         error: null,
       });
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-        json: jest.fn().mockResolvedValue({
-          error: 'Server error',
-        }),
+      (mockedSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+        data: { success: false },
+        error: null,
       });
 
       const result = await deleteUserAccount();
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error).toBe('Server error');
+        expect(result.error).toBe('Failed to delete account');
       }
     });
 
     it('should handle unexpected exceptions', async () => {
-      (mockedSupabase.auth.getSession as jest.Mock).mockRejectedValueOnce(
+      (mockedSupabase.auth.getUser as jest.Mock).mockRejectedValueOnce(
         new Error('Connection lost')
       );
 
@@ -297,7 +285,7 @@ describe('Account Service', () => {
     });
 
     it('should handle non-Error exceptions with fallback message', async () => {
-      (mockedSupabase.auth.getSession as jest.Mock).mockRejectedValueOnce({ code: 500 });
+      (mockedSupabase.auth.getUser as jest.Mock).mockRejectedValueOnce({ code: 500 });
 
       const result = await deleteUserAccount();
 

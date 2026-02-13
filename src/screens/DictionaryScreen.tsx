@@ -56,6 +56,7 @@ export default function DictionaryScreen() {
     }
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedQuery(searchQuery);
+      setExpandedSymbol(null);
     }, 400);
     return () => {
       if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);

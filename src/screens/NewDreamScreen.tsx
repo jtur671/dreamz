@@ -88,11 +88,6 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   }, [autoSaveDraft]);
 
   async function handleSubmit() {
-    console.log('[SUBMIT] handleSubmit() called');
-    console.log('[SUBMIT] dreamText length:', dreamText.trim().length);
-    console.log('[SUBMIT] dreamType:', dreamType);
-    console.log('[SUBMIT] mood:', mood);
-
     if (!dreamText.trim()) {
       Alert.alert('Error', 'Please describe your dream');
       return;
@@ -111,12 +106,9 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     if (!dreamId) {
       setLoadingState('saving');
 
-      console.log('[SUBMIT] Calling saveDream()...');
       const saveResult = await saveDream(dreamText.trim(), mood || undefined, dreamType);
-      console.log('[SUBMIT] saveDream result:', saveResult);
 
       if (!saveResult.success) {
-        console.log('[SUBMIT] Save failed:', saveResult.error);
         setLoadingState('error');
         setErrorMessage(saveResult.error);
         Alert.alert('Error', saveResult.error);
@@ -125,15 +117,11 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
       dreamId = saveResult.dream.id;
       setSavedDreamId(dreamId);
-      console.log('[SUBMIT] Dream saved, ID:', dreamId);
-    } else {
-      console.log('[SUBMIT] Reusing existing dream ID:', dreamId);
     }
 
     // Step 2: Analyze the dream with user profile context
     setLoadingState('interpreting');
 
-    console.log('[SUBMIT] Loading profile for context...');
     const analyzeContext: AnalyzeDreamContext = {
       dreamId,
       mood: mood || undefined,
@@ -141,14 +129,10 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
       gender: userProfile?.gender,
       ageRange: userProfile?.age_range,
     };
-    console.log('[SUBMIT] Analyze context:', analyzeContext);
 
-    console.log('[SUBMIT] Calling analyzeDream()...');
     const analyzeResult = await analyzeDream(dreamText.trim(), analyzeContext);
-    console.log('[SUBMIT] analyzeDream result:', analyzeResult);
 
     if (!analyzeResult.success) {
-      console.log('[SUBMIT] Analysis failed:', analyzeResult.error);
       setLoadingState('error');
       setErrorMessage(analyzeResult.error);
       // Dream was saved but analysis failed - offer to continue or retry
