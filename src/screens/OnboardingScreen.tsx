@@ -28,17 +28,14 @@ export default function OnboardingScreen() {
 
   const handleAboutContinue = async () => {
     setSaving(true);
-    // Save profile data for free tier
-    if (selectedTier === 'free') {
-      const updates: Parameters<typeof updateProfile>[0] = {
-        subscription_tier: 'free',
-      };
-      if (selectedZodiac) updates.zodiac_sign = selectedZodiac;
-      if (selectedGender) updates.gender = selectedGender;
-      if (selectedAge) updates.age_range = selectedAge;
+    const updates: Parameters<typeof updateProfile>[0] = {
+      subscription_tier: selectedTier,
+    };
+    if (selectedZodiac) updates.zodiac_sign = selectedZodiac;
+    if (selectedGender) updates.gender = selectedGender;
+    if (selectedAge) updates.age_range = selectedAge;
 
-      await updateProfile(updates);
-    }
+    await updateProfile(updates);
     setSaving(false);
     setStep('welcome');
   };

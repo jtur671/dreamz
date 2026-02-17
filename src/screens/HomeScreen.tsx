@@ -22,28 +22,32 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   useFocusEffect(
     useCallback(() => {
       async function loadStats() {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
 
-        const { data } = await supabase
-          .from('dreams')
-          .select('reading')
-          .eq('user_id', user.id)
-          .is('deleted_at', null)
-          .order('created_at', { ascending: false })
-          .limit(1);
+          const { data } = await supabase
+            .from('dreams')
+            .select('reading')
+            .eq('user_id', user.id)
+            .is('deleted_at', null)
+            .order('created_at', { ascending: false })
+            .limit(1);
 
-        if (data && data.length > 0) {
-          setLastDreamTitle(data[0].reading?.title || null);
+          if (data && data.length > 0) {
+            setLastDreamTitle(data[0].reading?.title || null);
+          }
+
+          const { count } = await supabase
+            .from('dreams')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .is('deleted_at', null);
+
+          setDreamCount(count || 0);
+        } catch {
+          // Silently handle errors - home screen stats are non-critical
         }
-
-        const { count } = await supabase
-          .from('dreams')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .is('deleted_at', null);
-
-        setDreamCount(count || 0);
       }
       loadStats();
     }, [])

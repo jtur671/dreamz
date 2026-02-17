@@ -37,7 +37,8 @@
     },
     "plugins": [
       "expo-web-browser",
-      "expo-audio"
+      "expo-audio",
+      "@config-plugins/detox"
     ]
   }
 }

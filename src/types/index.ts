@@ -24,7 +24,6 @@ export interface Dream {
   user_id: string;
   dream_text: string;
   mood?: string;
-  emotions?: string[];
   reading?: DreamReading;
   dream_type: 'dream' | 'nightmare';
   created_at: string;

@@ -41,7 +41,7 @@ export default function ReadingScreen() {
 
   // Lazy-load dream image if not already present
   useEffect(() => {
-    if (imageUrl || fromGrimoire || !dreamText || !params.dreamId) return;
+    if (imageUrl || !dreamText || !params.dreamId) return;
 
     const symbolName = reading.symbols?.[0]?.name;
     generateDreamImage(params.dreamId, dreamText, symbolName).then((result) => {
@@ -49,7 +49,7 @@ export default function ReadingScreen() {
         setImageUrl(result.image_url);
       }
     });
-  }, [imageUrl, fromGrimoire, dreamText, params.dreamId, reading.symbols]);
+  }, [imageUrl, dreamText, params.dreamId, reading.symbols]);
 
   function handleViewInGrimoire() {
     // Navigate to Grimoire tab - reset to top of stack first, then go to Grimoire

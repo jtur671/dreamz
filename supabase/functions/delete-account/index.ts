@@ -76,7 +76,6 @@ Deno.serve(async (req: Request) => {
     }
 
     const userId = user.id;
-    const userEmail = user.email;
     console.log(`[${correlationId}] Processing account deletion for user: ${userId}`);
 
     // Create admin client with service role key for privileged operations
@@ -87,7 +86,26 @@ Deno.serve(async (req: Request) => {
       },
     });
 
-    // Step 1: Delete all user's dreams
+    // Step 1: Delete dream images from storage
+    const { data: imageFiles } = await adminClient.storage
+      .from("dream-images")
+      .list(userId);
+
+    if (imageFiles && imageFiles.length > 0) {
+      const filePaths = imageFiles.map((f) => `${userId}/${f.name}`);
+      const { error: storageError } = await adminClient.storage
+        .from("dream-images")
+        .remove(filePaths);
+
+      if (storageError) {
+        console.error(`[${correlationId}] Failed to delete dream images: ${storageError.message}`);
+        // Continue with deletion - images are not critical to block on
+      } else {
+        console.log(`[${correlationId}] Deleted ${filePaths.length} dream images`);
+      }
+    }
+
+    // Step 2: Delete all user's dreams
     const { error: dreamsError } = await adminClient
       .from("dreams")
       .delete()
@@ -104,7 +122,7 @@ Deno.serve(async (req: Request) => {
     }
     console.log(`[${correlationId}] Dreams deleted`);
 
-    // Step 2: Delete user profile
+    // Step 3: Delete user profile
     const { error: profileError } = await adminClient
       .from("profiles")
       .delete()
@@ -121,7 +139,7 @@ Deno.serve(async (req: Request) => {
     }
     console.log(`[${correlationId}] Profile deleted`);
 
-    // Step 3: Delete auth user (requires admin privileges)
+    // Step 4: Delete auth user (requires admin privileges)
     const { error: authDeleteError } = await adminClient.auth.admin.deleteUser(userId);
 
     if (authDeleteError) {
@@ -135,7 +153,7 @@ Deno.serve(async (req: Request) => {
     }
     console.log(`[${correlationId}] Auth user deleted`);
 
-    console.log(`[${correlationId}] Account fully deleted: ${userEmail}`);
+    console.log(`[${correlationId}] Account fully deleted for user: ${userId}`);
 
     return jsonResponse({
       success: true,

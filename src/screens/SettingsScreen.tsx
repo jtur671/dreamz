@@ -87,8 +87,9 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   async function performDreamDeletion(dreamId: string) {
     const result = await deleteDream(dreamId);
     if (result.success) {
-      setDreams(dreams.filter(d => d.id !== dreamId));
-      if (dreams.length === 1) {
+      const remaining = dreams.filter(d => d.id !== dreamId);
+      setDreams(remaining);
+      if (remaining.length === 0) {
         setShowDreamPicker(false);
       }
     } else {

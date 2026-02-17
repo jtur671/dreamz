@@ -203,6 +203,7 @@ export default function AuthScreen() {
 
           <View style={styles.form}>
             <TextInput
+              testID="auth-email-input"
               style={styles.input}
               placeholder="Email"
               placeholderTextColor="#8b7fa8"
@@ -213,6 +214,7 @@ export default function AuthScreen() {
             />
             <View style={styles.passwordContainer}>
               <TextInput
+                testID="auth-password-input"
                 style={styles.passwordInput}
                 placeholder="Password"
                 placeholderTextColor="#8b7fa8"
@@ -230,6 +232,7 @@ export default function AuthScreen() {
             </View>
 
             <TouchableOpacity
+              testID="auth-submit-button"
               style={[styles.button, loading && styles.buttonDisabled]}
               onPress={handleEmailAuth}
               disabled={loading}

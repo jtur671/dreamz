@@ -121,7 +121,6 @@ Before responding, verify:
 
 export interface DreamerContext {
   mood?: string;
-  emotions?: string[];
   zodiacSign?: string;
   gender?: string;
   ageRange?: string;
@@ -139,10 +138,6 @@ export function buildUserPrompt(dreamText: string, context?: DreamerContext): st
 
   if (context?.mood) {
     contextParts.push(`The dreamer woke feeling: ${context.mood}`);
-  }
-
-  if (context?.emotions && context.emotions.length > 0) {
-    contextParts.push(`Emotions present in the dream: ${context.emotions.join(', ')}`);
   }
 
   if (context?.zodiacSign) {
@@ -246,8 +241,8 @@ export function validateReading(reading: unknown): {
   if (!Array.isArray(r.symbols)) {
     return { isValid: false, error: "symbols must be an array" };
   }
-  if (r.symbols.length < 1 || r.symbols.length > 3) {
-    return { isValid: false, error: "symbols must have 1-3 items" };
+  if (r.symbols.length < 1 || r.symbols.length > 7) {
+    return { isValid: false, error: "symbols must have 1-7 items" };
   }
 
   // Validate each symbol

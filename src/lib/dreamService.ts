@@ -42,7 +42,6 @@ export async function saveDream(
         user_id: user.id,
         dream_text: dreamText.trim(),
         mood: mood || null,
-        emotions: mood ? [mood] : null,
         dream_type: dreamType,
       })
       .select()
@@ -229,6 +228,12 @@ export async function generateDreamImage(
   symbolName?: string
 ): Promise<{ success: true; image_url: string } | { success: false; error: string }> {
   try {
+    // Ensure token is fresh before calling edge function (important for background backfill)
+    const accessToken = await getFreshAccessToken();
+    if (!accessToken) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
     const { data, error } = await supabase.functions.invoke('generate-dream-image', {
       body: {
         dream_id: dreamId,

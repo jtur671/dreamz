@@ -205,6 +205,8 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
       return;
     }
 
+    await clearDraft();
+    setSavedDreamId(null);
     setLoadingState('idle');
     navigation.replace('Reading', {
       reading: analyzeResult.reading,

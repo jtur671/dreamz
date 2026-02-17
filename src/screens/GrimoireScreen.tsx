@@ -25,7 +25,7 @@ type GrimoireScreenProps = {
 };
 
 export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
-  const { dreams, loading, refresh } = useDreams();
+  const { dreams, loading, error, refresh } = useDreams();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activePill, setActivePill] = useState<string | null>(null);
@@ -234,6 +234,23 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6b4e9e" />
       </View>
+    );
+  }
+
+  if (error && dreams.length === 0) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.gradient}>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>{'  '}</Text>
+            <Text style={styles.emptyText}>Could not load your dreams</Text>
+            <Text style={styles.emptySubtext}>{error}</Text>
+            <TouchableOpacity style={styles.emptyButton} onPress={handleRefresh}>
+              <Text style={styles.emptyButtonText}>Try Again</Text>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+      </SafeAreaView>
     );
   }
 

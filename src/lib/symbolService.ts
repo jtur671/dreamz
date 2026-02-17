@@ -11,6 +11,13 @@ export interface Symbol {
 }
 
 /**
+ * Escapes SQL LIKE/ILIKE wildcard characters in user input
+ */
+function escapeLikeQuery(query: string): string {
+  return query.replace(/[%_\\]/g, '\\$&');
+}
+
+/**
  * Search symbols by name (case-insensitive partial match)
  */
 export async function searchSymbols(
@@ -18,10 +25,11 @@ export async function searchSymbols(
   limit = 50,
   offset = 0
 ): Promise<{ data: Symbol[]; error: string | null }> {
+  const escaped = escapeLikeQuery(query);
   const { data, error } = await supabase
     .from('symbols')
     .select('name, meaning, shadow_meaning, guidance, category, related_symbols, source')
-    .ilike('name', `%${query}%`)
+    .ilike('name', `%${escaped}%`)
     .order('name')
     .range(offset, offset + limit - 1);
 

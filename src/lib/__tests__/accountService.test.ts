@@ -63,7 +63,6 @@ describe('Account Service', () => {
         {
           dream_text: 'I was flying over mountains',
           mood: 4,
-          emotions: ['peaceful', 'excited'],
           dream_type: 'dream',
           reading: {
             title: 'The Soaring Spirit',
@@ -115,7 +114,6 @@ describe('Account Service', () => {
         {
           dream_text: 'A simple dream',
           mood: 3,
-          emotions: null,
           dream_type: 'nightmare',
           reading: null,
           created_at: '2026-02-01T10:00:00Z',

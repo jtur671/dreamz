@@ -26,7 +26,7 @@ export function getSymbolFrequency(dreams: Dream[]): FrequencyItem[] {
     if (!dream.reading?.symbols) continue;
     const seen = new Set<string>();
     for (const symbol of dream.reading.symbols) {
-      const name = symbol.name;
+      const name = symbol.name.toLowerCase();
       if (!seen.has(name)) {
         seen.add(name);
         counts.set(name, (counts.get(name) || 0) + 1);
@@ -35,7 +35,7 @@ export function getSymbolFrequency(dreams: Dream[]): FrequencyItem[] {
   }
 
   return Array.from(counts.entries())
-    .map(([name, count]) => ({ name, count }))
+    .map(([name, count]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), count }))
     .sort((a, b) => b.count - a.count);
 }
 
@@ -110,7 +110,7 @@ export function getRecurringSymbols(
     if (!dream.reading?.symbols) continue;
     const seen = new Set<string>();
     for (const symbol of dream.reading.symbols) {
-      const name = symbol.name;
+      const name = symbol.name.toLowerCase();
       if (!seen.has(name)) {
         seen.add(name);
         const ids = symbolMap.get(name) || [];
@@ -122,7 +122,7 @@ export function getRecurringSymbols(
 
   return Array.from(symbolMap.entries())
     .filter(([, ids]) => ids.length >= minCount)
-    .map(([name, dreamIds]) => ({ name, count: dreamIds.length, dreamIds }))
+    .map(([name, dreamIds]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), count: dreamIds.length, dreamIds }))
     .sort((a, b) => b.count - a.count);
 }
 
