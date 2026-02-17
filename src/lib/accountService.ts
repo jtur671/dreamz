@@ -5,16 +5,18 @@ export interface ExportedDream {
   date: string;
   dream_text: string;
   mood: string | null;
-  emotions: string[] | null;
   type: string;
   reading: {
     title: string;
     summary: string;
+    plain_english: string | null;
     symbols: unknown[];
     omen: string;
     ritual: string;
     reflection: string;
     themes: string[];
+    content_warnings: string[];
+    image_url: string | null;
   } | null;
 }
 
@@ -46,7 +48,7 @@ export async function exportUserDreams(): Promise<ExportResult> {
 
     const { data: dreams, error } = await supabase
       .from('dreams')
-      .select('dream_text, mood, emotions, dream_type, reading, created_at')
+      .select('dream_text, mood, dream_type, reading, created_at')
       .eq('user_id', user.id)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
@@ -65,16 +67,18 @@ export async function exportUserDreams(): Promise<ExportResult> {
       }),
       dream_text: dream.dream_text,
       mood: dream.mood,
-      emotions: dream.emotions,
       type: dream.dream_type || 'dream',
       reading: dream.reading ? {
         title: dream.reading.title,
         summary: dream.reading.tldr,
+        plain_english: dream.reading.plain_english || null,
         symbols: dream.reading.symbols,
         omen: dream.reading.omen,
         ritual: dream.reading.ritual,
         reflection: dream.reading.journal_prompt,
         themes: dream.reading.tags,
+        content_warnings: dream.reading.content_warnings || [],
+        image_url: dream.reading.image_url || null,
       } : null,
     }));
 

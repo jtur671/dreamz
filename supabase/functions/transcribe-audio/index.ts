@@ -48,20 +48,20 @@ Deno.serve(async (req: Request) => {
 
   // Only allow POST
   if (req.method !== "POST") {
-    return errorResponse("Method not allowed", 405);
+    return errorResponse("METHOD_NOT_ALLOWED", "Only POST method is allowed", 405);
   }
 
   try {
     // Verify OpenAI API key is configured
     if (!OPENAI_API_KEY) {
       console.error("OPENAI_API_KEY not configured");
-      return errorResponse("Service configuration error", 500);
+      return errorResponse("CONFIG_ERROR", "Service configuration error", 500, true);
     }
 
     // Verify auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return errorResponse("Missing authorization header", 401);
+      return errorResponse("UNAUTHORIZED", "Missing authorization header", 401);
     }
 
     // Verify user with Supabase
@@ -71,7 +71,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return errorResponse("Invalid or expired token", 401);
+      return errorResponse("UNAUTHORIZED", "Invalid or expired token", 401);
     }
 
     // Parse request body (JSON with base64 audio)
@@ -84,7 +84,7 @@ Deno.serve(async (req: Request) => {
       const body = await req.json();
 
       if (!body.audio) {
-        return errorResponse("Missing audio data", 400);
+        return errorResponse("VALIDATION_ERROR", "Missing audio data", 400);
       }
 
       // Decode base64 to binary
@@ -105,7 +105,7 @@ Deno.serve(async (req: Request) => {
       const audioFile = formData.get("audio");
 
       if (!audioFile || !(audioFile instanceof File)) {
-        return errorResponse("Missing audio file", 400);
+        return errorResponse("VALIDATION_ERROR", "Missing audio file", 400);
       }
 
       audioBlob = audioFile;
@@ -115,7 +115,13 @@ Deno.serve(async (req: Request) => {
 
     // Validate file size
     if (audioBlob.size > MAX_FILE_SIZE) {
-      return errorResponse("File too large. Maximum size is 25MB.", 400);
+      return errorResponse("VALIDATION_ERROR", "File too large. Maximum size is 25MB.", 400);
+    }
+
+    // Validate MIME type
+    const blobType = audioBlob.type?.toLowerCase() || "";
+    if (blobType && !ALLOWED_TYPES.includes(blobType)) {
+      return errorResponse("VALIDATION_ERROR", `Unsupported audio type: ${blobType}`, 400);
     }
 
     // Prepare request to OpenAI Whisper API
@@ -142,8 +148,10 @@ Deno.serve(async (req: Request) => {
       const errorText = await whisperResponse.text();
       console.error("Whisper API error:", whisperResponse.status, errorText);
       return errorResponse(
-        `Transcription failed: ${whisperResponse.status}`,
-        whisperResponse.status
+        "TRANSCRIPTION_ERROR",
+        `Transcription failed (${whisperResponse.status})`,
+        500,
+        true
       );
     }
 
@@ -151,7 +159,7 @@ Deno.serve(async (req: Request) => {
     console.log("Transcription successful, length:", whisperData.text?.length);
 
     if (!whisperData.text) {
-      return errorResponse("No transcription returned", 500);
+      return errorResponse("TRANSCRIPTION_ERROR", "No transcription returned", 500, true);
     }
 
     return jsonResponse({
@@ -161,8 +169,10 @@ Deno.serve(async (req: Request) => {
   } catch (error) {
     console.error("Transcription error:", error);
     return errorResponse(
+      "INTERNAL_ERROR",
       error instanceof Error ? error.message : "Transcription failed",
-      500
+      500,
+      true
     );
   }
 });
