@@ -5,11 +5,11 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   ActivityIndicator,
   TextInput,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRoute } from '@react-navigation/native';
 import {
@@ -86,7 +86,11 @@ export default function DictionaryScreen() {
       if (reset) {
         setSymbols(result.data);
       } else {
-        setSymbols(prev => [...prev, ...result.data]);
+        setSymbols(prev => {
+          const existingNames = new Set(prev.map(s => s.name.toLowerCase()));
+          const newItems = result.data.filter(s => !existingNames.has(s.name.toLowerCase()));
+          return [...prev, ...newItems];
+        });
       }
       setHasMore(result.data.length === PAGE_SIZE);
       offsetRef.current = offset + result.data.length;
@@ -133,6 +137,7 @@ export default function DictionaryScreen() {
 
     return (
       <TouchableOpacity
+        testID={`dictionary-symbol-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
         style={[styles.symbolCard, expanded && styles.symbolCardExpanded]}
         onPress={() => toggleExpand(item.name)}
         activeOpacity={0.7}
@@ -208,6 +213,7 @@ export default function DictionaryScreen() {
 
           <View style={styles.searchContainer}>
             <TextInput
+              testID="dictionary-search-input"
               style={styles.searchInput}
               placeholder="Search symbols..."
               placeholderTextColor="#6b5b8a"
@@ -218,6 +224,7 @@ export default function DictionaryScreen() {
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity
+                testID="dictionary-search-clear"
                 style={styles.clearButton}
                 onPress={() => { setSearchQuery(''); setDebouncedQuery(''); }}
               >
@@ -235,6 +242,7 @@ export default function DictionaryScreen() {
             {CATEGORIES.map(cat => (
               <TouchableOpacity
                 key={cat.value}
+                testID={`dictionary-category-${cat.value.toLowerCase()}`}
                 style={[styles.categoryChip, activeCategory === cat.value && styles.categoryChipActive]}
                 onPress={() => handleCategoryPress(cat.value)}
               >
@@ -251,13 +259,14 @@ export default function DictionaryScreen() {
             <ActivityIndicator size="large" color="#6b4e9e" />
           </View>
         ) : symbols.length === 0 ? (
-          <View style={styles.emptyContainer}>
+          <View testID="dictionary-empty" style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>📜</Text>
             <Text style={styles.emptyText}>No symbols found</Text>
             <Text style={styles.emptySubtext}>Try a different search or category</Text>
           </View>
         ) : (
           <FlatList
+            testID="dictionary-list"
             data={symbols}
             renderItem={renderSymbol}
             keyExtractor={(item) => item.name}
