@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  SafeAreaView,
   RefreshControl,
   TextInput,
   Alert,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { useDreams } from '../hooks/useDreams';
@@ -284,6 +284,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
             contentContainerStyle={styles.pillRowContent}
           >
             <TouchableOpacity
+              testID="grimoire-pill-all"
               style={[styles.pill, !activePill && styles.pillActive]}
               onPress={() => setActivePill(null)}
             >
@@ -294,6 +295,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
             {symbolPills.map(({ name, count }) => (
               <TouchableOpacity
                 key={name}
+                testID={`grimoire-pill-${name}`}
                 style={[styles.pill, activePill === name && styles.pillActive]}
                 onPress={() => setActivePill(activePill === name ? null : name)}
               >
@@ -308,6 +310,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
         {dreams.length > 0 && (
           <View style={styles.searchContainer}>
             <TextInput
+              testID="grimoire-search-input"
               style={styles.searchInput}
               placeholder="Search dreams, symbols, tags..."
               placeholderTextColor="#6b5b8a"
@@ -318,6 +321,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity
+                testID="grimoire-search-clear"
                 style={styles.clearButton}
                 onPress={() => setSearchQuery('')}
               >
@@ -337,6 +341,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
               Record a dream to begin your journey
             </Text>
             <TouchableOpacity
+              testID="grimoire-empty-record"
               style={styles.emptyButton}
               onPress={() => navigation.navigate('NewDream')}
             >
@@ -344,7 +349,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
             </TouchableOpacity>
           </View>
         ) : filteredDreams.length === 0 ? (
-          <View style={styles.emptyContainer}>
+          <View testID="grimoire-empty-no-results" style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>🔮</Text>
             <Text style={styles.emptyText}>
               No dreams match your search
@@ -355,6 +360,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
           </View>
         ) : (
           <FlatList
+            testID="grimoire-dream-list"
             data={filteredDreams}
             renderItem={renderDream}
             keyExtractor={(item) => item.id}

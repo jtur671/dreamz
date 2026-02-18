@@ -5,13 +5,13 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Share,
   Image,
   Dimensions,
   Modal,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -181,6 +181,7 @@ Interpreted with Dreamz`;
 
       <View style={styles.header}>
         <TouchableOpacity
+          testID="reading-back"
           style={styles.backButton}
           onPress={() => navigation.goBack()}
           accessibilityLabel="Go back"
@@ -216,12 +217,13 @@ Interpreted with Dreamz`;
         ) : null)}
 
         {/* Title */}
-        <Text style={styles.title}>{reading.title}</Text>
+        <Text testID="reading-title" style={styles.title}>{reading.title}</Text>
 
         {/* Expandable Dream Text */}
         {dreamText && (
           <View style={styles.dreamTextSection}>
             <TouchableOpacity
+              testID="reading-dream-toggle"
               style={styles.dreamTextToggle}
               onPress={() => setShowDreamText(!showDreamText)}
               accessibilityRole="button"
@@ -317,6 +319,7 @@ Interpreted with Dreamz`;
         <View style={styles.actionContainer}>
           {!fromGrimoire && (
             <TouchableOpacity
+              testID="reading-grimoire-button"
               style={styles.viewGrimoireButton}
               onPress={handleViewInGrimoire}
               accessibilityLabel="View in Grimoire"
@@ -327,6 +330,7 @@ Interpreted with Dreamz`;
           )}
 
           <TouchableOpacity
+            testID="reading-share-button"
             style={styles.shareButton}
             onPress={handleShare}
             accessibilityLabel="Share reading"

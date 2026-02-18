@@ -4,8 +4,8 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -71,6 +71,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <View style={styles.actions}>
             {lastDreamTitle && (
               <TouchableOpacity
+                testID="home-last-dream-card"
                 style={styles.lastDreamCard}
                 onPress={() => navigation.navigate('Grimoire')}
               >
@@ -85,6 +86,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             )}
 
             <TouchableOpacity
+              testID="home-record-button"
               style={styles.newDreamButton}
               onPress={() => navigation.navigate('NewDream')}
               activeOpacity={0.8}
@@ -100,6 +102,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             </TouchableOpacity>
 
             <TouchableOpacity
+              testID="home-grimoire-button"
               style={styles.grimoireButton}
               onPress={() => navigation.navigate('Grimoire')}
             >
