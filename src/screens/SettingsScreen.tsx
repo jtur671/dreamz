@@ -6,16 +6,19 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
-  SafeAreaView,
   Share,
   Modal,
   FlatList,
   ActivityIndicator,
+  Linking,
+  Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../lib/supabase';
 import { getProfile, updateZodiacSign } from '../lib/profileService';
 import { exportUserDreams, deleteUserAccount } from '../lib/accountService';
 import { fetchUserDreams, deleteDream } from '../lib/dreamService';
+import { getReadingsThisMonth, FREE_TIER_MONTHLY_LIMIT, checkPremiumAccess } from '../lib/purchaseService';
 import { ZODIAC_SIGNS } from '../types';
 import type { Dream } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -27,6 +30,8 @@ type SettingsScreenProps = {
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [zodiacSign, setZodiacSign] = useState<string | null>(null);
+  const [subscriptionTier, setSubscriptionTier] = useState<'free' | 'premium'>('free');
+  const [readingsRemaining, setReadingsRemaining] = useState<number | null>(null);
   const [showZodiacPicker, setShowZodiacPicker] = useState(false);
   const [showDreamPicker, setShowDreamPicker] = useState(false);
   const [dreams, setDreams] = useState<Dream[]>([]);
@@ -42,8 +47,16 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     setUserEmail(user?.email || null);
 
     const profile = await getProfile();
-    if (profile?.zodiac_sign) {
-      setZodiacSign(profile.zodiac_sign);
+    if (profile) {
+      if (profile.zodiac_sign) setZodiacSign(profile.zodiac_sign);
+
+      const isPremium = profile.subscription_tier === 'premium' || await checkPremiumAccess();
+      setSubscriptionTier(isPremium ? 'premium' : 'free');
+
+      if (!isPremium) {
+        const used = await getReadingsThisMonth(supabase);
+        setReadingsRemaining(Math.max(0, FREE_TIER_MONTHLY_LIMIT - used));
+      }
     }
   }
 
@@ -225,6 +238,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
               ))}
             </ScrollView>
             <TouchableOpacity
+              testID="settings-zodiac-cancel"
               style={styles.cancelButton}
               onPress={() => setShowZodiacPicker(false)}
             >
@@ -282,6 +296,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
               />
             )}
             <TouchableOpacity
+              testID="settings-dream-picker-done"
               style={styles.cancelButton}
               onPress={() => setShowDreamPicker(false)}
             >
@@ -302,6 +317,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           </View>
 
           <TouchableOpacity
+            testID="settings-zodiac-edit"
             style={[styles.card, styles.cardButton]}
             onPress={() => setShowZodiacPicker(true)}
           >
@@ -316,9 +332,56 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Subscription</Text>
+          <View style={styles.card}>
+            <Text style={styles.label}>Current Plan</Text>
+            <Text style={styles.value}>
+              {subscriptionTier === 'premium' ? 'Premium' : 'Free'}
+            </Text>
+          </View>
+
+          {subscriptionTier === 'free' ? (
+            <>
+              {readingsRemaining !== null && (
+                <View style={styles.card}>
+                  <Text style={styles.label}>Readings This Month</Text>
+                  <Text style={styles.value}>
+                    {readingsRemaining} of {FREE_TIER_MONTHLY_LIMIT} remaining
+                  </Text>
+                </View>
+              )}
+              <TouchableOpacity
+                testID="settings-upgrade-button"
+                style={[styles.menuItem, styles.upgradeItem]}
+                onPress={() => (navigation as any).navigate('Paywall', { source: 'settings' })}
+              >
+                <Text style={styles.upgradeText}>Upgrade to Premium</Text>
+                <Text style={styles.menuItemSubtext}>Unlimited readings from the oracle</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity
+              testID="settings-manage-subscription"
+              style={styles.menuItem}
+              onPress={() => {
+                if (Platform.OS === 'ios') {
+                  Linking.openURL('https://apps.apple.com/account/subscriptions');
+                } else {
+                  Linking.openURL('https://play.google.com/store/account/subscriptions');
+                }
+              }}
+            >
+              <Text style={styles.menuItemText}>Manage Subscription</Text>
+              <Text style={styles.menuItemSubtext}>Change or cancel in device settings</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Data</Text>
 
           <TouchableOpacity
+            testID="settings-export-button"
             style={styles.menuItem}
             onPress={handleExportDreams}
             disabled={loading}
@@ -328,6 +391,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           </TouchableOpacity>
 
           <TouchableOpacity
+            testID="settings-delete-dream-button"
             style={styles.menuItem}
             onPress={handleOpenDreamPicker}
             disabled={loading}
@@ -341,6 +405,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           <Text style={styles.sectionTitle}>Danger Zone</Text>
 
           <TouchableOpacity
+            testID="settings-delete-account-button"
             style={[styles.menuItem, styles.dangerItem]}
             onPress={handleDeleteAccount}
             disabled={loading}
@@ -351,6 +416,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         </View>
 
         <TouchableOpacity
+          testID="settings-signout-button"
           style={styles.signOutButton}
           onPress={handleSignOut}
         >
@@ -443,6 +509,16 @@ const styles = StyleSheet.create({
   menuItemSubtext: {
     fontSize: 13,
     color: '#8b7fa8',
+  },
+  upgradeItem: {
+    borderColor: '#6b4e9e',
+    backgroundColor: '#2d2a4e',
+  },
+  upgradeText: {
+    fontSize: 16,
+    color: '#9b7fd4',
+    fontWeight: '600',
+    marginBottom: 4,
   },
   dangerItem: {
     borderColor: '#5e2a2a',

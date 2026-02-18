@@ -64,6 +64,7 @@ const MAX_RETRIES = 2; // Initial attempt + 1 retry
 const REQUEST_TIMEOUT_MS = 20000;
 const MAX_DREAM_TEXT_LENGTH = 10000;
 const MIN_DREAM_TEXT_LENGTH = 10;
+const FREE_TIER_MONTHLY_LIMIT = 3;
 
 // ============================================================================
 // Helper Functions
@@ -338,6 +339,34 @@ Deno.serve(async (req: Request) => {
     }
 
     const { dream_text, mood, dream_id, zodiac_sign, gender, age_range } = validation.data;
+
+    // Check reading limit for free tier users
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("subscription_tier")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.subscription_tier !== "premium") {
+      const firstOfMonth = new Date();
+      firstOfMonth.setDate(1);
+      firstOfMonth.setHours(0, 0, 0, 0);
+
+      const { count } = await supabase
+        .from("dreams")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", firstOfMonth.toISOString())
+        .is("deleted_at", null);
+
+      if ((count ?? 0) >= FREE_TIER_MONTHLY_LIMIT) {
+        return errorResponse(
+          "READING_LIMIT_REACHED",
+          "You've reached your 3 free readings this month. Upgrade to Premium for unlimited readings.",
+          403
+        );
+      }
+    }
 
     // Build dreamer context for personalized interpretation
     const dreamerContext: DreamerContext = {

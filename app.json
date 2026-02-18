@@ -38,7 +38,8 @@
     "plugins": [
       "expo-web-browser",
       "expo-audio",
-      "@config-plugins/detox"
+      "@config-plugins/detox",
+      "react-native-purchases"
     ]
   }
 }

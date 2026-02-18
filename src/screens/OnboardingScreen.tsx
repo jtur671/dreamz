@@ -5,10 +5,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
+  Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { updateProfile, completeOnboarding } from '../lib/profileService';
+import { checkPremiumAccess } from '../lib/purchaseService';
 import { ZODIAC_SIGNS, GENDER_OPTIONS, AGE_RANGES, Gender, AgeRange } from '../types';
 
 type OnboardingStep = 'tier' | 'about' | 'welcome';
@@ -22,14 +24,25 @@ export default function OnboardingScreen() {
   const [selectedAge, setSelectedAge] = useState<AgeRange | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const handleTierContinue = () => {
+  const handleTierContinue = async () => {
+    if (selectedTier === 'premium') {
+      // Check if user already has premium via RevenueCat
+      const hasPremium = await checkPremiumAccess();
+      if (!hasPremium) {
+        // Navigate to paywall; don't let them self-upgrade without paying
+        (navigation as any).navigate('Paywall', { source: 'onboarding' });
+        return;
+      }
+    }
     setStep('about');
   };
 
   const handleAboutContinue = async () => {
     setSaving(true);
+    // Only save 'free' tier from onboarding — premium requires RevenueCat purchase
+    const tier = selectedTier === 'premium' && await checkPremiumAccess() ? 'premium' : 'free';
     const updates: Parameters<typeof updateProfile>[0] = {
-      subscription_tier: selectedTier,
+      subscription_tier: tier,
     };
     if (selectedZodiac) updates.zodiac_sign = selectedZodiac;
     if (selectedGender) updates.gender = selectedGender;
@@ -42,8 +55,9 @@ export default function OnboardingScreen() {
 
   const handleSkip = async () => {
     setSaving(true);
-    // Still save tier selection even when skipping
-    await updateProfile({ subscription_tier: selectedTier });
+    // Only save 'free' tier from onboarding — premium requires RevenueCat purchase
+    const tier = selectedTier === 'premium' && await checkPremiumAccess() ? 'premium' : 'free';
+    await updateProfile({ subscription_tier: tier });
     setSaving(false);
     setStep('welcome');
   };
@@ -86,6 +100,7 @@ export default function OnboardingScreen() {
       </Text>
 
       <TouchableOpacity
+        testID="onboarding-tier-free"
         style={[
           styles.tierCard,
           selectedTier === 'free' && styles.tierCardSelected,
@@ -109,6 +124,7 @@ export default function OnboardingScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
+        testID="onboarding-tier-premium"
         style={[
           styles.tierCard,
           styles.tierCardPremium,
@@ -131,6 +147,7 @@ export default function OnboardingScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
+        testID="onboarding-tier-continue"
         style={styles.continueButton}
         onPress={handleTierContinue}
       >
@@ -152,6 +169,7 @@ export default function OnboardingScreen() {
           {ZODIAC_SIGNS.map((sign) => (
             <TouchableOpacity
               key={sign}
+              testID={`onboarding-zodiac-${sign.toLowerCase()}`}
               style={[
                 styles.optionChip,
                 selectedZodiac === sign && styles.optionChipSelected,
@@ -177,6 +195,7 @@ export default function OnboardingScreen() {
           {GENDER_OPTIONS.map((option) => (
             <TouchableOpacity
               key={option.value}
+              testID={`onboarding-gender-${option.value}`}
               style={[
                 styles.optionChip,
                 selectedGender === option.value && styles.optionChipSelected,
@@ -202,6 +221,7 @@ export default function OnboardingScreen() {
           {AGE_RANGES.map((range) => (
             <TouchableOpacity
               key={range}
+              testID={`onboarding-age-${range}`}
               style={[
                 styles.optionChip,
                 selectedAge === range && styles.optionChipSelected,
@@ -223,6 +243,7 @@ export default function OnboardingScreen() {
 
       <View style={styles.buttonRow}>
         <TouchableOpacity
+          testID="onboarding-about-skip"
           style={styles.skipButton}
           onPress={handleSkip}
           disabled={saving}
@@ -230,6 +251,7 @@ export default function OnboardingScreen() {
           <Text style={styles.skipButtonText}>Skip</Text>
         </TouchableOpacity>
         <TouchableOpacity
+          testID="onboarding-about-continue"
           style={[styles.continueButton, styles.continueButtonFlex, saving && styles.buttonDisabled]}
           onPress={handleAboutContinue}
           disabled={saving}
@@ -259,6 +281,7 @@ export default function OnboardingScreen() {
       </View>
 
       <TouchableOpacity
+        testID="onboarding-welcome-begin"
         style={[styles.beginButton, saving && styles.buttonDisabled]}
         onPress={handleBeginJourney}
         disabled={saving}
