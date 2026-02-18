@@ -9,13 +9,15 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { saveDream, analyzeDream, AnalyzeDreamContext } from '../lib/dreamService';
 import { getProfile } from '../lib/profileService';
 import { saveDraft, loadDraft, clearDraft } from '../lib/draftService';
+import { getReadingsThisMonth, FREE_TIER_MONTHLY_LIMIT, checkPremiumAccess } from '../lib/purchaseService';
+import { supabase } from '../lib/supabase';
 import VoiceRecorder from '../components/VoiceRecorder';
 import DreamLoadingAnimation from '../components/DreamLoadingAnimation';
 import type { Profile } from '../types';
@@ -38,6 +40,8 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasDraftRecovered, setHasDraftRecovered] = useState(false);
   const [savedDreamId, setSavedDreamId] = useState<string | null>(null);
+  const [readingsRemaining, setReadingsRemaining] = useState<number | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
   const draftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isLoading = loadingState === 'saving' || loadingState === 'interpreting';
@@ -49,6 +53,14 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
       const profile = await getProfile();
       if (profile) {
         setUserProfile(profile);
+
+        // Check reading limits
+        const premium = profile.subscription_tier === 'premium' || await checkPremiumAccess();
+        setIsPremium(premium);
+        if (!premium) {
+          const used = await getReadingsThisMonth(supabase);
+          setReadingsRemaining(Math.max(0, FREE_TIER_MONTHLY_LIMIT - used));
+        }
       }
 
       // Load draft
@@ -95,6 +107,12 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
     if (!mood) {
       Alert.alert('Error', 'Please select how your dream felt');
+      return;
+    }
+
+    // Check reading limit before proceeding
+    if (!isPremium && readingsRemaining !== null && readingsRemaining <= 0) {
+      (navigation as any).navigate('Paywall', { source: 'limit' });
       return;
     }
 
@@ -226,7 +244,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <LinearGradient
         colors={['#1a1a2e', '#1e1a3a']}
         style={styles.gradient}
@@ -237,6 +255,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
       >
         <View style={styles.header}>
           <TouchableOpacity
+            testID="new-dream-back"
             style={styles.backButton}
             onPress={() => navigation.goBack()}
             disabled={isLoading}
@@ -258,10 +277,30 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
               Describe what you remember from your dream...
             </Text>
 
+            {!isPremium && readingsRemaining !== null && (
+              <View style={styles.readingsRemainingBanner}>
+                <Text style={[
+                  styles.readingsRemainingText,
+                  readingsRemaining === 0 && styles.readingsRemainingZero,
+                ]}>
+                  {readingsRemaining === 0
+                    ? 'No readings remaining this month'
+                    : `${readingsRemaining} reading${readingsRemaining === 1 ? '' : 's'} remaining this month`}
+                </Text>
+                {readingsRemaining === 0 && (
+                  <TouchableOpacity
+                    onPress={() => (navigation as any).navigate('Paywall', { source: 'limit' })}
+                  >
+                    <Text style={styles.upgradeLink}>Upgrade to Premium</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
             {hasDraftRecovered && (
               <View style={styles.draftBanner}>
                 <Text style={styles.draftBannerText}>Draft recovered</Text>
-                <TouchableOpacity onPress={() => {
+                <TouchableOpacity testID="new-dream-draft-clear" onPress={() => {
                   setDreamText('');
                   setDreamType('dream');
                   setMood(null);
@@ -276,6 +315,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
             <View style={styles.dreamTypeContainer}>
               <TouchableOpacity
+                testID="new-dream-type-dream"
                 style={[
                   styles.dreamTypeButton,
                   dreamType === 'dream' && styles.dreamTypeButtonSelected,
@@ -296,6 +336,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
+                testID="new-dream-type-nightmare"
                 style={[
                   styles.dreamTypeButton,
                   dreamType === 'nightmare' && styles.nightmareTypeButtonSelected,
@@ -325,6 +366,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                   return (
                     <TouchableOpacity
                       key={option}
+                      testID={`new-dream-mood-${option.toLowerCase()}`}
                       style={[
                         styles.moodChip,
                         dreamType === 'nightmare' && styles.nightmareMoodChip,
@@ -362,6 +404,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
             </View>
 
             <TextInput
+              testID="new-dream-text-input"
               style={styles.dreamInput}
               placeholder="I was walking through a forest when..."
               placeholderTextColor="#6b5b8a"
@@ -379,6 +422,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
             )}
 
             <TouchableOpacity
+              testID="new-dream-submit"
               style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
               onPress={handleSubmit}
               disabled={isLoading}
@@ -447,6 +491,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#a89cc8',
     marginBottom: 16,
+  },
+  readingsRemainingBanner: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#252542',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
+  },
+  readingsRemainingText: {
+    fontSize: 13,
+    color: '#a89cc8',
+  },
+  readingsRemainingZero: {
+    color: '#e07a7a',
+  },
+  upgradeLink: {
+    fontSize: 13,
+    color: '#9b7fd4',
+    fontWeight: '600',
   },
   draftBanner: {
     flexDirection: 'row',

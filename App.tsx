@@ -17,8 +17,10 @@ import DictionaryScreen from './src/screens/DictionaryScreen';
 import ReadingScreen from './src/screens/ReadingScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
+import PaywallScreen from './src/screens/PaywallScreen';
 import { DreamProvider } from './src/context/DreamContext';
 import { getProfile } from './src/lib/profileService';
+import { initPurchases } from './src/lib/purchaseService';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -100,6 +102,9 @@ export default function App() {
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   useEffect(() => {
+    // Initialize RevenueCat
+    initPurchases().catch(() => {});
+
     // Set up callback for new user signup
     setOnNewUserSignup(() => {
       setNeedsOnboarding(true);
@@ -175,6 +180,11 @@ export default function App() {
             <Stack.Screen name="MainTabs" component={MainTabs} />
             <Stack.Screen name="NewDream" component={NewDreamScreen} />
             <Stack.Screen name="Reading" component={ReadingScreen} />
+            <Stack.Screen
+              name="Paywall"
+              component={PaywallScreen}
+              options={{ presentation: 'modal' }}
+            />
           </Stack.Navigator>
         ) : (
           <Stack.Navigator
