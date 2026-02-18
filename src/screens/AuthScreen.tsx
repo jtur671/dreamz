@@ -223,6 +223,7 @@ export default function AuthScreen() {
                 secureTextEntry={!showPassword}
               />
               <TouchableOpacity
+                testID="auth-password-toggle"
                 style={styles.eyeButton}
                 onPress={() => setShowPassword(!showPassword)}
                 accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
@@ -243,6 +244,7 @@ export default function AuthScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
+              testID="auth-mode-switch"
               style={styles.switchButton}
               onPress={() => setIsSignUp(!isSignUp)}
             >

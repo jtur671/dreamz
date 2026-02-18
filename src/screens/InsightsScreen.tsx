@@ -5,9 +5,10 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { PieChart, BarChart } from 'react-native-gifted-charts';
 import { useDreams } from '../hooks/useDreams';
@@ -29,6 +30,8 @@ type InsightsScreenProps = {
 const DONUT_COLORS = ['#9b7fd4', '#6b4e9e', '#c4a8f0', '#8b6cc1', '#5a3a8e', '#d4c4f7', '#7a5ab0'];
 const BAR_COLOR = '#9b7fd4';
 const MIN_DREAMS_FOR_INSIGHTS = 5;
+// 24px content padding on each side + 20px chartSection padding on each side + ~45px for y-axis
+const CHART_WIDTH = Dimensions.get('window').width - 48 - 40 - 45;
 
 export default function InsightsScreen({ navigation }: InsightsScreenProps) {
   const { dreams, loading } = useDreams();
@@ -135,8 +138,9 @@ export default function InsightsScreen({ navigation }: InsightsScreenProps) {
             <View style={styles.chartContainer}>
               <BarChart
                 data={weeklyBarData}
-                barWidth={22}
-                spacing={16}
+                width={CHART_WIDTH}
+                barWidth={Math.floor(CHART_WIDTH / 8 - 10)}
+                spacing={10}
                 xAxisColor="#3a3a5e"
                 yAxisColor="#3a3a5e"
                 xAxisLabelTextStyle={styles.chartAxisLabel}
@@ -382,6 +386,7 @@ const styles = StyleSheet.create({
   chartContainer: {
     marginTop: 12,
     alignItems: 'center',
+    overflow: 'hidden',
   },
   chartAxisLabel: {
     color: '#6b5b8a',
