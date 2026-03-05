@@ -1,13 +1,19 @@
-import { element, by, expect, waitFor } from 'detox';
-import { launchApp, tapById, typeById, clearById, waitForVisible, navigateToTab } from './helpers/actions';
+import { device, element, by, expect, waitFor } from 'detox';
+import { launchApp, tapById, waitForVisible, navigateToTab } from './helpers/actions';
 
 describe('Dictionary Screen', () => {
   beforeAll(async () => {
     await launchApp(true);
     await waitFor(element(by.text('Welcome, Dreamer')))
       .toBeVisible()
-      .withTimeout(15000);
+      .withTimeout(30000);
+    // DreamContext background image backfill fires DALL-E 3 network requests
+    // on fresh launch. Disable sync so subsequent actions are immediate.
+    await device.disableSynchronization();
     await navigateToTab('Dictionary');
+    await waitFor(element(by.text('Symbol Dictionary')))
+      .toBeVisible()
+      .withTimeout(10000);
   });
 
   beforeEach(async () => {
@@ -15,6 +21,17 @@ describe('Dictionary Screen', () => {
     await waitFor(element(by.text('Symbol Dictionary')))
       .toBeVisible()
       .withTimeout(10000);
+    // Clear any active search left by the previous test.
+    // The clear button is only rendered when searchQuery.length > 0.
+    try {
+      await tapById('dictionary-search-clear');
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch {
+      // No active search — that's fine
+    }
+    // Reset to All category and wait for list
+    await tapById('dictionary-category-all');
+    await waitForVisible('dictionary-list', 10000);
   });
 
   it('should load symbols list', async () => {
@@ -22,75 +39,75 @@ describe('Dictionary Screen', () => {
   });
 
   it('should find "Water" when searching for "water"', async () => {
-    await clearById('dictionary-search-input');
-    await typeById('dictionary-search-input', 'water');
+    // replaceText fires a single atomic onChangeText — more reliable than
+    // clearById + typeById char-by-char under React 18 batching.
+    await element(by.id('dictionary-search-input')).replaceText('water');
 
-    // Wait for debounce + results
-    await waitForVisible('dictionary-list', 5000);
+    // Wait for debounce (400ms) + Supabase search network call
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await waitForVisible('dictionary-list', 10000);
 
-    // At least one result should contain "Water"
     await waitFor(element(by.text('Water')))
       .toBeVisible()
       .withTimeout(5000);
   });
 
   it('should show empty state for nonexistent search', async () => {
-    await clearById('dictionary-search-input');
-    await typeById('dictionary-search-input', 'xyznonexistent999');
-
-    await waitForVisible('dictionary-empty', 5000);
+    await element(by.id('dictionary-search-input')).replaceText('xyznonexistent999');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await waitForVisible('dictionary-empty', 10000);
     await expect(element(by.text('No symbols found'))).toBeVisible();
   });
 
   it('should filter by Animal category', async () => {
-    await clearById('dictionary-search-input');
     await tapById('dictionary-category-animal');
-
+    await new Promise(resolve => setTimeout(resolve, 500));
     await waitForVisible('dictionary-list', 5000);
   });
 
   it('should return full list when tapping All category', async () => {
     await tapById('dictionary-category-all');
-
+    await new Promise(resolve => setTimeout(resolve, 500));
     await waitForVisible('dictionary-list', 5000);
   });
 
   it('should expand a symbol card to show meaning', async () => {
-    await clearById('dictionary-search-input');
-    await tapById('dictionary-category-all');
+    // Search for "Water" — a known curated symbol with full meaning data.
+    // This avoids FlatList virtualization issues with the first item in the All list.
+    await element(by.id('dictionary-search-input')).replaceText('Water');
+    await new Promise(resolve => setTimeout(resolve, 2000));
     await waitForVisible('dictionary-list', 5000);
 
-    // Tap first symbol to expand
-    await element(by.id('dictionary-list'))
-      .atIndex(0)
-      .tap();
+    // Tap the Water card to expand it. atIndex(1) because atIndex(0) matches
+    // the search TextInput (which shows "Water" as its current value).
+    await element(by.text('Water')).atIndex(1).tap();
 
-    // Should see meaning text
-    await waitFor(element(by.text('Meaning')).atIndex(0))
+    // Give React time to re-render the expanded card
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // The detailLabel uses textTransform: 'uppercase' — Detox on iOS may match
+    // against the displayed text "MEANING" rather than the prop value "Meaning"
+    await waitFor(element(by.text('MEANING')).atIndex(0))
       .toBeVisible()
-      .withTimeout(3000);
+      .withTimeout(5000);
   });
 
   it('should navigate search when tapping a related symbol pill', async () => {
-    // Search for a symbol that likely has related symbols (curated ones)
-    await clearById('dictionary-search-input');
-    await typeById('dictionary-search-input', 'Moon');
+    await element(by.id('dictionary-search-input')).replaceText('Moon');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await waitForVisible('dictionary-list', 10000);
 
-    await waitForVisible('dictionary-list', 5000);
-
-    // Tap Moon symbol to expand
     try {
       await element(by.text('Moon')).tap();
 
-      // Look for Related Symbols section and tap first pill
+      // Look for Related Symbols section
       await waitFor(element(by.text('Related Symbols')))
         .toBeVisible()
         .withTimeout(3000);
 
-      // Tap the first related pill - it should update the search
-      // We can't know the exact pill name, but we verify no crash
+      // Tap the first related pill — it should update the search
     } catch {
-      // Moon might not have related symbols - that's OK
+      // Moon might not have related symbols — that's OK
     }
 
     // Screen should still be functional

@@ -8,6 +8,7 @@ module.exports = {
     'ios.release': {
       type: 'ios.app',
       binaryPath: 'ios/build/Build/Products/Release-iphonesimulator/Dreamz.app',
+      launchArgs: { DisablePasswordAutoFill: 1 },
       build:
         'xcodebuild -workspace ios/Dreamz.xcworkspace -scheme Dreamz -configuration Release -sdk iphonesimulator -derivedDataPath ios/build -destination "platform=iOS Simulator,name=iPhone 16 Pro,OS=26.2"',
     },

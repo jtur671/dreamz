@@ -69,27 +69,27 @@ function MainTabs() {
         <Tab.Screen
           name="Home"
           component={HomeScreen}
-          options={{ tabBarLabel: 'Dream' }}
+          options={{ tabBarLabel: 'Dream', tabBarButtonTestID: 'tab-dream' }}
         />
         <Tab.Screen
           name="Grimoire"
           component={GrimoireScreen}
-          options={{ tabBarLabel: 'Grimoire' }}
+          options={{ tabBarLabel: 'Grimoire', tabBarButtonTestID: 'tab-grimoire' }}
         />
         <Tab.Screen
           name="Insights"
           component={InsightsScreen}
-          options={{ tabBarLabel: 'Insights' }}
+          options={{ tabBarLabel: 'Insights', tabBarButtonTestID: 'tab-insights' }}
         />
         <Tab.Screen
           name="Dictionary"
           component={DictionaryScreen}
-          options={{ tabBarLabel: 'Dictionary' }}
+          options={{ tabBarLabel: 'Dictionary', tabBarButtonTestID: 'tab-dictionary' }}
         />
         <Tab.Screen
           name="Settings"
           component={SettingsScreen}
-          options={{ tabBarLabel: 'Settings' }}
+          options={{ tabBarLabel: 'Settings', tabBarButtonTestID: 'tab-settings' }}
         />
       </Tab.Navigator>
     </DreamProvider>
@@ -112,29 +112,41 @@ export default function App() {
 
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-
-      // Check if user needs onboarding
+      // Check profile BEFORE setting session to avoid a flash of MainTabs
+      // when the user needs onboarding (prevents DreamProvider from mounting
+      // prematurely and keeping background tasks alive).
       if (session) {
         const profile = await getProfile();
-        // Only show onboarding if explicitly false (new users)
-        // Existing users with null or true skip onboarding
         if (profile?.onboarding_completed === false) {
           setNeedsOnboarding(true);
         }
       }
 
+      setSession(session);
       setLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-
-        // Reset onboarding state on sign out
-        if (!session) {
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          // Check profile before setting session so the app goes directly to
+          // OnboardingScreen (if needed) without a flash of MainTabs.
+          try {
+            const profile = await getProfile();
+            if (profile?.onboarding_completed === false) {
+              setNeedsOnboarding(true);
+            }
+          } catch {
+            // Profile check failed — assume onboarding complete (safe default)
+          }
+          setSession(session);
+        } else if (!session) {
+          // Reset onboarding state on sign out
           setNeedsOnboarding(false);
+          setSession(session);
+        } else {
+          setSession(session);
         }
       }
     );

@@ -66,11 +66,6 @@ async function findRecordingFile(): Promise<string | null> {
       }
     }
 
-    if (bestFile) {
-      console.log(`[VOICE] Found recording: ${bestFile.path} (${bestFile.size} bytes)`);
-    } else {
-      console.log('[VOICE] No recording file found in any directory');
-    }
     return bestFile?.path || null;
   } catch (error) {
     console.error('[VOICE] Error scanning for recording:', error);
@@ -100,10 +95,6 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
       Alert.alert('Recording Error', status.error || 'An error occurred while recording.');
       return;
     }
-    // Update actual duration from recorder (more reliable than manual timer)
-    if (status.durationMillis !== undefined) {
-      actualDurationRef.current = status.durationMillis;
-    }
   };
 
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY, handleRecordingStatus);
@@ -123,7 +114,6 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
 
     try {
       const status = await AudioModule.requestRecordingPermissionsAsync();
-      console.log('[VOICE] Permission status:', status);
       if (!status.granted) {
         Alert.alert(
           'Permission Required',
@@ -132,21 +122,17 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
         return;
       }
 
-      console.log('[VOICE] Setting audio mode...');
       await AudioModule.setAudioModeAsync({
         allowsRecording: true,
         playsInSilentMode: true,
       });
-      console.log('[VOICE] Audio mode set');
 
       // Ensure Audio cache directory exists (SDK 54 workaround for Android)
-      console.log('[VOICE] Creating Audio directory...');
       const audioCacheDir = `${FileSystem.cacheDirectory}Audio/`;
       const dirInfo = await FileSystem.getInfoAsync(audioCacheDir);
       if (!dirInfo.exists) {
         await FileSystem.makeDirectoryAsync(audioCacheDir, { intermediates: true });
       }
-      console.log('[VOICE] Directory ready');
 
       // Reset actual duration tracker
       actualDurationRef.current = 0;
@@ -154,13 +140,8 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
       // IMPORTANT: Must prepare before recording.
       // useAudioRecorder creates the recorder but does NOT auto-prepare.
       // Without this, Android's native record() silently does nothing (isPrepared=false).
-      console.log('[VOICE] Preparing recorder...');
       await audioRecorder.prepareToRecordAsync();
-      console.log('[VOICE] Recorder prepared');
-
-      console.log('[VOICE] Starting recorder...');
       audioRecorder.record();
-      console.log('[VOICE] Recording started');
       setRecordingState('recording');
       setRecordingDuration(0);
 
@@ -175,11 +156,6 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
   }
 
   async function stopRecording() {
-    console.log('[VOICE] stopRecording() called');
-    console.log('[VOICE] Actual duration from recorder:', actualDurationRef.current, 'ms');
-    console.log('[VOICE] UI duration:', recordingDuration, 's');
-    console.log('[VOICE] audioRecorder.isRecording:', audioRecorder.isRecording);
-
     // Stop duration timer
     if (durationIntervalRef.current) {
       clearInterval(durationIntervalRef.current);
@@ -189,7 +165,6 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
     // Check minimum duration (use UI timer as fallback if recorder duration is 0)
     const effectiveDuration = Math.max(actualDurationRef.current / 1000, recordingDuration);
     if (effectiveDuration < MIN_RECORDING_SECONDS) {
-      console.log('[VOICE] Recording too short:', effectiveDuration, 's');
       Alert.alert(
         'Recording Too Short',
         'Please hold the button and speak for at least a second.'
@@ -199,7 +174,7 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
       // Still stop the recorder to clean up
       try {
         await audioRecorder.stop();
-      } catch (_e) {
+      } catch {
         // ignore cleanup error
       }
       return;
@@ -208,57 +183,38 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
     setRecordingState('transcribing');
 
     try {
-      // Get status before stopping for diagnostics
-      const preStopStatus = audioRecorder.getStatus();
-      console.log('[VOICE] Pre-stop status:', JSON.stringify(preStopStatus));
-      console.log('[VOICE] Pre-stop uri:', audioRecorder.uri);
-
-      console.log('[VOICE] Stopping recorder...');
       await audioRecorder.stop();
-      console.log('[VOICE] Recorder stopped');
 
       // Wait for file to be written (SDK 54 race condition workaround)
-      console.log('[VOICE] Waiting 1000ms for file write...');
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Try to get URL from recorder
       const state = audioRecorder.getStatus();
       let url = state.url || audioRecorder.uri;
 
-      console.log('[VOICE] Post-stop status:', JSON.stringify(state));
-      console.log('[VOICE] Post-stop uri:', audioRecorder.uri);
-      console.log('[VOICE] URL to use:', url || '(empty)');
-
       // If no URL or empty, scan cache directory (SDK 54 workaround)
       if (!url) {
-        console.log('[VOICE] No direct URI, scanning cache directory...');
         url = await findRecordingFile();
       }
 
       // Verify file exists and has content, with retry logic
       if (url) {
         let fileInfo = await FileSystem.getInfoAsync(url);
-        console.log('[VOICE] Initial file check:', JSON.stringify({ exists: fileInfo.exists, size: (fileInfo as any).size }));
         let attempts = 0;
         const maxRetries = 3;
 
         while (fileInfo.exists && (!fileInfo.size || fileInfo.size === 0) && attempts < maxRetries) {
-          console.log(`[VOICE] File empty, retry ${attempts + 1}/${maxRetries}...`);
           await new Promise(resolve => setTimeout(resolve, 500));
           fileInfo = await FileSystem.getInfoAsync(url);
           attempts++;
         }
 
         if (!fileInfo.exists || !fileInfo.size || fileInfo.size === 0) {
-          console.log('[VOICE] File still empty after retries, re-scanning...');
           url = await findRecordingFile();
-        } else {
-          console.log(`[VOICE] File confirmed: ${url} (${fileInfo.size} bytes)`);
         }
       }
 
       if (url) {
-        console.log('[VOICE] Proceeding to transcribe:', url);
         await transcribeAudio(url);
       } else {
         // No file found
@@ -278,15 +234,11 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
   }
 
   async function transcribeAudio(uri: string) {
-    console.log('[VOICE] transcribeAudio() called with:', uri);
-
     try {
       // Read file as base64
-      console.log('[VOICE] Reading file as base64...');
       const base64Audio = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
-      console.log('[VOICE] Base64 length:', base64Audio.length);
 
       if (base64Audio.length === 0) {
         throw new Error('Recording file was empty');
@@ -294,7 +246,6 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
 
       // Call transcription Edge Function via supabase.functions.invoke
       // (handles auth headers automatically, same pattern as analyze-dream)
-      console.log('[VOICE] Calling transcribe-audio edge function...');
       const { data, error } = await supabase.functions.invoke('transcribe-audio', {
         body: {
           audio: base64Audio,
@@ -316,8 +267,6 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
         const message = errorBody?.error || error.message || 'Transcription failed';
         throw new Error(message);
       }
-
-      console.log('[VOICE] Transcription result:', data?.text ? `"${data.text.substring(0, 50)}..."` : 'no text');
 
       if (data?.text) {
         onTranscription(data.text);

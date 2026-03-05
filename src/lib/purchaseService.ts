@@ -94,9 +94,10 @@ export async function getReadingsThisMonth(supabaseClient: any): Promise<number>
 
   const { count, error } = await supabaseClient
     .from('dreams')
-    .select('*', { count: 'exact', head: true })
+    .select('id', { count: 'exact', head: true })
     .gte('created_at', firstOfMonth)
-    .is('deleted_at', null);
+    .is('deleted_at', null)
+    .not('reading', 'is', null);
 
   if (error) {
     console.error('Failed to count readings:', error.message);

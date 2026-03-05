@@ -119,6 +119,6 @@ We encourage you to review this policy periodically to stay informed about how w
 
 If you have questions, concerns, or requests regarding this Privacy Policy or your personal data, please contact us at:
 
-**Email:** dreamz.privacy@example.com
+**Email:** dad.mediumrare@gmail.com
 
 We will respond to all privacy-related inquiries within 30 days.

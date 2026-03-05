@@ -14,7 +14,6 @@ import {
   getOfferings,
   purchasePremium,
   restorePurchases,
-  checkPremiumAccess,
 } from '../lib/purchaseService';
 import { updateProfile } from '../lib/profileService';
 import type { PurchasesPackage, PurchasesOffering } from 'react-native-purchases';
@@ -110,7 +109,8 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
         <TouchableOpacity
           style={styles.closeButton}
           onPress={() => navigation.goBack()}
-          accessibilityLabel="Close"
+          accessibilityRole="button"
+          accessibilityLabel="Close paywall"
         >
           <Text style={styles.closeText}>Close</Text>
         </TouchableOpacity>
@@ -163,6 +163,8 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
               onPress={() => handlePurchase(monthlyPackage)}
               disabled={purchasing || restoring}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={hasFreeTrial ? 'Start Free Trial' : 'Subscribe Now'}
             >
               <Text style={styles.purchaseButtonText}>
                 {purchasing
@@ -193,6 +195,8 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
           style={styles.restoreButton}
           onPress={handleRestore}
           disabled={purchasing || restoring}
+          accessibilityRole="button"
+          accessibilityLabel="Restore Purchases"
         >
           <Text style={styles.restoreText}>
             {restoring ? 'Restoring...' : 'Restore Purchases'}

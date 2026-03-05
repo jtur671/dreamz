@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dreamz.app",
+      "bundleIdentifier": "com.dreamzjournal.app",
       "usesAppleSignIn": true,
       "buildNumber": "1",
       "infoPlist": {
@@ -27,7 +27,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1a1a2e"
       },
-      "package": "com.dreamz.app",
+      "package": "com.dreamzjournal.app",
       "permissions": ["RECORD_AUDIO"],
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
@@ -38,8 +38,7 @@
     "plugins": [
       "expo-web-browser",
       "expo-audio",
-      "@config-plugins/detox",
-      "react-native-purchases"
+      "@config-plugins/detox"
     ]
   }
 }

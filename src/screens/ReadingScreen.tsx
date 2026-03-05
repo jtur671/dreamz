@@ -75,7 +75,7 @@ export default function ReadingScreen() {
           title: reading.title,
         });
       }
-    } catch (error) {
+    } catch {
       // Fallback to text share if image capture fails
       const tagsText = reading.tags?.length > 0 ? `\n\n#${reading.tags.join(' #')}` : '';
       const shareText = `✧ ${reading.title} ✧
@@ -138,7 +138,7 @@ Interpreted with Dreamz`;
                   <Text style={styles.shareCardTitle}>{reading.title}</Text>
 
                   <View style={styles.shareCardOmen}>
-                    <Text style={styles.shareCardOmenText}>"{reading.omen}"</Text>
+                    <Text style={styles.shareCardOmenText}>&ldquo;{reading.omen}&rdquo;</Text>
                   </View>
 
                   <View style={styles.shareCardTags}>
@@ -159,6 +159,8 @@ Interpreted with Dreamz`;
               style={styles.shareImageButton}
               onPress={captureAndShare}
               disabled={isCapturing}
+              accessibilityRole="button"
+              accessibilityLabel="Share as image"
             >
               {isCapturing ? (
                 <ActivityIndicator size="small" color="#fff" />
@@ -172,6 +174,8 @@ Interpreted with Dreamz`;
               style={styles.shareCancelButton}
               onPress={() => setShowShareCard(false)}
               disabled={isCapturing}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel sharing"
             >
               <Text style={styles.shareCancelButtonText}>Cancel</Text>
             </TouchableOpacity>
@@ -192,6 +196,7 @@ Interpreted with Dreamz`;
       </View>
 
       <ScrollView
+        testID="reading-scroll-view"
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}

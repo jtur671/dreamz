@@ -41,7 +41,7 @@ export function DreamProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   // Background image backfill: after initial load, find dreams with readings
-  // but no image and generate images one at a time without blocking the UI.
+  // but no image and generate all images in parallel without blocking the UI.
   const backfillRan = useRef(false);
 
   useEffect(() => {
@@ -54,25 +54,21 @@ export function DreamProvider({ children }: { children: React.ReactNode }) {
 
     if (dreamsNeedingImages.length === 0) return;
 
-    (async () => {
-      for (const dream of dreamsNeedingImages) {
-        try {
-          const symbolName = dream.reading?.symbols?.[0]?.name;
-          const result = await generateDreamImage(dream.id, dream.dream_text, symbolName);
-          if (result.success) {
-            setDreams((prev) =>
-              prev.map((d) =>
-                d.id === dream.id && d.reading
-                  ? { ...d, reading: { ...d.reading, image_url: result.image_url } }
-                  : d
-              )
-            );
-          }
-        } catch {
-          // Skip failures silently — content filter rejections, network errors, etc.
+    Promise.allSettled(
+      dreamsNeedingImages.map(async (dream) => {
+        const symbolName = dream.reading?.symbols?.[0]?.name;
+        const result = await generateDreamImage(dream.id, dream.dream_text, symbolName);
+        if (result.success) {
+          setDreams((prev) =>
+            prev.map((d) =>
+              d.id === dream.id && d.reading
+                ? { ...d, reading: { ...d.reading, image_url: result.image_url } }
+                : d
+            )
+          );
         }
-      }
-    })();
+      })
+    );
   }, [loading, dreams]);
 
   return (

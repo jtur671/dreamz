@@ -1,37 +1,79 @@
-import { element, by, expect, waitFor } from 'detox';
-import { launchApp, tapById, typeById, waitForVisible, waitForNotVisible, navigateToTab } from './helpers/actions';
+import { device, element, by, expect, waitFor } from 'detox';
+import { launchApp, tapById, typeById, waitForVisible, waitForNotVisible } from './helpers/actions';
 import { TEST_DREAM_TEXT } from './helpers/dreamFactory';
+import { setTestAccountPremium } from './helpers/db';
+
+/**
+ * Navigate to NewDream from home and return to a clean, known state:
+ *   - Scroll to top (ensures mood chips are in the viewport)
+ *   - Clear any stale draft (previous run may have left nightmare type or leftover text)
+ */
+async function openNewDream() {
+  await tapById('home-record-button');
+  await waitForVisible('new-dream-text-input', 5000);
+  // Scroll to top so mood chips are definitely visible (not scrolled off-screen)
+  await element(by.id('new-dream-scroll-view')).scrollTo('top');
+  // Clear any stale draft (nightmare type from a prior run causes "No elements found" for dream moods)
+  try {
+    await waitFor(element(by.id('new-dream-draft-clear'))).toBeVisible().withTimeout(1000);
+    await tapById('new-dream-draft-clear');
+  } catch {
+    // No draft — that's the happy path
+  }
+}
 
 describe('Dream Entry', () => {
-  beforeEach(async () => {
+  beforeAll(async () => {
+    // Upgrade test account to premium so reading limits never block the submit test
+    await setTestAccountPremium();
+    // Full launch + sign-in once for the whole suite
     await launchApp(true);
-    // Wait for home screen
+    // DreamContext background image backfill fires DALL-E 3 network requests
+    // immediately on launch, keeping the app perpetually busy from Detox's
+    // perspective. Disable sync so all waitFor calls use real-time polling.
+    await device.disableSynchronization();
+  });
+
+  beforeEach(async () => {
+    // Fast JS reset (~3s) — Supabase session persists in AsyncStorage
+    await device.reloadReactNative();
+    // Re-disable sync after JS reload (reloadReactNative may reset sync state)
+    // so DreamContext backfill network requests don't block Detox idle-waiting.
+    await device.disableSynchronization();
     await waitFor(element(by.text('Welcome, Dreamer')))
       .toBeVisible()
-      .withTimeout(15000);
+      .withTimeout(20000);
+    // HomeScreen fires loadStats() on focus which fetches the last dream title
+    // from Supabase and inserts a card ABOVE home-record-button, causing a layout
+    // shift. Wait for the layout to stabilize before trying to tap the button.
+    await new Promise(resolve => setTimeout(resolve, 2000));
   });
 
   it('should navigate from home to NewDream screen', async () => {
-    await tapById('home-record-button');
-    await waitForVisible('new-dream-text-input', 5000);
+    await openNewDream();
     await expect(element(by.text('Record Your Dream'))).toBeVisible();
   });
 
   it('should submit a dream with text and mood and see reading', async () => {
-    await tapById('home-record-button');
-    await waitForVisible('new-dream-text-input', 5000);
+    await openNewDream();
 
-    await typeById('new-dream-text-input', TEST_DREAM_TEXT);
+    // Select mood BEFORE typing so the keyboard doesn't obscure it
     await tapById('new-dream-mood-peaceful');
-    await tapById('new-dream-submit');
+    await typeById('new-dream-text-input', TEST_DREAM_TEXT);
 
-    // Wait for reading to appear (loading may take time)
-    await waitForVisible('reading-title', 60000);
+    // Scroll down from center (y=0.5) so keyboard doesn't clip the gesture start point
+    await element(by.id('new-dream-scroll-view')).scroll(600, 'down', 0.5, 0.5);
+
+    // Sync is already disabled globally (see beforeAll/beforeEach).
+    // DreamLoadingAnimation setInterval and post-submit DALL-E backfill both
+    // keep Detox's idle tracker busy — disabling sync lets waitFor poll normally.
+    await tapById('new-dream-submit');
+    // Wait for reading to appear (AI + image generation can take up to 3min)
+    await waitForVisible('reading-title', 180000);
   });
 
   it('should switch to nightmare type and show nightmare moods', async () => {
-    await tapById('home-record-button');
-    await waitForVisible('new-dream-text-input', 5000);
+    await openNewDream();
 
     await tapById('new-dream-type-nightmare');
 
@@ -41,10 +83,11 @@ describe('Dream Entry', () => {
   });
 
   it('should show alert when submitting without text', async () => {
-    await tapById('home-record-button');
-    await waitForVisible('new-dream-text-input', 5000);
+    await openNewDream();
 
     await tapById('new-dream-mood-peaceful');
+    // Scroll to bottom so submit button is not obscured
+    await element(by.id('new-dream-scroll-view')).scrollTo('bottom');
     await tapById('new-dream-submit');
 
     await waitFor(element(by.text('Please describe your dream')))
@@ -53,10 +96,11 @@ describe('Dream Entry', () => {
   });
 
   it('should show alert when submitting without mood', async () => {
-    await tapById('home-record-button');
-    await waitForVisible('new-dream-text-input', 5000);
+    await openNewDream();
 
     await typeById('new-dream-text-input', TEST_DREAM_TEXT);
+    // Scroll down from center (y=0.5) so keyboard doesn't clip the gesture start point
+    await element(by.id('new-dream-scroll-view')).scroll(600, 'down', 0.5, 0.5);
     await tapById('new-dream-submit');
 
     await waitFor(element(by.text('Please select how your dream felt')))
@@ -65,8 +109,7 @@ describe('Dream Entry', () => {
   });
 
   it('should recover a draft after navigating away and back', async () => {
-    await tapById('home-record-button');
-    await waitForVisible('new-dream-text-input', 5000);
+    await openNewDream();
 
     await typeById('new-dream-text-input', 'A draft dream about flying');
 
@@ -76,8 +119,8 @@ describe('Dream Entry', () => {
     // Go back
     await tapById('new-dream-back');
 
-    // Re-open NewDream
-    await waitForVisible('home-record-button', 5000);
+    // Re-open NewDream — allow extra time for navigation animation + home layout settle
+    await waitForVisible('home-record-button', 15000);
     await tapById('home-record-button');
 
     // Should see draft recovered banner
@@ -89,6 +132,7 @@ describe('Dream Entry', () => {
   it('should clear a recovered draft', async () => {
     await tapById('home-record-button');
     await waitForVisible('new-dream-text-input', 5000);
+    await element(by.id('new-dream-scroll-view')).scrollTo('top');
 
     // If there's a draft, clear it
     try {

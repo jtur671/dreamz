@@ -184,6 +184,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         'Farewell, Dreamer',
         'Your account and all dreams have been deleted. May your waking hours be filled with wonder.'
       );
+      await supabase.auth.signOut();
     } catch (error: any) {
       Alert.alert('Deletion Error', error.message || 'Failed to delete account');
     } finally {
@@ -222,6 +223,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
               {ZODIAC_SIGNS.map((sign) => (
                 <TouchableOpacity
                   key={sign}
+                  testID={`zodiac-option-${sign.toLowerCase()}`}
                   style={[
                     styles.zodiacOption,
                     zodiacSign === sign && styles.zodiacOptionSelected,
@@ -306,8 +308,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         </View>
       </Modal>
 
-      <ScrollView style={styles.container}>
-        <Text style={styles.title}>Settings</Text>
+      <ScrollView testID="settings-scroll-view" style={styles.container}>
+        <Text testID="settings-title" style={styles.title}>Settings</Text>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
@@ -320,6 +322,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             testID="settings-zodiac-edit"
             style={[styles.card, styles.cardButton]}
             onPress={() => setShowZodiacPicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel={`Zodiac Sign: ${zodiacSign || 'Not set'}. Tap to edit.`}
           >
             <View>
               <Text style={styles.label}>Zodiac Sign</Text>
@@ -354,6 +358,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
                 testID="settings-upgrade-button"
                 style={[styles.menuItem, styles.upgradeItem]}
                 onPress={() => (navigation as any).navigate('Paywall', { source: 'settings' })}
+                accessibilityRole="button"
+                accessibilityLabel="Upgrade to Premium"
               >
                 <Text style={styles.upgradeText}>Upgrade to Premium</Text>
                 <Text style={styles.menuItemSubtext}>Unlimited readings from the oracle</Text>
@@ -370,6 +376,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
                   Linking.openURL('https://play.google.com/store/account/subscriptions');
                 }
               }}
+              accessibilityRole="button"
+              accessibilityLabel="Manage Subscription"
             >
               <Text style={styles.menuItemText}>Manage Subscription</Text>
               <Text style={styles.menuItemSubtext}>Change or cancel in device settings</Text>
@@ -385,6 +393,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             style={styles.menuItem}
             onPress={handleExportDreams}
             disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Gather Your Dreams — Export all dreams as JSON"
           >
             <Text style={styles.menuItemText}>Gather Your Dreams</Text>
             <Text style={styles.menuItemSubtext}>Export all dreams as JSON</Text>
@@ -395,6 +405,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             style={styles.menuItem}
             onPress={handleOpenDreamPicker}
             disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Release a Dream — Delete an individual dream"
           >
             <Text style={styles.menuItemText}>Release a Dream</Text>
             <Text style={styles.menuItemSubtext}>Delete individual dreams from your grimoire</Text>
@@ -409,6 +421,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             style={[styles.menuItem, styles.dangerItem]}
             onPress={handleDeleteAccount}
             disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Delete account and all data"
           >
             <Text style={styles.dangerText}>Close the Grimoire Forever</Text>
             <Text style={styles.menuItemSubtext}>Delete your account and all data</Text>
@@ -419,10 +433,21 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           testID="settings-signout-button"
           style={styles.signOutButton}
           onPress={handleSignOut}
+          accessibilityRole="button"
+          accessibilityLabel="Sign out"
         >
           <Text style={styles.signOutText}>Step Away from the Grimoire</Text>
         </TouchableOpacity>
 
+        <View style={styles.legalRow}>
+          <TouchableOpacity
+            onPress={() => Linking.openURL('https://[YOUR-PRIVACY-POLICY-URL]')}
+            accessibilityRole="link"
+            accessibilityLabel="Privacy Policy"
+          >
+            <Text style={styles.legalLink}>Privacy Policy</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.version}>Dreamz v1.0.0</Text>
         <Text style={styles.footer}>Your dreams are private. Always.</Text>
       </ScrollView>
@@ -537,11 +562,21 @@ const styles = StyleSheet.create({
     color: '#8b7fa8',
     fontSize: 16,
   },
+  legalRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 32,
+  },
+  legalLink: {
+    color: '#8b7fa8',
+    fontSize: 12,
+    textDecorationLine: 'underline',
+  },
   version: {
     textAlign: 'center',
     color: '#5a5a7a',
     fontSize: 12,
-    marginTop: 32,
+    marginTop: 12,
   },
   footer: {
     textAlign: 'center',

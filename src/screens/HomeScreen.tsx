@@ -26,24 +26,15 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) return;
 
-          const { data } = await supabase
+          const { data, count } = await supabase
             .from('dreams')
-            .select('reading')
+            .select('reading', { count: 'exact' })
             .eq('user_id', user.id)
             .is('deleted_at', null)
             .order('created_at', { ascending: false })
             .limit(1);
 
-          if (data && data.length > 0) {
-            setLastDreamTitle(data[0].reading?.title || null);
-          }
-
-          const { count } = await supabase
-            .from('dreams')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .is('deleted_at', null);
-
+          setLastDreamTitle(data?.[0]?.reading?.title || null);
           setDreamCount(count || 0);
         } catch {
           // Silently handle errors - home screen stats are non-critical
@@ -74,6 +65,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 testID="home-last-dream-card"
                 style={styles.lastDreamCard}
                 onPress={() => navigation.navigate('Grimoire')}
+                accessibilityRole="button"
+                accessibilityLabel={`Last reading: ${lastDreamTitle}. View your grimoire.`}
               >
                 <Text style={styles.lastDreamLabel}>Last reading</Text>
                 <Text style={styles.lastDreamTitle}>{lastDreamTitle}</Text>
@@ -90,6 +83,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
               style={styles.newDreamButton}
               onPress={() => navigation.navigate('NewDream')}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Record a Dream"
             >
               <LinearGradient
                 colors={['#6b4e9e', '#8b6cc1']}
@@ -105,6 +100,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
               testID="home-grimoire-button"
               style={styles.grimoireButton}
               onPress={() => navigation.navigate('Grimoire')}
+              accessibilityRole="button"
+              accessibilityLabel="View Your Grimoire"
             >
               <Text style={styles.grimoireButtonText}>View Your Grimoire</Text>
             </TouchableOpacity>
