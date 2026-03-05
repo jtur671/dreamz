@@ -45,7 +45,20 @@ coverage/
 /ios
 /android
 
-# Project docs (local only)
+# Project config (local only)
 .claude/
 CLAUDE.md
-docs/
+
+# MCP config (contains API keys)
+.mcp.json
+
+# Generated store assets (large binaries)
+store/generated/
+
+# Symbol enrichment progress trackers (local scripts, not needed in repo)
+.enrich-progress.json
+.enrich-missing-progress.json
+
+# Detox test artifacts (screenshots, logs from local test runs)
+e2e/artifacts/
+e2e/reports/

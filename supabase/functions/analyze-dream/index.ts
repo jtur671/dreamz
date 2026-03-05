@@ -61,7 +61,7 @@ interface OpenAIResponse {
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 const OPENAI_MODEL = "gpt-5-mini";
 const MAX_RETRIES = 2; // Initial attempt + 1 retry
-const REQUEST_TIMEOUT_MS = 20000;
+const REQUEST_TIMEOUT_MS = 45000; // Increased: gpt-5-mini is a reasoning model and needs more time
 const MAX_DREAM_TEXT_LENGTH = 10000;
 const MIN_DREAM_TEXT_LENGTH = 10;
 const FREE_TIER_MONTHLY_LIMIT = 3;
@@ -90,7 +90,11 @@ async function callOpenAI(
       body: JSON.stringify({
         model: OPENAI_MODEL,
         messages,
-        max_completion_tokens: 1200,
+        // gpt-5-mini is a reasoning model: tokens are split between internal reasoning
+        // (chain-of-thought, not returned) and the actual output. 1200 was only enough
+        // for reasoning, leaving nothing for the JSON content. 4000 provides sufficient
+        // headroom for ~1000 tokens of reasoning + ~800 tokens of JSON output.
+        max_completion_tokens: 4000,
       }),
       signal: controller.signal,
     });
@@ -354,10 +358,11 @@ Deno.serve(async (req: Request) => {
 
       const { count } = await supabase
         .from("dreams")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("user_id", user.id)
         .gte("created_at", firstOfMonth.toISOString())
-        .is("deleted_at", null);
+        .is("deleted_at", null)
+        .not("reading", "is", null);
 
       if ((count ?? 0) >= FREE_TIER_MONTHLY_LIMIT) {
         return errorResponse(

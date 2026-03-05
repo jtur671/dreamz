@@ -24,6 +24,15 @@ type GrimoireScreenProps = {
   navigation: NativeStackNavigationProp<any>;
 };
 
+function formatDate(dateString: string) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
   const { dreams, loading, error, refresh } = useDreams();
   const [refreshing, setRefreshing] = useState(false);
@@ -58,22 +67,13 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
     }, [refresh])
   );
 
-  async function handleRefresh() {
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await refresh();
     setRefreshing(false);
-  }
+  }, [refresh]);
 
-  function formatDate(dateString: string) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  }
-
-  function handleDreamPress(dream: Dream) {
+  const handleDreamPress = useCallback((dream: Dream) => {
     if (dream.reading) {
       navigation.navigate('Reading', {
         reading: dream.reading,
@@ -82,9 +82,18 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
         fromGrimoire: true,
       });
     }
-  }
+  }, [navigation]);
 
-  function handleDeletePress(dream: Dream) {
+  const handleDeleteDream = useCallback(async (dreamId: string) => {
+    const result = await deleteDreamService(dreamId);
+    if (!result.success) {
+      Alert.alert('Error', result.error);
+      return;
+    }
+    await refresh();
+  }, [refresh]);
+
+  const handleDeletePress = useCallback((dream: Dream) => {
     const title = dream.reading?.title || 'this dream';
     Alert.alert(
       'Delete Dream',
@@ -98,36 +107,18 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
         },
       ]
     );
-  }
+  }, [handleDeleteDream]);
 
-  async function handleDeleteDream(dreamId: string) {
-    const result = await deleteDreamService(dreamId);
-    if (!result.success) {
-      Alert.alert('Error', result.error);
-      return;
-    }
-    await refresh();
-  }
-
-  // Generate subtitle based on dream count and reading status
-  function getGrimoireSubtitle(dreamList: Dream[]): string {
-    const total = dreamList.length;
-    const withReadings = dreamList.filter(d => d.reading).length;
-
-    if (total === 0) {
-      return 'No dreams recorded yet';
-    }
-
-    if (withReadings === total) {
-      return `${total} dream${total !== 1 ? 's' : ''} with readings`;
-    }
-
-    if (withReadings === 0) {
-      return `${total} dream${total !== 1 ? 's' : ''} awaiting interpretation`;
-    }
-
+  const grimoireSubtitle = useMemo(() => {
+    const total = dreams.length;
+    const withReadings = dreams.filter(d => d.reading).length;
+    if (total === 0) return 'No dreams recorded yet';
+    if (withReadings === total) return `${total} dream${total !== 1 ? 's' : ''} with readings`;
+    if (withReadings === 0) return `${total} dream${total !== 1 ? 's' : ''} awaiting interpretation`;
     return `${withReadings} of ${total} dreams interpreted`;
-  }
+  }, [dreams]);
+
+  const dreamStreak = useMemo(() => getDreamStats(dreams).streak, [dreams]);
 
   // Filter dreams based on pill selection + search query (additive)
   const filteredDreams = useMemo(() => {
@@ -162,13 +153,21 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
     });
   }, [dreams, activePill, searchQuery]);
 
-  function renderDream({ item }: { item: Dream }) {
+  const renderDream = useCallback(({ item }: { item: Dream }) => {
     const hasReading = !!item.reading;
     const title = item.reading?.title;
     const isNightmare = item.dream_type === 'nightmare';
+    const dateLabel = formatDate(item.created_at);
+    const cardLabel = title
+      ? `${title}, ${dateLabel}${item.mood ? ', ' + item.mood : ''}`
+      : `Dream from ${dateLabel}`;
 
     return (
       <TouchableOpacity
+        testID="grimoire-dream-item"
+        accessibilityRole="button"
+        accessibilityLabel={cardLabel}
+        accessibilityHint={hasReading ? 'Double tap to view reading' : 'No reading available'}
         style={[
           styles.dreamCard,
           isNightmare && styles.nightmareCard,
@@ -197,12 +196,14 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
                   </Text>
                 )}
               </View>
-              <Text style={styles.dreamDate}>{formatDate(item.created_at)}</Text>
+              <Text style={styles.dreamDate}>{dateLabel}</Text>
             </View>
             <TouchableOpacity
               style={styles.deleteButton}
               onPress={() => handleDeletePress(item)}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel="Delete dream"
             >
               <Text style={styles.deleteButtonText}>✕</Text>
             </TouchableOpacity>
@@ -227,7 +228,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
         </View>
       </TouchableOpacity>
     );
-  }
+  }, [handleDreamPress, handleDeletePress]);
 
   if (loading) {
     return (
@@ -261,20 +262,15 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
         style={styles.gradient}
       >
         <Text style={styles.title}>Your Grimoire</Text>
-        <Text style={styles.subtitle}>
-          {getGrimoireSubtitle(dreams)}
-        </Text>
+        <Text style={styles.subtitle}>{grimoireSubtitle}</Text>
 
-        {(() => {
-          const { streak } = getDreamStats(dreams);
-          return streak >= 2 ? (
+        {dreamStreak >= 2 && (
             <View style={styles.streakBadge}>
               <Text style={styles.streakText}>
-                {streak}-day streak
+                {dreamStreak}-day streak
               </Text>
             </View>
-          ) : null;
-        })()}
+        )}
 
         {dreams.length > 0 && symbolPills.length > 0 && (
           <ScrollView
@@ -287,6 +283,9 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
               testID="grimoire-pill-all"
               style={[styles.pill, !activePill && styles.pillActive]}
               onPress={() => setActivePill(null)}
+              accessibilityRole="button"
+              accessibilityLabel={`All dreams, ${dreams.length} total`}
+              accessibilityState={{ selected: !activePill }}
             >
               <Text style={[styles.pillText, !activePill && styles.pillTextActive]}>
                 All ({dreams.length})
@@ -298,6 +297,9 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
                 testID={`grimoire-pill-${name}`}
                 style={[styles.pill, activePill === name && styles.pillActive]}
                 onPress={() => setActivePill(activePill === name ? null : name)}
+                accessibilityRole="button"
+                accessibilityLabel={`Filter by ${name}, ${count} dreams`}
+                accessibilityState={{ selected: activePill === name }}
               >
                 <Text style={[styles.pillText, activePill === name && styles.pillTextActive]}>
                   {name.charAt(0).toUpperCase() + name.slice(1)} ({count})
@@ -318,6 +320,8 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
               onChangeText={setSearchQuery}
               autoCapitalize="none"
               autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={() => { /* dismiss keyboard via returnKeyType="done" */ }}
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity
@@ -366,6 +370,10 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            removeClippedSubviews
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            windowSize={5}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}

@@ -123,21 +123,18 @@ export default function DictionaryScreen() {
     }
   }
 
-  function toggleExpand(name: string) {
-    setExpandedSymbol(expandedSymbol === name ? null : name);
-  }
+  const toggleExpand = useCallback((name: string) => {
+    setExpandedSymbol(prev => prev === name ? null : name);
+  }, []);
 
-  function isEnriched(symbol: Symbol): boolean {
-    return !!(symbol.shadow_meaning || symbol.guidance);
-  }
-
-  function renderSymbol({ item }: { item: Symbol }) {
+  const renderSymbol = useCallback(({ item }: { item: Symbol }) => {
     const expanded = expandedSymbol === item.name;
-    const enriched = isEnriched(item);
+    const enriched = !!(item.shadow_meaning || item.guidance);
 
     return (
       <TouchableOpacity
-        testID={`dictionary-symbol-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+        testID="dictionary-symbol-item"
+        accessibilityLabel={`dictionary-symbol-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
         style={[styles.symbolCard, expanded && styles.symbolCardExpanded]}
         onPress={() => toggleExpand(item.name)}
         activeOpacity={0.7}
@@ -183,10 +180,12 @@ export default function DictionaryScreen() {
               <View style={styles.relatedSection}>
                 <Text style={styles.detailLabel}>Related Symbols</Text>
                 <View style={styles.relatedRow}>
-                  {item.related_symbols.map((rel, i) => (
+                  {item.related_symbols.map((rel) => (
                     <TouchableOpacity
-                      key={i}
+                      key={rel}
                       style={styles.relatedPill}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Search for ${rel}`}
                       onPress={() => {
                         setSearchQuery(rel);
                         setDebouncedQuery(rel);
@@ -203,7 +202,7 @@ export default function DictionaryScreen() {
         )}
       </TouchableOpacity>
     );
-  }
+  }, [expandedSymbol, toggleExpand]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -227,6 +226,8 @@ export default function DictionaryScreen() {
                 testID="dictionary-search-clear"
                 style={styles.clearButton}
                 onPress={() => { setSearchQuery(''); setDebouncedQuery(''); }}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search"
               >
                 <Text style={styles.clearButtonText}>Clear</Text>
               </TouchableOpacity>
@@ -245,6 +246,9 @@ export default function DictionaryScreen() {
                 testID={`dictionary-category-${cat.value.toLowerCase()}`}
                 style={[styles.categoryChip, activeCategory === cat.value && styles.categoryChipActive]}
                 onPress={() => handleCategoryPress(cat.value)}
+                accessibilityRole="button"
+                accessibilityLabel={`Filter by ${cat.label}`}
+                accessibilityState={{ selected: activeCategory === cat.value }}
               >
                 <Text style={[styles.categoryChipText, activeCategory === cat.value && styles.categoryChipTextActive]}>
                   {cat.label}
@@ -272,6 +276,10 @@ export default function DictionaryScreen() {
             keyExtractor={(item) => item.name}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            removeClippedSubviews
+            initialNumToRender={20}
+            maxToRenderPerBatch={20}
+            windowSize={5}
             onEndReached={handleEndReached}
             onEndReachedThreshold={0.3}
             ListFooterComponent={

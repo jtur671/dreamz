@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -107,6 +106,9 @@ export default function OnboardingScreen() {
         ]}
         onPress={() => setSelectedTier('free')}
         activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel="Free plan — 3 readings per month"
+        accessibilityState={{ selected: selectedTier === 'free' }}
       >
         {selectedTier === 'free' && (
           <View style={styles.selectedBadge}>
@@ -132,6 +134,9 @@ export default function OnboardingScreen() {
         ]}
         onPress={() => setSelectedTier('premium')}
         activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel="Premium plan — unlimited readings, coming soon"
+        accessibilityState={{ selected: selectedTier === 'premium' }}
       >
         <View style={styles.comingSoonBadge}>
           <Text style={styles.comingSoonText}>Coming Soon</Text>
@@ -150,6 +155,8 @@ export default function OnboardingScreen() {
         testID="onboarding-tier-continue"
         style={styles.continueButton}
         onPress={handleTierContinue}
+        accessibilityRole="button"
+        accessibilityLabel="Continue"
       >
         <Text style={styles.continueButtonText}>Continue</Text>
       </TouchableOpacity>
@@ -157,7 +164,7 @@ export default function OnboardingScreen() {
   );
 
   const renderAboutStep = () => (
-    <ScrollView contentContainerStyle={styles.stepContent}>
+    <ScrollView testID="onboarding-about-scroll" contentContainerStyle={styles.stepContent}>
       <Text style={styles.stepTitle}>Tell Us About You</Text>
       <Text style={styles.stepSubtitle}>
         Personalize your readings (all optional)
@@ -175,6 +182,9 @@ export default function OnboardingScreen() {
                 selectedZodiac === sign && styles.optionChipSelected,
               ]}
               onPress={() => setSelectedZodiac(selectedZodiac === sign ? null : sign)}
+              accessibilityRole="button"
+              accessibilityLabel={sign}
+              accessibilityState={{ selected: selectedZodiac === sign }}
             >
               <Text
                 style={[
@@ -201,6 +211,9 @@ export default function OnboardingScreen() {
                 selectedGender === option.value && styles.optionChipSelected,
               ]}
               onPress={() => setSelectedGender(selectedGender === option.value ? null : option.value)}
+              accessibilityRole="button"
+              accessibilityLabel={option.label}
+              accessibilityState={{ selected: selectedGender === option.value }}
             >
               <Text
                 style={[
@@ -227,6 +240,9 @@ export default function OnboardingScreen() {
                 selectedAge === range && styles.optionChipSelected,
               ]}
               onPress={() => setSelectedAge(selectedAge === range ? null : range)}
+              accessibilityRole="button"
+              accessibilityLabel={range}
+              accessibilityState={{ selected: selectedAge === range }}
             >
               <Text
                 style={[
@@ -247,6 +263,8 @@ export default function OnboardingScreen() {
           style={styles.skipButton}
           onPress={handleSkip}
           disabled={saving}
+          accessibilityRole="button"
+          accessibilityLabel="Skip personalisation"
         >
           <Text style={styles.skipButtonText}>Skip</Text>
         </TouchableOpacity>
@@ -255,6 +273,8 @@ export default function OnboardingScreen() {
           style={[styles.continueButton, styles.continueButtonFlex, saving && styles.buttonDisabled]}
           onPress={handleAboutContinue}
           disabled={saving}
+          accessibilityRole="button"
+          accessibilityLabel="Continue"
         >
           <Text style={styles.continueButtonText}>
             {saving ? 'Saving...' : 'Continue'}
@@ -285,6 +305,8 @@ export default function OnboardingScreen() {
         style={[styles.beginButton, saving && styles.buttonDisabled]}
         onPress={handleBeginJourney}
         disabled={saving}
+        accessibilityRole="button"
+        accessibilityLabel="Begin Your Journey"
       >
         <Text style={styles.beginButtonText}>
           {saving ? 'Opening the portal...' : 'Begin Your Journey'}

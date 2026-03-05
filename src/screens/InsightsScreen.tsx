@@ -67,6 +67,8 @@ export default function InsightsScreen({ navigation }: InsightsScreenProps) {
             <TouchableOpacity
               style={styles.ctaButton}
               onPress={() => navigation.navigate('NewDream')}
+              accessibilityRole="button"
+              accessibilityLabel="Record a Dream"
             >
               <Text style={styles.ctaButtonText}>Record a Dream</Text>
             </TouchableOpacity>
@@ -200,6 +202,8 @@ export default function InsightsScreen({ navigation }: InsightsScreenProps) {
                       key={i}
                       style={styles.legendItem}
                       onPress={() => navigateToDictionary(item.text)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Look up ${item.text} in dictionary`}
                     >
                       <View style={[styles.legendDot, { backgroundColor: item.color }]} />
                       <Text style={[styles.legendText, styles.legendTextLink]}>
@@ -242,7 +246,11 @@ export default function InsightsScreen({ navigation }: InsightsScreenProps) {
               <Text style={styles.sectionSubtitle}>Symbols appearing in 3+ dreams</Text>
               {recurring.slice(0, 10).map((item, i) => (
                 <View key={i} style={styles.recurringItem}>
-                  <TouchableOpacity onPress={() => navigateToDictionary(item.name)}>
+                  <TouchableOpacity
+                    onPress={() => navigateToDictionary(item.name)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Look up ${item.name} in dictionary`}
+                  >
                     <Text style={[styles.recurringName, styles.legendTextLink]}>{item.name}</Text>
                   </TouchableOpacity>
                   <View style={styles.recurringBarTrack}>

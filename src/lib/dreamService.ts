@@ -252,7 +252,7 @@ export async function generateDreamImage(
     }
 
     return { success: false, error: 'No image URL returned' };
-  } catch (err) {
+  } catch {
     return { success: false, error: 'Image generation failed' };
   }
 }

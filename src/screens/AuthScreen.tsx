@@ -190,6 +190,8 @@ export default function AuthScreen() {
               style={styles.googleButton}
               onPress={handleGoogleSignIn}
               disabled={loading}
+              accessibilityRole="button"
+              accessibilityLabel="Continue with Google"
             >
               <Text style={styles.googleButtonText}>Continue with Google</Text>
             </TouchableOpacity>
@@ -226,6 +228,7 @@ export default function AuthScreen() {
                 testID="auth-password-toggle"
                 style={styles.eyeButton}
                 onPress={() => setShowPassword(!showPassword)}
+                accessibilityRole="button"
                 accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
               >
                 <Text style={styles.eyeIcon}>{showPassword ? '👁' : '👁‍🗨'}</Text>
@@ -237,6 +240,8 @@ export default function AuthScreen() {
               style={[styles.button, loading && styles.buttonDisabled]}
               onPress={handleEmailAuth}
               disabled={loading}
+              accessibilityRole="button"
+              accessibilityLabel={isSignUp ? 'Create Account' : 'Sign In'}
             >
               <Text style={styles.buttonText}>
                 {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
@@ -247,6 +252,8 @@ export default function AuthScreen() {
               testID="auth-mode-switch"
               style={styles.switchButton}
               onPress={() => setIsSignUp(!isSignUp)}
+              accessibilityRole="button"
+              accessibilityLabel={isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
             >
               <Text style={styles.switchText}>
                 {isSignUp

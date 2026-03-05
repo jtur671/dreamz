@@ -151,6 +151,12 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     const analyzeResult = await analyzeDream(dreamText.trim(), analyzeContext);
 
     if (!analyzeResult.success) {
+      // If the server-side limit was hit (stale client count), show Paywall
+      if (analyzeResult.error?.includes('READING_LIMIT_REACHED') || analyzeResult.error?.includes('3 free readings')) {
+        setLoadingState('idle');
+        (navigation as any).navigate('Paywall', { source: 'limit' });
+        return;
+      }
       setLoadingState('error');
       setErrorMessage(analyzeResult.error);
       // Dream was saved but analysis failed - offer to continue or retry
@@ -271,7 +277,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
         {isLoading ? (
           <DreamLoadingAnimation phase={loadingState === 'saving' ? 'saving' : 'interpreting'} />
         ) : (
-          <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+          <ScrollView testID="new-dream-scroll-view" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets style={styles.scroll} contentContainerStyle={styles.content}>
             <Text style={styles.title}>Record Your Dream</Text>
             <Text style={styles.subtitle}>
               Describe what you remember from your dream...
@@ -290,6 +296,8 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                 {readingsRemaining === 0 && (
                   <TouchableOpacity
                     onPress={() => (navigation as any).navigate('Paywall', { source: 'limit' })}
+                    accessibilityRole="button"
+                    accessibilityLabel="Upgrade to Premium"
                   >
                     <Text style={styles.upgradeLink}>Upgrade to Premium</Text>
                   </TouchableOpacity>
@@ -300,7 +308,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
             {hasDraftRecovered && (
               <View style={styles.draftBanner}>
                 <Text style={styles.draftBannerText}>Draft recovered</Text>
-                <TouchableOpacity testID="new-dream-draft-clear" onPress={() => {
+                <TouchableOpacity testID="new-dream-draft-clear" accessibilityRole="button" accessibilityLabel="Clear recovered draft" onPress={() => {
                   setDreamText('');
                   setDreamType('dream');
                   setMood(null);
@@ -322,6 +330,9 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                 ]}
                 onPress={() => { setDreamType('dream'); setMood(null); }}
                 disabled={isLoading}
+                accessibilityRole="button"
+                accessibilityLabel="Dream"
+                accessibilityState={{ selected: dreamType === 'dream' }}
               >
                 <Text style={styles.dreamTypeIcon}>
                   {dreamType === 'dream' ? '\u{1F319}' : '\u{1F311}'}
@@ -343,6 +354,9 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                 ]}
                 onPress={() => { setDreamType('nightmare'); setMood(null); }}
                 disabled={isLoading}
+                accessibilityRole="button"
+                accessibilityLabel="Nightmare"
+                accessibilityState={{ selected: dreamType === 'nightmare' }}
               >
                 <Text style={styles.dreamTypeIcon}>
                   {dreamType === 'nightmare' ? '\u{26A1}' : '\u{1F329}'}
@@ -515,6 +529,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#9b7fd4',
     fontWeight: '600',
+    marginLeft: 8,
   },
   draftBanner: {
     flexDirection: 'row',

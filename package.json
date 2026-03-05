@@ -12,6 +12,7 @@
     "test:coverage": "jest --coverage",
     "test:e2e": "RUN_E2E_TESTS=true jest --config jest.e2e.config.js",
     "detox:build:ios": "detox build --configuration ios.release",
+    "detox:rebundle:ios": "expo export:embed --platform ios --dev false --entry-file index.ts --bundle-output ios/build/Build/Products/Release-iphonesimulator/Dreamz.app/main.jsbundle --assets-dest ios/build/Build/Products/Release-iphonesimulator/Dreamz.app",
     "detox:test:ios": "detox test --configuration ios.release",
     "lint": "expo lint"
   },
