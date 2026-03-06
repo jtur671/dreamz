@@ -606,7 +606,7 @@ Uses OpenAI Whisper API for transcription.
 - Basic search
 - Export (JSON)
 
-### Premium Tier ($4.99/month) - via RevenueCat
+### Premium Tier ($4.99/month or $29.99/year) - via RevenueCat
 - Unlimited readings
 - Deeper symbol breakdowns
 - Pattern insights ("You've dreamed of water 8 times")
