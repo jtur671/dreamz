@@ -98,6 +98,52 @@ export async function setTestAccountPremium(): Promise<void> {
 }
 
 /**
+ * Sets the test account's subscription_tier to 'free' so the upgrade button
+ * is visible on the Settings screen (it only renders when tier is free).
+ * Call this in beforeAll for paywall tests.
+ */
+export async function setTestAccountFree(): Promise<void> {
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('[setTestAccountFree] Supabase env vars not set — skipping');
+    return;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase: any = createClient(supabaseUrl, supabaseAnonKey);
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: TEST_EMAIL,
+    password: TEST_PASSWORD,
+  });
+
+  if (signInError) {
+    console.warn('[setTestAccountFree] Sign-in failed:', signInError.message);
+    return;
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    console.warn('[setTestAccountFree] No user after sign-in');
+    await supabase.auth.signOut();
+    return;
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ subscription_tier: 'free' })
+    .eq('id', user.id);
+
+  if (error) {
+    console.warn('[setTestAccountFree] Failed to set free:', error.message);
+  }
+
+  await supabase.auth.signOut();
+}
+
+/**
  * Resets the test account's monthly reading count to 0 by soft-deleting all
  * dreams with completed readings from the current month.
  *
