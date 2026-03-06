@@ -114,9 +114,10 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
   const hasFreeTrial = introPrice && introPrice.price === 0;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+    <SafeAreaView style={styles.container} testID="paywall-screen">
+      <ScrollView contentContainerStyle={styles.scrollContent} testID="paywall-scroll-view">
         <TouchableOpacity
+          testID="paywall-close-button"
           style={styles.closeButton}
           onPress={() => navigation.goBack()}
           accessibilityRole="button"
@@ -125,13 +126,13 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
           <Text style={styles.closeText}>Close</Text>
         </TouchableOpacity>
 
-        <Text style={styles.title}>Unlock the Full Oracle</Text>
+        <Text testID="paywall-title" style={styles.title}>Unlock the Full Oracle</Text>
         <Text style={styles.subtitle}>
           Unlimited readings await beyond the veil
         </Text>
 
         {/* Feature comparison */}
-        <View style={styles.comparisonContainer}>
+        <View testID="paywall-feature-comparison" style={styles.comparisonContainer}>
           <View style={styles.tierColumn}>
             <Text style={styles.tierHeader}>Free</Text>
             {FREE_FEATURES.map((feature) => (
@@ -155,12 +156,13 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
 
         {/* Pricing */}
         {loading ? (
-          <ActivityIndicator size="large" color="#9b7fd4" style={styles.loader} />
+          <ActivityIndicator testID="paywall-loading" size="large" color="#9b7fd4" style={styles.loader} />
         ) : monthlyPackage ? (
-          <View style={styles.pricingContainer}>
+          <View testID="paywall-pricing" style={styles.pricingContainer}>
             {/* Plan selector */}
             <View style={styles.planSelector}>
               <TouchableOpacity
+                testID="paywall-plan-monthly"
                 style={[styles.planCard, selectedPlan === 'monthly' && styles.planCardSelected]}
                 onPress={() => setSelectedPlan('monthly')}
                 accessibilityRole="button"
@@ -176,6 +178,7 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
 
               {annualPackage && (
                 <TouchableOpacity
+                  testID="paywall-plan-annual"
                   style={[styles.planCard, selectedPlan === 'annual' && styles.planCardSelected]}
                   onPress={() => setSelectedPlan('annual')}
                   accessibilityRole="button"
@@ -202,6 +205,7 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
             )}
 
             <TouchableOpacity
+              testID="paywall-purchase-button"
               style={[styles.purchaseButton, (purchasing || restoring) && styles.buttonDisabled]}
               onPress={() => handlePurchase(selectedPackage!)}
               disabled={purchasing || restoring}
@@ -225,7 +229,7 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
             )}
           </View>
         ) : (
-          <View style={styles.pricingContainer}>
+          <View testID="paywall-pricing-fallback" style={styles.pricingContainer}>
             {/* Fallback plan cards when RevenueCat is unavailable */}
             <View style={styles.planSelector}>
               <View style={[styles.planCard, styles.planCardSelected]}>
@@ -242,10 +246,11 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
                 <Text style={styles.planPeriod}>/year</Text>
               </View>
             </View>
-            <Text style={styles.unavailableText}>
+            <Text testID="paywall-unavailable-text" style={styles.unavailableText}>
               Unable to load subscription options. Please check your connection and try again.
             </Text>
             <TouchableOpacity
+              testID="paywall-retry-button"
               style={[styles.purchaseButton, { marginTop: 16 }]}
               onPress={loadOfferings}
               accessibilityRole="button"
@@ -258,6 +263,7 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
 
         {/* Restore */}
         <TouchableOpacity
+          testID="paywall-restore-button"
           style={styles.restoreButton}
           onPress={handleRestore}
           disabled={purchasing || restoring}
@@ -269,7 +275,7 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
           </Text>
         </TouchableOpacity>
 
-        <Text style={styles.legalText}>
+        <Text testID="paywall-legal-text" style={styles.legalText}>
           Payment will be charged to your Apple ID account at confirmation of purchase.
           Subscription automatically renews unless cancelled at least 24 hours before
           the end of the current period. Manage subscriptions in your device Settings.
