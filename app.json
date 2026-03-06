@@ -28,7 +28,11 @@
         "backgroundColor": "#1a1a2e"
       },
       "package": "com.dreamzjournal.app",
-      "permissions": ["RECORD_AUDIO"],
+      "permissions": [
+        "RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
@@ -39,6 +43,11 @@
       "expo-web-browser",
       "expo-audio",
       "@config-plugins/detox"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7a63985f-a2fb-45fe-8dc8-311a9c270047"
+      }
+    }
   }
 }

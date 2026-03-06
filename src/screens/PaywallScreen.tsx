@@ -16,7 +16,7 @@ import {
   restorePurchases,
 } from '../lib/purchaseService';
 import { updateProfile } from '../lib/profileService';
-import type { PurchasesPackage, PurchasesOffering } from 'react-native-purchases';
+import type { PurchasesPackage, PurchasesOffering, PACKAGE_TYPE } from 'react-native-purchases';
 
 type PaywallScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -26,6 +26,8 @@ type PaywallScreenProps = {
     };
   };
 };
+
+type PlanType = 'monthly' | 'annual';
 
 const FREE_FEATURES = [
   '3 readings per month',
@@ -47,6 +49,7 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>('annual');
 
   useEffect(() => {
     loadOfferings();
@@ -99,8 +102,15 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
     }
   }
 
-  const monthlyPackage = offering?.availablePackages?.[0];
-  const introPrice = monthlyPackage?.product?.introPrice;
+  const monthlyPackage = offering?.availablePackages?.find(
+    (p) => p.packageType === 'MONTHLY' as PACKAGE_TYPE || p.product.identifier.toLowerCase().includes('monthly'),
+  ) ?? offering?.availablePackages?.[0] ?? null;
+  const annualPackage = offering?.availablePackages?.find(
+    (p) => p.packageType === 'ANNUAL' as PACKAGE_TYPE || p.product.identifier.toLowerCase().includes('yearly') || p.product.identifier.toLowerCase().includes('annual'),
+  ) ?? null;
+
+  const selectedPackage = selectedPlan === 'annual' && annualPackage ? annualPackage : monthlyPackage;
+  const introPrice = selectedPackage?.product?.introPrice;
   const hasFreeTrial = introPrice && introPrice.price === 0;
 
   return (
@@ -148,19 +158,52 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
           <ActivityIndicator size="large" color="#9b7fd4" style={styles.loader} />
         ) : monthlyPackage ? (
           <View style={styles.pricingContainer}>
-            <Text style={styles.price}>
-              {monthlyPackage.product.priceString}/month
-            </Text>
+            {/* Plan selector */}
+            <View style={styles.planSelector}>
+              <TouchableOpacity
+                style={[styles.planCard, selectedPlan === 'monthly' && styles.planCardSelected]}
+                onPress={() => setSelectedPlan('monthly')}
+                accessibilityRole="button"
+                accessibilityLabel="Monthly plan"
+                accessibilityState={{ selected: selectedPlan === 'monthly' }}
+              >
+                <Text style={[styles.planLabel, selectedPlan === 'monthly' && styles.planLabelSelected]}>Monthly</Text>
+                <Text style={[styles.planPrice, selectedPlan === 'monthly' && styles.planPriceSelected]}>
+                  {monthlyPackage.product.priceString}
+                </Text>
+                <Text style={[styles.planPeriod, selectedPlan === 'monthly' && styles.planPeriodSelected]}>/month</Text>
+              </TouchableOpacity>
+
+              {annualPackage && (
+                <TouchableOpacity
+                  style={[styles.planCard, selectedPlan === 'annual' && styles.planCardSelected]}
+                  onPress={() => setSelectedPlan('annual')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Annual plan, save 50 percent"
+                  accessibilityState={{ selected: selectedPlan === 'annual' }}
+                >
+                  <View style={styles.saveBadge}>
+                    <Text style={styles.saveBadgeText}>Save 50%</Text>
+                  </View>
+                  <Text style={[styles.planLabel, selectedPlan === 'annual' && styles.planLabelSelected]}>Annual</Text>
+                  <Text style={[styles.planPrice, selectedPlan === 'annual' && styles.planPriceSelected]}>
+                    {annualPackage.product.priceString}
+                  </Text>
+                  <Text style={[styles.planPeriod, selectedPlan === 'annual' && styles.planPeriodSelected]}>/year</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
             {hasFreeTrial && (
               <Text style={styles.trialText}>
                 Free for {introPrice.periodNumberOfUnits} {introPrice.periodUnit.toLowerCase()}
-                {introPrice.periodNumberOfUnits > 1 ? 's' : ''}, then {monthlyPackage.product.priceString}/month
+                {introPrice.periodNumberOfUnits > 1 ? 's' : ''}, then {selectedPackage!.product.priceString}/{selectedPlan === 'annual' ? 'year' : 'month'}
               </Text>
             )}
 
             <TouchableOpacity
               style={[styles.purchaseButton, (purchasing || restoring) && styles.buttonDisabled]}
-              onPress={() => handlePurchase(monthlyPackage)}
+              onPress={() => handlePurchase(selectedPackage!)}
               disabled={purchasing || restoring}
               activeOpacity={0.8}
               accessibilityRole="button"
@@ -183,10 +226,33 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
           </View>
         ) : (
           <View style={styles.pricingContainer}>
-            <Text style={styles.price}>$4.99/month</Text>
+            {/* Fallback plan cards when RevenueCat is unavailable */}
+            <View style={styles.planSelector}>
+              <View style={[styles.planCard, styles.planCardSelected]}>
+                <Text style={[styles.planLabel, styles.planLabelSelected]}>Monthly</Text>
+                <Text style={[styles.planPrice, styles.planPriceSelected]}>$4.99</Text>
+                <Text style={[styles.planPeriod, styles.planPeriodSelected]}>/month</Text>
+              </View>
+              <View style={[styles.planCard]}>
+                <View style={styles.saveBadge}>
+                  <Text style={styles.saveBadgeText}>Save 50%</Text>
+                </View>
+                <Text style={styles.planLabel}>Annual</Text>
+                <Text style={styles.planPrice}>$29.99</Text>
+                <Text style={styles.planPeriod}>/year</Text>
+              </View>
+            </View>
             <Text style={styles.unavailableText}>
-              Subscriptions coming soon. Stay tuned.
+              Unable to load subscription options. Please check your connection and try again.
             </Text>
+            <TouchableOpacity
+              style={[styles.purchaseButton, { marginTop: 16 }]}
+              onPress={loadOfferings}
+              accessibilityRole="button"
+              accessibilityLabel="Retry loading subscriptions"
+            >
+              <Text style={styles.purchaseButtonText}>Retry</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -300,6 +366,64 @@ const styles = StyleSheet.create({
   pricingContainer: {
     alignItems: 'center',
     marginBottom: 24,
+  },
+  planSelector: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+    width: '100%',
+  },
+  planCard: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: '#3a3a5e',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  planCardSelected: {
+    borderColor: '#9b7fd4',
+    backgroundColor: '#2a2a4e',
+  },
+  planLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8b7fa8',
+    marginBottom: 4,
+  },
+  planLabelSelected: {
+    color: '#c0b4e0',
+  },
+  planPrice: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#8b7fa8',
+  },
+  planPriceSelected: {
+    color: '#e0d4f7',
+  },
+  planPeriod: {
+    fontSize: 13,
+    color: '#8b7fa8',
+    marginTop: 2,
+  },
+  planPeriodSelected: {
+    color: '#a89cc8',
+  },
+  saveBadge: {
+    position: 'absolute',
+    top: -10,
+    right: -1,
+    backgroundColor: '#9b7fd4',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  saveBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#fff',
   },
   price: {
     fontSize: 32,

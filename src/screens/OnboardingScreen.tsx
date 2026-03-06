@@ -135,14 +135,15 @@ export default function OnboardingScreen() {
         onPress={() => setSelectedTier('premium')}
         activeOpacity={0.8}
         accessibilityRole="button"
-        accessibilityLabel="Premium plan — unlimited readings, coming soon"
+        accessibilityLabel="Premium plan — unlimited readings, $4.99 per month or $29.99 per year"
         accessibilityState={{ selected: selectedTier === 'premium' }}
       >
-        <View style={styles.comingSoonBadge}>
-          <Text style={styles.comingSoonText}>Coming Soon</Text>
+        <View style={styles.pricingBadge}>
+          <Text style={styles.pricingBadgeText}>From $2.50/mo</Text>
         </View>
         <Text style={styles.tierName}>Premium</Text>
         <Text style={styles.tierDescription}>Unlock deeper mysteries</Text>
+        <Text style={styles.tierPricing}>$4.99/mo or $29.99/yr</Text>
         <View style={styles.tierFeatures}>
           <Text style={[styles.tierFeature, styles.premiumFeature]}>Unlimited readings</Text>
           <Text style={[styles.tierFeature, styles.premiumFeature]}>Advanced insights</Text>
@@ -397,17 +398,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  comingSoonBadge: {
+  pricingBadge: {
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: '#4a4a6e',
+    backgroundColor: '#6b4e9e',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  comingSoonText: {
-    color: '#a89cc8',
+  pricingBadgeText: {
+    color: '#e0d4f7',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -420,7 +421,13 @@ const styles = StyleSheet.create({
   tierDescription: {
     fontSize: 14,
     color: '#a89cc8',
-    marginBottom: 16,
+    marginBottom: 4,
+  },
+  tierPricing: {
+    fontSize: 13,
+    color: '#9b7fd4',
+    fontWeight: '600',
+    marginBottom: 12,
   },
   tierFeatures: {
     marginTop: 8,
