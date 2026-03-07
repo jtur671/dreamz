@@ -14,6 +14,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { supabase } from '../lib/supabase';
+import { updateProfile } from '../lib/profileService';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -83,7 +84,14 @@ export default function AuthScreen() {
 
         if (error) {
           Alert.alert('Apple Sign In Error', error.message);
-        } else if (data?.user?.created_at) {
+        } else if (data?.user) {
+          // Save display name from Apple if provided
+          const fullName = credential.fullName;
+          if (fullName?.givenName) {
+            const displayName = [fullName.givenName, fullName.familyName].filter(Boolean).join(' ');
+            await updateProfile({ display_name: displayName });
+          }
+
           // Check if this is a new user (created within last minute)
           const createdAt = new Date(data.user.created_at);
           const now = new Date();
@@ -141,6 +149,13 @@ export default function AuthScreen() {
               access_token: accessToken,
               refresh_token: refreshToken,
             });
+
+            // Save display name from Google user metadata
+            const fullName = sessionData?.user?.user_metadata?.full_name ||
+              sessionData?.user?.user_metadata?.name;
+            if (fullName) {
+              await updateProfile({ display_name: fullName });
+            }
 
             // Check if this is a new user (created within last minute)
             if (sessionData?.user?.created_at) {
