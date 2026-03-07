@@ -49,8 +49,7 @@ export default function AuthScreen() {
       if (error) {
         Alert.alert('Sign Up Error', error.message);
       } else {
-        // New user - trigger onboarding flow
-        Alert.alert('Success', 'Check your email for confirmation');
+        // New user — auto-signed-in, onAuthStateChange handles navigation
         onNewUserSignup?.();
       }
     } else {

@@ -10,6 +10,8 @@ export interface Symbol {
   source: string | null;
 }
 
+export type SortPhase = 'alpha' | 'numeric';
+
 /**
  * Escapes SQL LIKE/ILIKE wildcard characters in user input
  */
@@ -23,13 +25,18 @@ function escapeLikeQuery(query: string): string {
 export async function searchSymbols(
   query: string,
   limit = 50,
-  offset = 0
+  offset = 0,
+  phase: SortPhase = 'alpha'
 ): Promise<{ data: Symbol[]; error: string | null }> {
   const escaped = escapeLikeQuery(query);
-  const { data, error } = await supabase
+  let q = supabase
     .from('symbols')
     .select('name, meaning, shadow_meaning, guidance, category, related_symbols, source')
-    .ilike('name', `%${escaped}%`)
+    .ilike('name', `%${escaped}%`);
+
+  q = phase === 'alpha' ? q.gte('name', 'A') : q.lt('name', 'A');
+
+  const { data, error } = await q
     .order('name')
     .range(offset, offset + limit - 1);
 
@@ -78,12 +85,17 @@ export async function fetchSymbolByName(
 export async function fetchSymbolsByCategory(
   category: string,
   limit = 50,
-  offset = 0
+  offset = 0,
+  phase: SortPhase = 'alpha'
 ): Promise<{ data: Symbol[]; error: string | null }> {
-  const { data, error } = await supabase
+  let q = supabase
     .from('symbols')
     .select('name, meaning, shadow_meaning, guidance, category, related_symbols, source')
-    .eq('category', category)
+    .eq('category', category);
+
+  q = phase === 'alpha' ? q.gte('name', 'A') : q.lt('name', 'A');
+
+  const { data, error } = await q
     .order('name')
     .range(offset, offset + limit - 1);
 
@@ -109,15 +121,20 @@ export async function fetchCategories(): Promise<{ data: string[]; error: string
 }
 
 /**
- * Fetch all symbols with pagination (alphabetical browse)
+ * Fetch all symbols with pagination (alphabetical browse, letters before numbers)
  */
 export async function fetchSymbols(
   limit = 50,
-  offset = 0
+  offset = 0,
+  phase: SortPhase = 'alpha'
 ): Promise<{ data: Symbol[]; error: string | null }> {
-  const { data, error } = await supabase
+  let q = supabase
     .from('symbols')
-    .select('name, meaning, shadow_meaning, guidance, category, related_symbols, source')
+    .select('name, meaning, shadow_meaning, guidance, category, related_symbols, source');
+
+  q = phase === 'alpha' ? q.gte('name', 'A') : q.lt('name', 'A');
+
+  const { data, error } = await q
     .order('name')
     .range(offset, offset + limit - 1);
 

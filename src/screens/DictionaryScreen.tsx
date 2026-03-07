@@ -17,6 +17,7 @@ import {
   fetchSymbols,
   fetchSymbolsByCategory,
   type Symbol,
+  type SortPhase,
 } from '../lib/symbolService';
 
 // Display labels → DB values are lowercase
@@ -47,6 +48,7 @@ export default function DictionaryScreen() {
   const [expandedSymbol, setExpandedSymbol] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const offsetRef = useRef(0);
+  const numericPhaseRef = useRef(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Debounce search: only fire query after 400ms of no typing
@@ -67,19 +69,21 @@ export default function DictionaryScreen() {
     if (reset) {
       setLoading(true);
       offsetRef.current = 0;
+      numericPhaseRef.current = false;
     } else {
       setLoadingMore(true);
     }
 
     const offset = reset ? 0 : offsetRef.current;
+    const phase: SortPhase = numericPhaseRef.current ? 'numeric' : 'alpha';
     let result;
 
     if (debouncedQuery.trim()) {
-      result = await searchSymbols(debouncedQuery.trim(), PAGE_SIZE, offset);
+      result = await searchSymbols(debouncedQuery.trim(), PAGE_SIZE, offset, phase);
     } else if (activeCategory !== 'All') {
-      result = await fetchSymbolsByCategory(activeCategory, PAGE_SIZE, offset);
+      result = await fetchSymbolsByCategory(activeCategory, PAGE_SIZE, offset, phase);
     } else {
-      result = await fetchSymbols(PAGE_SIZE, offset);
+      result = await fetchSymbols(PAGE_SIZE, offset, phase);
     }
 
     if (result.data) {
@@ -92,8 +96,16 @@ export default function DictionaryScreen() {
           return [...prev, ...newItems];
         });
       }
-      setHasMore(result.data.length === PAGE_SIZE);
-      offsetRef.current = offset + result.data.length;
+
+      if (result.data.length < PAGE_SIZE && !numericPhaseRef.current) {
+        // Alpha results exhausted — switch to numeric/special char phase
+        numericPhaseRef.current = true;
+        offsetRef.current = 0;
+        setHasMore(true);
+      } else {
+        setHasMore(result.data.length === PAGE_SIZE);
+        offsetRef.current = offset + result.data.length;
+      }
     }
 
     setLoading(false);
