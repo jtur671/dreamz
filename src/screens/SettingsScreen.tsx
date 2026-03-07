@@ -441,7 +441,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
 
         <View style={styles.legalRow}>
           <TouchableOpacity
-            onPress={() => Linking.openURL('https://[YOUR-PRIVACY-POLICY-URL]')}
+            onPress={() => Linking.openURL('https://jtur671.github.io/dreamz/privacy.html')}
             accessibilityRole="link"
             accessibilityLabel="Privacy Policy"
           >
