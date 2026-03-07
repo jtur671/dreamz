@@ -54,6 +54,7 @@ export async function updateZodiacSign(zodiacSign: string): Promise<boolean> {
  * Updates multiple profile fields at once
  */
 export async function updateProfile(updates: {
+  display_name?: string;
   zodiac_sign?: string;
   gender?: Gender;
   age_range?: AgeRange;

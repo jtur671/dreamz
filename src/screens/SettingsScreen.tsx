@@ -12,10 +12,11 @@ import {
   ActivityIndicator,
   Linking,
   Platform,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../lib/supabase';
-import { getProfile, updateZodiacSign } from '../lib/profileService';
+import { getProfile, updateZodiacSign, updateProfile } from '../lib/profileService';
 import { exportUserDreams, deleteUserAccount } from '../lib/accountService';
 import { fetchUserDreams, deleteDream } from '../lib/dreamService';
 import { getReadingsThisMonth, FREE_TIER_MONTHLY_LIMIT, checkPremiumAccess } from '../lib/purchaseService';
@@ -29,6 +30,9 @@ type SettingsScreenProps = {
 
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string>('');
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
   const [zodiacSign, setZodiacSign] = useState<string | null>(null);
   const [subscriptionTier, setSubscriptionTier] = useState<'free' | 'premium'>('free');
   const [readingsRemaining, setReadingsRemaining] = useState<number | null>(null);
@@ -48,6 +52,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
 
     const profile = await getProfile();
     if (profile) {
+      if (profile.display_name) setDisplayName(profile.display_name);
       if (profile.zodiac_sign) setZodiacSign(profile.zodiac_sign);
 
       const isPremium = profile.subscription_tier === 'premium' || await checkPremiumAccess();
@@ -58,6 +63,15 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         setReadingsRemaining(Math.max(0, FREE_TIER_MONTHLY_LIMIT - used));
       }
     }
+  }
+
+  async function handleSaveName() {
+    const trimmed = nameInput.trim();
+    const success = await updateProfile({ display_name: trimmed || '' });
+    if (success) {
+      setDisplayName(trimmed);
+    }
+    setEditingName(false);
   }
 
   async function handleZodiacSelect(sign: string) {
@@ -318,6 +332,41 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             <Text style={styles.value}>{userEmail || 'Loading...'}</Text>
           </View>
 
+          {editingName ? (
+            <View style={[styles.card, styles.nameEditRow]}>
+              <TextInput
+                style={styles.nameInput}
+                value={nameInput}
+                onChangeText={setNameInput}
+                placeholder="Enter your name"
+                placeholderTextColor="#8b7fa8"
+                autoFocus
+                maxLength={50}
+                onSubmitEditing={handleSaveName}
+                returnKeyType="done"
+              />
+              <TouchableOpacity onPress={handleSaveName}>
+                <Text style={styles.editText}>Save</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setEditingName(false)}>
+                <Text style={styles.cancelInlineText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.card, styles.cardButton]}
+              onPress={() => { setNameInput(displayName); setEditingName(true); }}
+              accessibilityRole="button"
+              accessibilityLabel={`Display Name: ${displayName || 'Not set'}. Tap to edit.`}
+            >
+              <View>
+                <Text style={styles.label}>Display Name</Text>
+                <Text style={styles.value}>{displayName || 'Not set'}</Text>
+              </View>
+              <Text style={styles.editText}>Edit</Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity
             testID="settings-zodiac-edit"
             style={[styles.card, styles.cardButton]}
@@ -502,6 +551,21 @@ const styles = StyleSheet.create({
   },
   editText: {
     color: '#9b7fd4',
+    fontSize: 14,
+  },
+  nameEditRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  nameInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#e0d4f7',
+    padding: 0,
+  },
+  cancelInlineText: {
+    color: '#8b7fa8',
     fontSize: 14,
   },
   label: {

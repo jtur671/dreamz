@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../lib/supabase';
+import { getProfile } from '../lib/profileService';
 
 type HomeScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -18,6 +19,16 @@ type HomeScreenProps = {
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const [lastDreamTitle, setLastDreamTitle] = useState<string | null>(null);
   const [dreamCount, setDreamCount] = useState(0);
+  const [displayName, setDisplayName] = useState<string | null>(null);
+
+  function getGreeting(): string {
+    const hour = new Date().getHours();
+    if (hour < 5) return 'Quiet hours';
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    if (hour < 21) return 'Good evening';
+    return 'Quiet hours';
+  }
 
   useFocusEffect(
     useCallback(() => {
@@ -26,16 +37,20 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) return;
 
-          const { data, count } = await supabase
-            .from('dreams')
-            .select('reading', { count: 'exact' })
-            .eq('user_id', user.id)
-            .is('deleted_at', null)
-            .order('created_at', { ascending: false })
-            .limit(1);
+          const [dreamResult, profile] = await Promise.all([
+            supabase
+              .from('dreams')
+              .select('reading', { count: 'exact' })
+              .eq('user_id', user.id)
+              .is('deleted_at', null)
+              .order('created_at', { ascending: false })
+              .limit(1),
+            getProfile(),
+          ]);
 
-          setLastDreamTitle(data?.[0]?.reading?.title || null);
-          setDreamCount(count || 0);
+          setLastDreamTitle(dreamResult.data?.[0]?.reading?.title || null);
+          setDreamCount(dreamResult.count || 0);
+          setDisplayName(profile?.display_name || null);
         } catch {
           // Silently handle errors - home screen stats are non-critical
         }
@@ -55,7 +70,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             <View style={styles.moonGlow}>
               <Text style={styles.moonIcon}>{'\u{1F319}'}</Text>
             </View>
-            <Text style={styles.greeting}>Welcome, Dreamer</Text>
+            <Text style={styles.greeting}>
+              {getGreeting()}, {displayName?.split(' ')[0] || 'Dreamer'}
+            </Text>
             <Text style={styles.subtitle}>What did you dream last night?</Text>
           </View>
 
