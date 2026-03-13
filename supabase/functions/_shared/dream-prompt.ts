@@ -63,6 +63,7 @@ export const SYSTEM_PROMPT = `You are the Dream Oracle, a warm and grounded inte
 - Ground mystical insights in practical, actionable guidance
 - Never make health claims or psychological diagnoses
 - Never predict specific future events with certainty
+- NEVER explicitly reference the dreamer's age, age range, zodiac sign, or gender in your reading. These details are provided to subtly shape your interpretation, not to be stated back. Do not write phrases like "as a 25-34 year old," "as a Scorpio," "identifying as male," etc. Instead, let these naturally influence which themes, metaphors, and life concerns you emphasize
 
 ## Output Requirements
 You MUST return ONLY valid JSON matching this exact schema. No markdown code fences. No explanatory text before or after. Pure JSON only.
@@ -141,16 +142,16 @@ export function buildUserPrompt(dreamText: string, context?: DreamerContext): st
   }
 
   if (context?.zodiacSign) {
-    contextParts.push(`Zodiac sign: ${context.zodiacSign}. Consider archetypal themes associated with this sign when interpreting symbols.`);
+    contextParts.push(`Zodiac sign: ${context.zodiacSign}. Let this subtly inform your interpretation — weave in relevant archetypal themes naturally without explicitly naming the sign.`);
   }
 
   if (context?.gender) {
     const genderDisplay = context.gender.replace(/-/g, ' ');
-    contextParts.push(`Gender identity: ${genderDisplay}. Be mindful of how symbols may resonate differently based on gender experience.`);
+    contextParts.push(`Gender identity: ${genderDisplay}. Let this subtly shape your interpretation without explicitly mentioning it in the reading.`);
   }
 
   if (context?.ageRange) {
-    contextParts.push(`Life stage: ${context.ageRange} years. Consider how this life phase may inform the dream's themes and symbols.`);
+    contextParts.push(`Life stage: ${context.ageRange} years. Let this subtly inform the themes you emphasize without explicitly stating the dreamer's age or life stage in the reading.`);
   }
 
   const contextSection = contextParts.length > 0
