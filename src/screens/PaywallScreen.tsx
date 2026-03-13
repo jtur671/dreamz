@@ -7,6 +7,7 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -310,9 +311,9 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
         </TouchableOpacity>
 
         <Text testID="paywall-legal-text" style={styles.legalText}>
-          Payment will be charged to your Apple ID account at confirmation of purchase.
+          Payment will be charged to your {Platform.OS === 'ios' ? 'Apple ID' : 'Google Play'} account at confirmation of purchase.
           Subscription automatically renews unless cancelled at least 24 hours before
-          the end of the current period. Manage subscriptions in your device Settings.
+          the end of the current period. Manage subscriptions in {Platform.OS === 'ios' ? 'your device Settings' : 'Google Play Store settings'}.
         </Text>
       </ScrollView>
     </SafeAreaView>
