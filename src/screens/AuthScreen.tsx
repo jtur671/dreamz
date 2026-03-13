@@ -24,12 +24,16 @@ export function setOnNewUserSignup(callback: (() => void) | null) {
   onNewUserSignup = callback;
 }
 
+const OAUTH_TIMEOUT_MS = 60000;
+const RETRY_HINT_DELAY_MS = 10000;
+
 export default function AuthScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showRetryHint, setShowRetryHint] = useState(false);
 
   async function handleEmailAuth() {
     const trimmedEmail = email.trim();
@@ -111,8 +115,11 @@ export default function AuthScreen() {
   }
 
   async function handleGoogleSignIn() {
+    let retryHintTimer: NodeJS.Timeout | null = null;
+
     try {
       setLoading(true);
+      setShowRetryHint(false);
 
       const redirectUrl = AuthSession.makeRedirectUri({
         scheme: 'dreamz',
@@ -133,10 +140,36 @@ export default function AuthScreen() {
       }
 
       if (data?.url) {
-        const result = await WebBrowser.openAuthSessionAsync(
-          data.url,
-          redirectUrl
+        // Show retry hint after 10s of waiting
+        retryHintTimer = setTimeout(() => setShowRetryHint(true), RETRY_HINT_DELAY_MS);
+
+        // Race the auth session against a timeout
+        const timeoutPromise = new Promise<{ type: 'timeout' }>((resolve) =>
+          setTimeout(() => resolve({ type: 'timeout' }), OAUTH_TIMEOUT_MS)
         );
+
+        const result = await Promise.race([
+          WebBrowser.openAuthSessionAsync(data.url, redirectUrl),
+          timeoutPromise,
+        ]);
+
+        if (result.type === 'timeout') {
+          WebBrowser.dismissBrowser();
+          Alert.alert(
+            'Sign In Timed Out',
+            'Google sign-in took too long. Would you like to try again?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Retry', onPress: () => handleGoogleSignIn() },
+            ]
+          );
+          return;
+        }
+
+        if (result.type === 'cancel' || result.type === 'dismiss') {
+          // User cancelled or dismissed - silently clear loading
+          return;
+        }
 
         if (result.type === 'success' && result.url) {
           const params = new URL(result.url).hash.substring(1);
@@ -172,7 +205,9 @@ export default function AuthScreen() {
     } catch (error: any) {
       Alert.alert('Google Sign In Error', error.message || 'An error occurred');
     } finally {
+      if (retryHintTimer) clearTimeout(retryHintTimer);
       setLoading(false);
+      setShowRetryHint(false);
     }
   }
 
@@ -209,6 +244,17 @@ export default function AuthScreen() {
             >
               <Text style={styles.googleButtonText}>Continue with Google</Text>
             </TouchableOpacity>
+
+            {showRetryHint && (
+              <TouchableOpacity
+                style={styles.retryHint}
+                onPress={handleGoogleSignIn}
+                accessibilityRole="button"
+                accessibilityLabel="Taking too long? Tap to retry"
+              >
+                <Text style={styles.retryHintText}>Taking too long? Tap to retry</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.divider}>
@@ -402,6 +448,16 @@ const styles = StyleSheet.create({
   switchText: {
     color: '#a89cc8',
     fontSize: 14,
+  },
+  retryHint: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    marginTop: 8,
+  },
+  retryHintText: {
+    color: '#9b7fd4',
+    fontSize: 14,
+    fontWeight: '500',
   },
   privacyNote: {
     color: '#6b5b8a',

@@ -14,6 +14,7 @@ import {
   getOfferings,
   purchasePremium,
   restorePurchases,
+  isPurchasesConfigured,
 } from '../lib/purchaseService';
 import { updateProfile } from '../lib/profileService';
 import type { PurchasesPackage, PurchasesOffering, PACKAGE_TYPE } from 'react-native-purchases';
@@ -232,32 +233,65 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
           <View testID="paywall-pricing-fallback" style={styles.pricingContainer}>
             {/* Fallback plan cards when RevenueCat is unavailable */}
             <View style={styles.planSelector}>
-              <View style={[styles.planCard, styles.planCardSelected]}>
-                <Text style={[styles.planLabel, styles.planLabelSelected]}>Monthly</Text>
-                <Text style={[styles.planPrice, styles.planPriceSelected]}>$4.99</Text>
-                <Text style={[styles.planPeriod, styles.planPeriodSelected]}>/month</Text>
-              </View>
-              <View style={[styles.planCard]}>
+              <TouchableOpacity
+                testID="paywall-fallback-monthly"
+                style={[styles.planCard, selectedPlan === 'monthly' && styles.planCardSelected]}
+                onPress={() => setSelectedPlan('monthly')}
+                accessibilityRole="button"
+                accessibilityLabel="Monthly plan"
+                accessibilityState={{ selected: selectedPlan === 'monthly' }}
+              >
+                <Text style={[styles.planLabel, selectedPlan === 'monthly' && styles.planLabelSelected]}>Monthly</Text>
+                <Text style={[styles.planPrice, selectedPlan === 'monthly' && styles.planPriceSelected]}>$4.99</Text>
+                <Text style={[styles.planPeriod, selectedPlan === 'monthly' && styles.planPeriodSelected]}>/month</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                testID="paywall-fallback-annual"
+                style={[styles.planCard, selectedPlan === 'annual' && styles.planCardSelected]}
+                onPress={() => setSelectedPlan('annual')}
+                accessibilityRole="button"
+                accessibilityLabel="Annual plan, save 50 percent"
+                accessibilityState={{ selected: selectedPlan === 'annual' }}
+              >
                 <View style={styles.saveBadge}>
                   <Text style={styles.saveBadgeText}>Save 50%</Text>
                 </View>
-                <Text style={styles.planLabel}>Annual</Text>
-                <Text style={styles.planPrice}>$29.99</Text>
-                <Text style={styles.planPeriod}>/year</Text>
-              </View>
+                <Text style={[styles.planLabel, selectedPlan === 'annual' && styles.planLabelSelected]}>Annual</Text>
+                <Text style={[styles.planPrice, selectedPlan === 'annual' && styles.planPriceSelected]}>$29.99</Text>
+                <Text style={[styles.planPeriod, selectedPlan === 'annual' && styles.planPeriodSelected]}>/year</Text>
+              </TouchableOpacity>
             </View>
-            <Text testID="paywall-unavailable-text" style={styles.unavailableText}>
-              Unable to load subscription options. Please check your connection and try again.
-            </Text>
-            <TouchableOpacity
-              testID="paywall-retry-button"
-              style={[styles.purchaseButton, { marginTop: 16 }]}
-              onPress={loadOfferings}
-              accessibilityRole="button"
-              accessibilityLabel="Retry loading subscriptions"
-            >
-              <Text style={styles.purchaseButtonText}>Retry</Text>
-            </TouchableOpacity>
+            {!isPurchasesConfigured() ? (
+              <>
+                <Text testID="paywall-unavailable-text" style={styles.unavailableText}>
+                  Android subscriptions are coming soon. Stay tuned for premium access on this platform.
+                </Text>
+                <TouchableOpacity
+                  testID="paywall-android-ok-button"
+                  style={[styles.purchaseButton, { marginTop: 16 }]}
+                  onPress={() => navigation.goBack()}
+                  accessibilityRole="button"
+                  accessibilityLabel="Got it"
+                >
+                  <Text style={styles.purchaseButtonText}>Got It</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <Text testID="paywall-unavailable-text" style={styles.unavailableText}>
+                  Unable to load subscription options. Please check your connection and try again.
+                </Text>
+                <TouchableOpacity
+                  testID="paywall-retry-button"
+                  style={[styles.purchaseButton, { marginTop: 16 }]}
+                  onPress={loadOfferings}
+                  accessibilityRole="button"
+                  accessibilityLabel="Retry loading subscriptions"
+                >
+                  <Text style={styles.purchaseButtonText}>Retry</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         )}
 
