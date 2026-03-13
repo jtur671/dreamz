@@ -34,7 +34,7 @@ const NIGHTMARE_MOODS = ['Anxious', 'Fearful', 'Trapped', 'Chased', 'Confused', 
 export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   const [dreamText, setDreamText] = useState('');
   const [dreamType, setDreamType] = useState<'dream' | 'nightmare'>('dream');
-  const [mood, setMood] = useState<string | null>(null);
+  const [moods, setMoods] = useState<string[]>([]);
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [loadingState, setLoadingState] = useState<LoadingState>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -69,13 +69,15 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
         setDreamText(draft.dreamText);
         setDreamType(draft.dreamType);
         if (draft.mood) {
-          setMood(draft.mood);
+          setMoods(draft.mood.split(', ').filter(Boolean));
         }
         setHasDraftRecovered(true);
       }
     }
     initialize();
   }, []);
+
+  const moodString = moods.length > 0 ? moods.join(', ') : undefined;
 
   // Auto-save draft with debounce
   const autoSaveDraft = useCallback(() => {
@@ -85,10 +87,10 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
     draftTimeoutRef.current = setTimeout(() => {
       if (dreamText.trim()) {
-        saveDraft({ dreamText, dreamType, mood: mood || undefined });
+        saveDraft({ dreamText, dreamType, mood: moodString });
       }
     }, 1000); // Save after 1 second of inactivity
-  }, [dreamText, dreamType, mood]);
+  }, [dreamText, dreamType, moodString]);
 
   useEffect(() => {
     autoSaveDraft();
@@ -105,7 +107,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
       return;
     }
 
-    if (!mood) {
+    if (moods.length === 0) {
       Alert.alert('Error', 'Please select how your dream felt');
       return;
     }
@@ -124,7 +126,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     if (!dreamId) {
       setLoadingState('saving');
 
-      const saveResult = await saveDream(dreamText.trim(), mood || undefined, dreamType);
+      const saveResult = await saveDream(dreamText.trim(), moodString, dreamType);
 
       if (!saveResult.success) {
         setLoadingState('error');
@@ -142,7 +144,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
     const analyzeContext: AnalyzeDreamContext = {
       dreamId,
-      mood: mood || undefined,
+      mood: moodString,
       zodiacSign: userProfile?.zodiac_sign,
       gender: userProfile?.gender,
       ageRange: userProfile?.age_range,
@@ -201,7 +203,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
     const retryContext: AnalyzeDreamContext = {
       dreamId,
-      mood: mood || undefined,
+      mood: moodString,
       zodiacSign: userProfile?.zodiac_sign,
       gender: userProfile?.gender,
       ageRange: userProfile?.age_range,
@@ -311,7 +313,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                 <TouchableOpacity testID="new-dream-draft-clear" accessibilityRole="button" accessibilityLabel="Clear recovered draft" onPress={() => {
                   setDreamText('');
                   setDreamType('dream');
-                  setMood(null);
+                  setMoods([]);
                   setHasDraftRecovered(false);
                   setSavedDreamId(null);
                   clearDraft();
@@ -328,7 +330,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                   styles.dreamTypeButton,
                   dreamType === 'dream' && styles.dreamTypeButtonSelected,
                 ]}
-                onPress={() => { setDreamType('dream'); setMood(null); }}
+                onPress={() => { setDreamType('dream'); setMoods([]); }}
                 disabled={isLoading}
                 accessibilityRole="button"
                 accessibilityLabel="Dream"
@@ -352,7 +354,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                   styles.dreamTypeButton,
                   dreamType === 'nightmare' && styles.nightmareTypeButtonSelected,
                 ]}
-                onPress={() => { setDreamType('nightmare'); setMood(null); }}
+                onPress={() => { setDreamType('nightmare'); setMoods([]); }}
                 disabled={isLoading}
                 accessibilityRole="button"
                 accessibilityLabel="Nightmare"
@@ -374,9 +376,10 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
             <View style={styles.moodContainer}>
               <Text style={styles.moodLabel}>How did it feel?</Text>
+              <Text style={styles.moodHint}>(select up to 3)</Text>
               <View style={styles.moodChips}>
                 {(dreamType === 'nightmare' ? NIGHTMARE_MOODS : DREAM_MOODS).map((option) => {
-                  const selected = mood === option;
+                  const selected = moods.includes(option);
                   return (
                     <TouchableOpacity
                       key={option}
@@ -387,7 +390,13 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                         selected && (dreamType === 'nightmare' ? styles.nightmareMoodChipSelected : styles.moodChipSelected),
                       ]}
                       onPress={() =>
-                        setMood((current) => (current === option ? null : option))
+                        setMoods((current) => {
+                          if (current.includes(option)) {
+                            return current.filter((m) => m !== option);
+                          }
+                          if (current.length >= 3) return current;
+                          return [...current, option];
+                        })
                       }
                       disabled={isLoading}
                       accessibilityLabel={`Mood ${option}`}
@@ -558,8 +567,13 @@ const styles = StyleSheet.create({
   moodLabel: {
     fontSize: 14,
     color: '#a89cc8',
-    marginBottom: 8,
+    marginBottom: 2,
     fontWeight: '600',
+  },
+  moodHint: {
+    fontSize: 12,
+    color: '#6b5b8a',
+    marginBottom: 8,
   },
   moodChips: {
     flexDirection: 'row',

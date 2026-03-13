@@ -18,6 +18,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import ViewShot from 'react-native-view-shot';
 import type { DreamReading, DreamSymbol } from '../types';
 import { generateDreamImage } from '../lib/dreamService';
+import PaintBrushAnimation from '../components/PaintBrushAnimation';
 
 type ReadingScreenParams = {
   reading: DreamReading;
@@ -214,10 +215,7 @@ Interpreted with Dreamz`;
           </View>
         ) : !fromGrimoire && dreamText ? (
           <View style={styles.imageContainer}>
-            <View style={[styles.dreamImage, styles.imagePlaceholder]}>
-              <ActivityIndicator size="small" color="#6b4e9e" />
-              <Text style={styles.imagePlaceholderText}>Painting your dream...</Text>
-            </View>
+            <PaintBrushAnimation />
           </View>
         ) : null)}
 
@@ -393,17 +391,6 @@ const styles = StyleSheet.create({
     width: screenWidth,
     height: screenWidth * 0.75,
     backgroundColor: '#252542',
-  },
-  imagePlaceholder: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#1e1e3a',
-  },
-  imagePlaceholderText: {
-    color: '#6b5b8a',
-    fontSize: 13,
-    marginTop: 8,
-    fontStyle: 'italic',
   },
   imageOverlay: {
     position: 'absolute',

@@ -12,6 +12,9 @@ const REVENUECAT_API_KEY_ANDROID = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_AN
 
 const ENTITLEMENT_ID = 'premium';
 
+// Track whether RevenueCat was successfully configured
+let purchasesConfigured = false;
+
 /**
  * Initialize RevenueCat SDK. Call once on app start.
  */
@@ -20,6 +23,7 @@ export async function initPurchases(): Promise<void> {
 
   if (!apiKey) {
     console.warn('RevenueCat API key not configured for', Platform.OS);
+    purchasesConfigured = false;
     return;
   }
 
@@ -28,6 +32,14 @@ export async function initPurchases(): Promise<void> {
   }
 
   await Purchases.configure({ apiKey });
+  purchasesConfigured = true;
+}
+
+/**
+ * Whether RevenueCat SDK is configured (API key present and initialized).
+ */
+export function isPurchasesConfigured(): boolean {
+  return purchasesConfigured;
 }
 
 /**
@@ -46,6 +58,9 @@ export async function checkPremiumAccess(): Promise<boolean> {
  * Get available offerings (products + pricing).
  */
 export async function getOfferings(): Promise<PurchasesOffering | null> {
+  if (!purchasesConfigured) {
+    return null;
+  }
   try {
     const offerings = await Purchases.getOfferings();
     return offerings.current;
