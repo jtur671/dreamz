@@ -57,14 +57,14 @@ describe('Paywall Screen', () => {
     // On simulator, RevenueCat returns null → fallback with static prices
     // Check for fallback pricing text; if live pricing loaded, check plan cards
     const match = await waitForAnyVisible(
-      [{ text: '$4.99' }, { id: 'paywall-plan-monthly' }],
+      [{ text: '$5.99' }, { id: 'paywall-plan-monthly' }],
       10000,
     );
 
     if (match === 0) {
       // Fallback UI
-      await expect(element(by.text('$4.99'))).toBeVisible();
-      await expect(element(by.text('$29.99'))).toBeVisible();
+      await expect(element(by.text('$5.99'))).toBeVisible();
+      await expect(element(by.text('$35.99'))).toBeVisible();
     } else {
       // Live pricing from RevenueCat
       await expect(element(by.id('paywall-plan-monthly'))).toBeVisible();

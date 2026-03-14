@@ -59,26 +59,34 @@ interface OpenAIResponse {
 // ============================================================================
 
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
-const OPENAI_MODEL = "gpt-5-mini";
 const MAX_RETRIES = 2; // Initial attempt + 1 retry
-const REQUEST_TIMEOUT_MS = 45000; // Increased: gpt-5-mini is a reasoning model and needs more time
 const MAX_DREAM_TEXT_LENGTH = 10000;
 const MIN_DREAM_TEXT_LENGTH = 10;
-const FREE_TIER_MONTHLY_LIMIT = 3;
+
+// Tiered AI model configuration: free users get nano (cheaper/faster),
+// premium users get mini (deeper reasoning)
+const MODEL_CONFIG = {
+  free: { model: "gpt-5-nano", maxCompletionTokens: 4000, timeoutMs: 30000 },
+  premium: { model: "gpt-5-mini", maxCompletionTokens: 4000, timeoutMs: 45000 },
+} as const;
+
+type SubscriptionTier = keyof typeof MODEL_CONFIG;
+
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
 
 /**
- * Calls the OpenAI API with the given messages
+ * Calls the OpenAI API with the given messages using tier-appropriate model config
  */
 async function callOpenAI(
   messages: OpenAIMessage[],
-  apiKey: string
+  apiKey: string,
+  config: typeof MODEL_CONFIG[SubscriptionTier]
 ): Promise<string> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), config.timeoutMs);
 
   try {
     const response = await fetch(OPENAI_API_URL, {
@@ -88,13 +96,9 @@ async function callOpenAI(
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: OPENAI_MODEL,
+        model: config.model,
         messages,
-        // gpt-5-mini is a reasoning model: tokens are split between internal reasoning
-        // (chain-of-thought, not returned) and the actual output. 1200 was only enough
-        // for reasoning, leaving nothing for the JSON content. 4000 provides sufficient
-        // headroom for ~1000 tokens of reasoning + ~800 tokens of JSON output.
-        max_completion_tokens: 4000,
+        max_completion_tokens: config.maxCompletionTokens,
       }),
       signal: controller.signal,
     });
@@ -344,34 +348,16 @@ Deno.serve(async (req: Request) => {
 
     const { dream_text, mood, dream_id, zodiac_sign, gender, age_range } = validation.data;
 
-    // Check reading limit for free tier users
+    // Determine subscription tier for model selection
     const { data: profile } = await supabase
       .from("profiles")
       .select("subscription_tier")
       .eq("id", user.id)
       .single();
 
-    if (profile?.subscription_tier !== "premium") {
-      const firstOfMonth = new Date();
-      firstOfMonth.setDate(1);
-      firstOfMonth.setHours(0, 0, 0, 0);
-
-      const { count } = await supabase
-        .from("dreams")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .gte("created_at", firstOfMonth.toISOString())
-        .is("deleted_at", null)
-        .not("reading", "is", null);
-
-      if ((count ?? 0) >= FREE_TIER_MONTHLY_LIMIT) {
-        return errorResponse(
-          "READING_LIMIT_REACHED",
-          "You've reached your 3 free readings this month. Upgrade to Premium for unlimited readings.",
-          403
-        );
-      }
-    }
+    const tier: SubscriptionTier = profile?.subscription_tier === "premium" ? "premium" : "free";
+    const modelConfig = MODEL_CONFIG[tier];
+    console.log(`[${correlationId}] Using model ${modelConfig.model} for ${tier} tier`);
 
     // Build dreamer context for personalized interpretation
     const dreamerContext: DreamerContext = {
@@ -394,8 +380,8 @@ Deno.serve(async (req: Request) => {
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
-        console.log(`[${correlationId}] OpenAI attempt ${attempt + 1}/${MAX_RETRIES}`);
-        const aiResponse = await callOpenAI(messages, openaiApiKey);
+        console.log(`[${correlationId}] OpenAI attempt ${attempt + 1}/${MAX_RETRIES} (${modelConfig.model})`);
+        const aiResponse = await callOpenAI(messages, openaiApiKey, modelConfig);
         reading = parseAIResponse(aiResponse);
 
         if (reading) {

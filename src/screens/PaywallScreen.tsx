@@ -32,18 +32,18 @@ type PaywallScreenProps = {
 type PlanType = 'monthly' | 'annual';
 
 const FREE_FEATURES = [
-  '3 readings per month',
+  'Unlimited readings',
   'Dream journal',
-  'Symbol insights',
+  'Standard AI model',
   'Grimoire access',
 ];
 
 const PREMIUM_FEATURES = [
-  'Unlimited readings',
-  'Advanced insights',
+  'Deeper AI readings',
+  'Dream imagery',
+  'Ad-free experience',
   'Pattern tracking',
   'Export features',
-  'Priority support',
 ];
 
 export default function PaywallScreen({ navigation, route }: PaywallScreenProps) {
@@ -130,7 +130,7 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
 
         <Text testID="paywall-title" style={styles.title}>Unlock the Full Oracle</Text>
         <Text style={styles.subtitle}>
-          Unlimited readings await beyond the veil
+          Deeper readings, dream imagery & no ads
         </Text>
 
         {/* Feature comparison */}
@@ -243,7 +243,7 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
                 accessibilityState={{ selected: selectedPlan === 'monthly' }}
               >
                 <Text style={[styles.planLabel, selectedPlan === 'monthly' && styles.planLabelSelected]}>Monthly</Text>
-                <Text style={[styles.planPrice, selectedPlan === 'monthly' && styles.planPriceSelected]}>$4.99</Text>
+                <Text style={[styles.planPrice, selectedPlan === 'monthly' && styles.planPriceSelected]}>$5.99</Text>
                 <Text style={[styles.planPeriod, selectedPlan === 'monthly' && styles.planPeriodSelected]}>/month</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -258,7 +258,7 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
                   <Text style={styles.saveBadgeText}>Save 50%</Text>
                 </View>
                 <Text style={[styles.planLabel, selectedPlan === 'annual' && styles.planLabelSelected]}>Annual</Text>
-                <Text style={[styles.planPrice, selectedPlan === 'annual' && styles.planPriceSelected]}>$29.99</Text>
+                <Text style={[styles.planPrice, selectedPlan === 'annual' && styles.planPriceSelected]}>$35.99</Text>
                 <Text style={[styles.planPeriod, selectedPlan === 'annual' && styles.planPeriodSelected]}>/year</Text>
               </TouchableOpacity>
             </View>

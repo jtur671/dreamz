@@ -108,7 +108,7 @@ export default function OnboardingScreen() {
         onPress={() => setSelectedTier('free')}
         activeOpacity={0.8}
         accessibilityRole="button"
-        accessibilityLabel="Free plan — 3 readings per month"
+        accessibilityLabel="Free plan — Unlimited readings"
         accessibilityState={{ selected: selectedTier === 'free' }}
       >
         {selectedTier === 'free' && (
@@ -119,9 +119,9 @@ export default function OnboardingScreen() {
         <Text style={styles.tierName}>Free</Text>
         <Text style={styles.tierDescription}>Begin your dream exploration</Text>
         <View style={styles.tierFeatures}>
-          <Text style={styles.tierFeature}>3 readings per month</Text>
+          <Text style={styles.tierFeature}>Unlimited readings</Text>
           <Text style={styles.tierFeature}>Dream journal</Text>
-          <Text style={styles.tierFeature}>Symbol insights</Text>
+          <Text style={styles.tierFeature}>Standard AI model</Text>
           <Text style={styles.tierFeature}>Grimoire access</Text>
         </View>
       </TouchableOpacity>
@@ -136,7 +136,7 @@ export default function OnboardingScreen() {
         onPress={() => setSelectedTier('premium')}
         activeOpacity={0.8}
         accessibilityRole="button"
-        accessibilityLabel="Premium plan — unlimited readings, $4.99 per month or $29.99 per year"
+        accessibilityLabel="Premium plan — deeper readings, dream imagery, no ads, $5.99 per month or $35.99 per year"
         accessibilityState={{ selected: selectedTier === 'premium' }}
       >
         {selectedTier === 'premium' ? (
@@ -145,17 +145,17 @@ export default function OnboardingScreen() {
           </View>
         ) : (
           <View style={styles.pricingBadge}>
-            <Text style={styles.pricingBadgeText}>From $2.50/mo</Text>
+            <Text style={styles.pricingBadgeText}>From $3.00/mo</Text>
           </View>
         )}
         <Text style={styles.tierName}>Premium</Text>
         <Text style={styles.tierDescription}>Unlock deeper mysteries</Text>
-        <Text style={styles.tierPricing}>$4.99/mo or $29.99/yr</Text>
+        <Text style={styles.tierPricing}>$5.99/mo or $35.99/yr</Text>
         <View style={styles.tierFeatures}>
-          <Text style={[styles.tierFeature, styles.premiumFeature]}>Unlimited readings</Text>
-          <Text style={[styles.tierFeature, styles.premiumFeature]}>Advanced insights</Text>
+          <Text style={[styles.tierFeature, styles.premiumFeature]}>Deeper AI readings</Text>
+          <Text style={[styles.tierFeature, styles.premiumFeature]}>Dream imagery</Text>
+          <Text style={[styles.tierFeature, styles.premiumFeature]}>Ad-free experience</Text>
           <Text style={[styles.tierFeature, styles.premiumFeature]}>Pattern tracking</Text>
-          <Text style={[styles.tierFeature, styles.premiumFeature]}>Export features</Text>
         </View>
       </TouchableOpacity>
 
