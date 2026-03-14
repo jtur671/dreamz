@@ -19,7 +19,7 @@ import { supabase } from '../lib/supabase';
 import { getProfile, updateZodiacSign, updateProfile } from '../lib/profileService';
 import { exportUserDreams, deleteUserAccount } from '../lib/accountService';
 import { fetchUserDreams, deleteDream } from '../lib/dreamService';
-import { getReadingsThisMonth, FREE_TIER_MONTHLY_LIMIT, checkPremiumAccess } from '../lib/purchaseService';
+import { checkPremiumAccess } from '../lib/purchaseService';
 import { ZODIAC_SIGNS } from '../types';
 import type { Dream } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -35,7 +35,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [nameInput, setNameInput] = useState('');
   const [zodiacSign, setZodiacSign] = useState<string | null>(null);
   const [subscriptionTier, setSubscriptionTier] = useState<'free' | 'premium'>('free');
-  const [readingsRemaining, setReadingsRemaining] = useState<number | null>(null);
   const [showZodiacPicker, setShowZodiacPicker] = useState(false);
   const [showDreamPicker, setShowDreamPicker] = useState(false);
   const [dreams, setDreams] = useState<Dream[]>([]);
@@ -57,11 +56,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
 
       const isPremium = profile.subscription_tier === 'premium' || await checkPremiumAccess();
       setSubscriptionTier(isPremium ? 'premium' : 'free');
-
-      if (!isPremium) {
-        const used = await getReadingsThisMonth(supabase);
-        setReadingsRemaining(Math.max(0, FREE_TIER_MONTHLY_LIMIT - used));
-      }
     }
   }
 
@@ -394,26 +388,16 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           </View>
 
           {subscriptionTier === 'free' ? (
-            <>
-              {readingsRemaining !== null && (
-                <View style={styles.card}>
-                  <Text style={styles.label}>Readings This Month</Text>
-                  <Text style={styles.value}>
-                    {readingsRemaining} of {FREE_TIER_MONTHLY_LIMIT} remaining
-                  </Text>
-                </View>
-              )}
-              <TouchableOpacity
-                testID="settings-upgrade-button"
-                style={[styles.menuItem, styles.upgradeItem]}
-                onPress={() => (navigation as any).navigate('Paywall', { source: 'settings' })}
-                accessibilityRole="button"
-                accessibilityLabel="Upgrade to Premium"
-              >
-                <Text style={styles.upgradeText}>Upgrade to Premium</Text>
-                <Text style={styles.menuItemSubtext}>Unlimited readings from the oracle</Text>
-              </TouchableOpacity>
-            </>
+            <TouchableOpacity
+              testID="settings-upgrade-button"
+              style={[styles.menuItem, styles.upgradeItem]}
+              onPress={() => (navigation as any).navigate('Paywall', { source: 'settings' })}
+              accessibilityRole="button"
+              accessibilityLabel="Upgrade to Premium"
+            >
+              <Text style={styles.upgradeText}>Upgrade to Premium</Text>
+              <Text style={styles.menuItemSubtext}>Deeper readings, dream imagery & no ads</Text>
+            </TouchableOpacity>
           ) : (
             <TouchableOpacity
               testID="settings-manage-subscription"

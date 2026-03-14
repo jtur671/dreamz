@@ -1,4 +1,4 @@
-// Load .env so test helpers (e.g. resetTestReadingLimit) can access Supabase vars
+// Load .env so test helpers (e.g. setTestAccountPremium) can access Supabase vars
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 
 /** @type {import('@jest/types').Config.InitialOptions} */

@@ -25,13 +25,15 @@ type ReadingScreenParams = {
   dreamId: string;
   dreamText?: string;
   fromGrimoire?: boolean;
+  subscriptionTier?: 'free' | 'premium';
 };
 
 export default function ReadingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const route = useRoute();
   const params = route.params as ReadingScreenParams;
-  const { reading, dreamText, fromGrimoire = false } = params;
+  const { reading, dreamText, fromGrimoire = false, subscriptionTier } = params;
+  const isPremium = subscriptionTier === 'premium' || fromGrimoire;
   const [imageFailed, setImageFailed] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(reading.image_url || null);
 
@@ -40,9 +42,9 @@ export default function ReadingScreen() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [showDreamText, setShowDreamText] = useState(false);
 
-  // Lazy-load dream image if not already present
+  // Lazy-load dream image if not already present (premium only)
   useEffect(() => {
-    if (imageUrl || !dreamText || !params.dreamId) return;
+    if (!isPremium || imageUrl || !dreamText || !params.dreamId) return;
 
     const symbolName = reading.symbols?.[0]?.name;
     generateDreamImage(params.dreamId, dreamText, symbolName).then((result) => {
@@ -50,7 +52,7 @@ export default function ReadingScreen() {
         setImageUrl(result.image_url);
       }
     });
-  }, [imageUrl, dreamText, params.dreamId, reading.symbols]);
+  }, [isPremium, imageUrl, dreamText, params.dreamId, reading.symbols]);
 
   function handleViewInGrimoire() {
     // Navigate to Grimoire tab - reset to top of stack first, then go to Grimoire
@@ -202,8 +204,8 @@ Interpreted with Dreamz`;
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Dream Image (lazy-loaded) */}
-        {!imageFailed && (imageUrl ? (
+        {/* Dream Image (lazy-loaded, premium only) */}
+        {isPremium && !imageFailed && (imageUrl ? (
           <View style={styles.imageContainer}>
             <Image
               source={{ uri: imageUrl }}

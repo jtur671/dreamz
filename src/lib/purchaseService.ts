@@ -22,17 +22,20 @@ export async function initPurchases(): Promise<void> {
   const apiKey = Platform.OS === 'ios' ? REVENUECAT_API_KEY_IOS : REVENUECAT_API_KEY_ANDROID;
 
   if (!apiKey) {
-    console.warn('RevenueCat API key not configured for', Platform.OS);
+    console.warn('[RevenueCat] API key not configured for', Platform.OS);
     purchasesConfigured = false;
     return;
   }
 
-  if (__DEV__) {
-    Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+  try {
+    Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.DEBUG : LOG_LEVEL.INFO);
+    await Purchases.configure({ apiKey });
+    purchasesConfigured = true;
+    console.log('[RevenueCat] Configured successfully');
+  } catch (error) {
+    console.error('[RevenueCat] Configure failed:', error);
+    purchasesConfigured = false;
   }
-
-  await Purchases.configure({ apiKey });
-  purchasesConfigured = true;
 }
 
 /**
@@ -59,12 +62,17 @@ export async function checkPremiumAccess(): Promise<boolean> {
  */
 export async function getOfferings(): Promise<PurchasesOffering | null> {
   if (!purchasesConfigured) {
+    console.warn('[RevenueCat] getOfferings skipped — SDK not configured');
     return null;
   }
   try {
     const offerings = await Purchases.getOfferings();
+    if (!offerings.current) {
+      console.warn('[RevenueCat] No current offering — check RevenueCat dashboard: products, entitlements, and offerings must all be configured');
+    }
     return offerings.current;
-  } catch {
+  } catch (error) {
+    console.error('[RevenueCat] getOfferings failed:', error);
     return null;
   }
 }
@@ -100,26 +108,3 @@ export async function restorePurchases(): Promise<{ success: boolean; isPremium:
   }
 }
 
-/**
- * Get the number of readings used this month by counting dreams.
- */
-export async function getReadingsThisMonth(supabaseClient: any): Promise<number> {
-  const now = new Date();
-  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
-  const { count, error } = await supabaseClient
-    .from('dreams')
-    .select('id', { count: 'exact', head: true })
-    .gte('created_at', firstOfMonth)
-    .is('deleted_at', null)
-    .not('reading', 'is', null);
-
-  if (error) {
-    console.error('Failed to count readings:', error.message);
-    return 0;
-  }
-
-  return count || 0;
-}
-
-export const FREE_TIER_MONTHLY_LIMIT = 3;

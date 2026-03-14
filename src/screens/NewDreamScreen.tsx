@@ -16,8 +16,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { saveDream, analyzeDream, AnalyzeDreamContext } from '../lib/dreamService';
 import { getProfile } from '../lib/profileService';
 import { saveDraft, loadDraft, clearDraft } from '../lib/draftService';
-import { getReadingsThisMonth, FREE_TIER_MONTHLY_LIMIT, checkPremiumAccess } from '../lib/purchaseService';
-import { supabase } from '../lib/supabase';
+import { checkPremiumAccess } from '../lib/purchaseService';
+import { preloadInterstitialAd, showInterstitialAd } from '../lib/adService';
 import VoiceRecorder from '../components/VoiceRecorder';
 import DreamLoadingAnimation from '../components/DreamLoadingAnimation';
 import type { Profile } from '../types';
@@ -40,7 +40,6 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasDraftRecovered, setHasDraftRecovered] = useState(false);
   const [savedDreamId, setSavedDreamId] = useState<string | null>(null);
-  const [readingsRemaining, setReadingsRemaining] = useState<number | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const draftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -54,12 +53,10 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
       if (profile) {
         setUserProfile(profile);
 
-        // Check reading limits
         const premium = profile.subscription_tier === 'premium' || await checkPremiumAccess();
         setIsPremium(premium);
         if (!premium) {
-          const used = await getReadingsThisMonth(supabase);
-          setReadingsRemaining(Math.max(0, FREE_TIER_MONTHLY_LIMIT - used));
+          preloadInterstitialAd();
         }
       }
 
@@ -112,12 +109,6 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
       return;
     }
 
-    // Check reading limit before proceeding
-    if (!isPremium && readingsRemaining !== null && readingsRemaining <= 0) {
-      (navigation as any).navigate('Paywall', { source: 'limit' });
-      return;
-    }
-
     setErrorMessage(null);
 
     // Step 1: Save the dream (skip if already saved from a previous attempt)
@@ -150,15 +141,14 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
       ageRange: userProfile?.age_range,
     };
 
-    const analyzeResult = await analyzeDream(dreamText.trim(), analyzeContext);
+    // Start analysis; show interstitial ad for free users during the wait
+    const analyzePromise = analyzeDream(dreamText.trim(), analyzeContext);
+    if (!isPremium) {
+      try { await showInterstitialAd(); } catch { /* never block analysis */ }
+    }
+    const analyzeResult = await analyzePromise;
 
     if (!analyzeResult.success) {
-      // If the server-side limit was hit (stale client count), show Paywall
-      if (analyzeResult.error?.includes('READING_LIMIT_REACHED') || analyzeResult.error?.includes('3 free readings')) {
-        setLoadingState('idle');
-        (navigation as any).navigate('Paywall', { source: 'limit' });
-        return;
-      }
       setLoadingState('error');
       setErrorMessage(analyzeResult.error);
       // Dream was saved but analysis failed - offer to continue or retry
@@ -194,6 +184,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
       dreamId,
       dreamText: dreamText.trim(),
       alreadySaved: true,
+      subscriptionTier: isPremium ? 'premium' : 'free',
     });
   }
 
@@ -239,6 +230,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
       dreamId: dreamId,
       dreamText: dreamText.trim(),
       alreadySaved: true,
+      subscriptionTier: isPremium ? 'premium' : 'free',
     });
   }
 
@@ -284,28 +276,6 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
             <Text style={styles.subtitle}>
               Describe what you remember from your dream...
             </Text>
-
-            {!isPremium && readingsRemaining !== null && (
-              <View style={styles.readingsRemainingBanner}>
-                <Text style={[
-                  styles.readingsRemainingText,
-                  readingsRemaining === 0 && styles.readingsRemainingZero,
-                ]}>
-                  {readingsRemaining === 0
-                    ? 'No readings remaining this month'
-                    : `${readingsRemaining} reading${readingsRemaining === 1 ? '' : 's'} remaining this month`}
-                </Text>
-                {readingsRemaining === 0 && (
-                  <TouchableOpacity
-                    onPress={() => (navigation as any).navigate('Paywall', { source: 'limit' })}
-                    accessibilityRole="button"
-                    accessibilityLabel="Upgrade to Premium"
-                  >
-                    <Text style={styles.upgradeLink}>Upgrade to Premium</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
 
             {hasDraftRecovered && (
               <View style={styles.draftBanner}>
@@ -514,31 +484,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#a89cc8',
     marginBottom: 16,
-  },
-  readingsRemainingBanner: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#252542',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
-  },
-  readingsRemainingText: {
-    fontSize: 13,
-    color: '#a89cc8',
-  },
-  readingsRemainingZero: {
-    color: '#e07a7a',
-  },
-  upgradeLink: {
-    fontSize: 13,
-    color: '#9b7fd4',
-    fontWeight: '600',
-    marginLeft: 8,
   },
   draftBanner: {
     flexDirection: 'row',

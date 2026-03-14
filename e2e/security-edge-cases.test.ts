@@ -77,10 +77,8 @@ describe('Security & Edge Cases', () => {
     await tapById('home-record-button');
     await waitForVisible('new-dream-text-input', 5000);
     // Wait for NewDreamScreen's async initialize() to resolve.
-    // initialize() calls getProfile() + getReadingsThisMonth() (two network
-    // round-trips) then renders the readingsRemainingBanner ABOVE the mood
-    // chips.  If that banner renders mid-tap the native hit-test misses the
-    // chip due to the layout shift — adding a settle wait avoids the race.
+    // initialize() calls getProfile() + checkPremiumAccess() which can cause
+    // layout shifts — adding a settle wait avoids the race.
     await new Promise(r => setTimeout(r, 2000));
 
     // Select mood BEFORE typing so the chips are fully visible.

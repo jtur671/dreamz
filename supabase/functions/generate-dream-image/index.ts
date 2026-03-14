@@ -55,6 +55,21 @@ Deno.serve(async (req: Request) => {
       return errorResponse("UNAUTHORIZED", "Invalid or expired token", 401);
     }
 
+    // Only premium users can generate dream images
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("subscription_tier")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.subscription_tier !== "premium") {
+      return errorResponse(
+        "PREMIUM_REQUIRED",
+        "Dream imagery is a premium feature",
+        403
+      );
+    }
+
     let body: { dream_id: string; dream_text: string; symbol_name?: string };
     try {
       body = await req.json();

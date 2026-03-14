@@ -103,7 +103,7 @@ export default function App() {
 
   useEffect(() => {
     // Initialize RevenueCat
-    initPurchases().catch(() => {});
+    initPurchases().catch((e) => console.error('[App] initPurchases error:', e));
 
     // Set up callback for new user signup
     setOnNewUserSignup(() => {
