@@ -103,6 +103,7 @@ export default function OnboardingScreen() {
         style={[
           styles.tierCard,
           selectedTier === 'free' && styles.tierCardSelected,
+          selectedTier === 'premium' && styles.tierCardDimmed,
         ]}
         onPress={() => setSelectedTier('free')}
         activeOpacity={0.8}
@@ -129,8 +130,8 @@ export default function OnboardingScreen() {
         testID="onboarding-tier-premium"
         style={[
           styles.tierCard,
-          styles.tierCardPremium,
           selectedTier === 'premium' && styles.tierCardSelected,
+          selectedTier === 'free' && styles.tierCardDimmed,
         ]}
         onPress={() => setSelectedTier('premium')}
         activeOpacity={0.8}
@@ -138,9 +139,15 @@ export default function OnboardingScreen() {
         accessibilityLabel="Premium plan — unlimited readings, $4.99 per month or $29.99 per year"
         accessibilityState={{ selected: selectedTier === 'premium' }}
       >
-        <View style={styles.pricingBadge}>
-          <Text style={styles.pricingBadgeText}>From $2.50/mo</Text>
-        </View>
+        {selectedTier === 'premium' ? (
+          <View style={styles.selectedBadge}>
+            <Text style={styles.selectedBadgeText}>Selected</Text>
+          </View>
+        ) : (
+          <View style={styles.pricingBadge}>
+            <Text style={styles.pricingBadgeText}>From $2.50/mo</Text>
+          </View>
+        )}
         <Text style={styles.tierName}>Premium</Text>
         <Text style={styles.tierDescription}>Unlock deeper mysteries</Text>
         <Text style={styles.tierPricing}>$4.99/mo or $29.99/yr</Text>
@@ -378,11 +385,15 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   tierCardSelected: {
-    borderColor: '#6b4e9e',
-    backgroundColor: '#2d2a4e',
+    borderColor: '#9b7fd4',
+    backgroundColor: '#322d54',
+    shadowColor: '#6b4e9e',
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
   },
-  tierCardPremium: {
-    opacity: 0.7,
+  tierCardDimmed: {
+    opacity: 0.45,
+    borderColor: '#2a2a4e',
   },
   selectedBadge: {
     position: 'absolute',

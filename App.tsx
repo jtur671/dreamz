@@ -222,15 +222,10 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     backgroundColor: '#1a1a2e',
-    borderTopColor: '#2a2a4e',
-    borderTopWidth: 1,
+    borderTopWidth: 0,
     paddingTop: 8,
     // paddingBottom and height are set dynamically based on safe area insets
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
+    elevation: 0,
   },
   tabIconContainer: {
     width: 40,
