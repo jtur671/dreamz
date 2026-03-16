@@ -77,9 +77,14 @@ describe('Dream Entry', () => {
 
     await tapById('new-dream-type-nightmare');
 
-    // Nightmare moods should appear
-    await expect(element(by.id('new-dream-mood-anxious'))).toBeVisible();
-    await expect(element(by.id('new-dream-mood-fearful'))).toBeVisible();
+    // Nightmare moods should appear — use waitFor since sync is disabled
+    // and React needs a tick to re-render the mood chips
+    await waitFor(element(by.id('new-dream-mood-anxious')))
+      .toBeVisible()
+      .withTimeout(5000);
+    await waitFor(element(by.id('new-dream-mood-fearful')))
+      .toBeVisible()
+      .withTimeout(5000);
   });
 
   it('should show alert when submitting without text', async () => {
