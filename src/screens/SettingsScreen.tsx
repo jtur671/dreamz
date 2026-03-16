@@ -13,6 +13,7 @@ import {
   Linking,
   Platform,
   TextInput,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../lib/supabase';
@@ -20,6 +21,7 @@ import { getProfile, updateZodiacSign, updateProfile } from '../lib/profileServi
 import { exportUserDreams, deleteUserAccount } from '../lib/accountService';
 import { fetchUserDreams, deleteDream } from '../lib/dreamService';
 import { checkPremiumAccess } from '../lib/purchaseService';
+import { getReminderPreferences, setReminderEnabled, setReminderTime } from '../lib/notificationService';
 import { ZODIAC_SIGNS } from '../types';
 import type { Dream } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -40,6 +42,10 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [dreams, setDreams] = useState<Dream[]>([]);
   const [loadingDreams, setLoadingDreams] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [remindersEnabled, setRemindersEnabled] = useState(false);
+  const [reminderHour, setReminderHour] = useState(8);
+  const [reminderMinute, setReminderMinute] = useState(0);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   useEffect(() => {
     fetchUserData();
@@ -57,6 +63,11 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       const isPremium = profile.subscription_tier === 'premium' || await checkPremiumAccess();
       setSubscriptionTier(isPremium ? 'premium' : 'free');
     }
+
+    const reminderPrefs = await getReminderPreferences();
+    setRemindersEnabled(reminderPrefs.enabled);
+    setReminderHour(reminderPrefs.hour);
+    setReminderMinute(reminderPrefs.minute);
   }
 
   async function handleSaveName() {
@@ -200,6 +211,52 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     }
   }
 
+  function formatTime(hour: number, minute: number): string {
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
+  }
+
+  const TIME_SLOTS = (() => {
+    const slots: { hour: number; minute: number; label: string }[] = [];
+    for (let h = 5; h <= 10; h++) {
+      for (const m of [0, 30]) {
+        if (h === 10 && m === 30) continue;
+        const period = h >= 12 ? 'PM' : 'AM';
+        const displayH = h > 12 ? h - 12 : h;
+        slots.push({
+          hour: h,
+          minute: m,
+          label: `${displayH}:${m.toString().padStart(2, '0')} ${period}`,
+        });
+      }
+    }
+    return slots;
+  })();
+
+  async function handleReminderToggle(value: boolean) {
+    setRemindersEnabled(value);
+    const result = await setReminderEnabled(value);
+    if (!result.success && result.permissionDenied) {
+      setRemindersEnabled(false);
+      Alert.alert(
+        'Notifications Disabled',
+        'Dreamz needs notification permission to send dream reminders. You can enable it in your device settings.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ]
+      );
+    }
+  }
+
+  async function handleTimeSelect(hour: number, minute: number) {
+    setReminderHour(hour);
+    setReminderMinute(minute);
+    setShowTimePicker(false);
+    await setReminderTime(hour, minute);
+  }
+
   async function handleSignOut() {
     Alert.alert(
       'Sign Out',
@@ -316,6 +373,46 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         </View>
       </Modal>
 
+      <Modal
+        visible={showTimePicker}
+        transparent
+        animationType="fade"
+        accessibilityViewIsModal={true}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Reminder Time</Text>
+            <ScrollView style={styles.zodiacList} showsVerticalScrollIndicator={false}>
+              {TIME_SLOTS.map((slot) => (
+                <TouchableOpacity
+                  key={`${slot.hour}-${slot.minute}`}
+                  testID={`time-option-${slot.hour}-${slot.minute}`}
+                  style={[
+                    styles.zodiacOption,
+                    reminderHour === slot.hour && reminderMinute === slot.minute && styles.zodiacOptionSelected,
+                  ]}
+                  onPress={() => handleTimeSelect(slot.hour, slot.minute)}
+                >
+                  <Text style={[
+                    styles.zodiacText,
+                    reminderHour === slot.hour && reminderMinute === slot.minute && styles.zodiacTextSelected,
+                  ]}>
+                    {slot.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              testID="settings-time-picker-cancel"
+              style={styles.cancelButton}
+              onPress={() => setShowTimePicker(false)}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <ScrollView testID="settings-scroll-view" style={styles.container}>
         <Text testID="settings-title" style={styles.title}>Settings</Text>
 
@@ -414,6 +511,42 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             >
               <Text style={styles.menuItemText}>Manage Subscription</Text>
               <Text style={styles.menuItemSubtext}>Change or cancel in device settings</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Reminders</Text>
+
+          <View style={[styles.card, styles.cardButton]}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.menuItemText}>Dream Reminders</Text>
+              <Text style={styles.menuItemSubtext}>
+                {remindersEnabled ? 'A gentle nudge each morning' : 'Never miss a dream again'}
+              </Text>
+            </View>
+            <Switch
+              testID="settings-reminder-toggle"
+              value={remindersEnabled}
+              onValueChange={handleReminderToggle}
+              trackColor={{ false: '#3a3a5e', true: '#6b4e9e' }}
+              thumbColor={remindersEnabled ? '#e0d4f7' : '#8b7fa8'}
+            />
+          </View>
+
+          {remindersEnabled && (
+            <TouchableOpacity
+              testID="settings-reminder-time"
+              style={[styles.card, styles.cardButton]}
+              onPress={() => setShowTimePicker(true)}
+              accessibilityRole="button"
+              accessibilityLabel={`Reminder time: ${formatTime(reminderHour, reminderMinute)}. Tap to change.`}
+            >
+              <View>
+                <Text style={styles.label}>Reminder Time</Text>
+                <Text style={styles.value}>{formatTime(reminderHour, reminderMinute)}</Text>
+              </View>
+              <Text style={styles.editText}>Change</Text>
             </TouchableOpacity>
           )}
         </View>
