@@ -17,7 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.dreamzjournal.app",
       "usesAppleSignIn": true,
-      "buildNumber": "10",
+      "buildNumber": "12",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Dreamz uses your microphone to record dreams by voice.",
         "ITSAppUsesNonExemptEncryption": false
@@ -28,6 +28,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1a1a2e"
       },
+      "googleServicesFile": "./google-services.json",
       "package": "com.dreamzjournal.app",
       "permissions": [
         "RECORD_AUDIO",
