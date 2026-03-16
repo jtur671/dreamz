@@ -21,6 +21,7 @@ import PaywallScreen from './src/screens/PaywallScreen';
 import { DreamProvider } from './src/context/DreamContext';
 import { getProfile } from './src/lib/profileService';
 import { initPurchases } from './src/lib/purchaseService';
+import { initializeNotifications } from './src/lib/notificationService';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -104,6 +105,9 @@ export default function App() {
   useEffect(() => {
     // Initialize RevenueCat
     initPurchases().catch((e) => console.error('[App] initPurchases error:', e));
+
+    // Initialize notifications
+    initializeNotifications().catch((e) => console.error('[App] initializeNotifications error:', e));
 
     // Set up callback for new user signup
     setOnNewUserSignup(() => {
