@@ -46,7 +46,7 @@
     "plugins": [
       "expo-web-browser",
       "expo-audio",
-      "expo-notifications",
+      ["expo-notifications", { "mode": "production" }],
       "@config-plugins/detox",
       "expo-asset"
     ],
