@@ -123,6 +123,20 @@ export async function initializeNotifications(): Promise<void> {
     }),
   });
 
+  // Check if this is the first launch (no preference stored yet)
+  const storedEnabled = await AsyncStorage.getItem(STORAGE_KEYS.ENABLED);
+  if (storedEnabled === null) {
+    // First launch — opt users in by default (8:00 AM)
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status === 'granted') {
+      await scheduleReminder(8, 0);
+      await AsyncStorage.setItem(STORAGE_KEYS.ENABLED, 'true');
+    } else {
+      await AsyncStorage.setItem(STORAGE_KEYS.ENABLED, 'false');
+    }
+    return;
+  }
+
   // Re-validate schedule if reminders were previously enabled
   const prefs = await getReminderPreferences();
   if (prefs.enabled) {
