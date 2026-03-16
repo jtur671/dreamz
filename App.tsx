@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View, StyleSheet, Text } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import * as Notifications from 'expo-notifications';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Session } from '@supabase/supabase-js';
@@ -101,6 +102,7 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
   useEffect(() => {
     // Initialize RevenueCat
@@ -108,6 +110,16 @@ export default function App() {
 
     // Initialize notifications
     initializeNotifications().catch((e) => console.error('[App] initializeNotifications error:', e));
+
+    // Navigate to NewDream when user taps a reminder notification
+    const notificationResponseSub = Notifications.addNotificationResponseReceivedListener(() => {
+      // Small delay to ensure navigation is ready (app may be cold-starting)
+      setTimeout(() => {
+        if (navigationRef.current?.isReady()) {
+          (navigationRef.current as any).navigate('NewDream');
+        }
+      }, 500);
+    });
 
     // Set up callback for new user signup
     setOnNewUserSignup(() => {
@@ -157,6 +169,7 @@ export default function App() {
 
     return () => {
       subscription.unsubscribe();
+      notificationResponseSub.remove();
       setOnNewUserSignup(null);
     };
   }, []);
@@ -172,7 +185,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <StatusBar style="light" />
         {session ? (
           <Stack.Navigator
