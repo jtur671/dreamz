@@ -63,10 +63,10 @@ const MAX_RETRIES = 2; // Initial attempt + 1 retry
 const MAX_DREAM_TEXT_LENGTH = 10000;
 const MIN_DREAM_TEXT_LENGTH = 10;
 
-// Tiered AI model configuration: free users get nano (cheaper/faster),
-// premium users get mini (deeper reasoning)
+// Both tiers use gpt-5-mini (~$0.002/reading) with JSON mode for reliable output.
+// Free tier gets reduced token budget and timeout since readings are ~800 tokens.
 const MODEL_CONFIG = {
-  free: { model: "gpt-5-nano", maxCompletionTokens: 4000, timeoutMs: 30000 },
+  free: { model: "gpt-5-mini", maxCompletionTokens: 2000, timeoutMs: 25000 },
   premium: { model: "gpt-5-mini", maxCompletionTokens: 4000, timeoutMs: 45000 },
 } as const;
 
@@ -99,6 +99,7 @@ async function callOpenAI(
         model: config.model,
         messages,
         max_completion_tokens: config.maxCompletionTokens,
+        response_format: { type: "json_object" },
       }),
       signal: controller.signal,
     });
