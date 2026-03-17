@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "191247947238",
+    "project_id": "dreamz-2ff48",
+    "storage_bucket": "dreamz-2ff48.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:191247947238:android:a2dc8a3ab004026dc2b227",
+        "android_client_info": {
+          "package_name": "com.dreamzjournal.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQgafYHBvVGm5sXiLTtsr_r3a6XowSXwk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
