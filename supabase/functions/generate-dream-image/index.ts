@@ -100,7 +100,7 @@ Deno.serve(async (req: Request) => {
         prompt: imagePrompt,
         n: 1,
         size: "1024x1024",
-        quality: "low",
+        quality: "medium",
       }),
       signal: controller.signal,
     });
