@@ -78,9 +78,10 @@ async function deleteTestUser(accessToken: string): Promise<void> {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
+      signal: AbortSignal.timeout(15000),
     });
   } catch {
-    // Ignore cleanup errors
+    // Ignore cleanup errors (including timeout aborts)
   }
 }
 
@@ -98,7 +99,7 @@ describeE2E('E2E: Authentication - Happy Paths', () => {
     if (accessToken) {
       await deleteTestUser(accessToken);
     }
-  });
+  }, 60000);
 
   // AUTH-001: User can create account with email/password
   it('AUTH-001: should create account with email/password', async () => {
@@ -160,7 +161,7 @@ describeE2E('E2E: Authentication - Edge Cases', () => {
     if (accessToken) {
       await deleteTestUser(accessToken);
     }
-  });
+  }, 60000);
 
   // AUTH-E001: Email with leading/trailing spaces is trimmed
   it('AUTH-E001: should handle email with whitespace', async () => {
