@@ -1,7 +1,7 @@
 /**
  * Dream Analysis Edge Function
  *
- * Analyzes dream text using OpenAI GPT-4 and returns a structured mystical reading.
+ * Analyzes dream text using OpenAI GPT-5.4 and returns a structured mystical reading.
  * Implements retry logic, validation, and graceful fallback.
  *
  * Endpoint: POST /functions/v1/analyze-dream
@@ -63,11 +63,12 @@ const MAX_RETRIES = 2; // Initial attempt + 1 retry
 const MAX_DREAM_TEXT_LENGTH = 10000;
 const MIN_DREAM_TEXT_LENGTH = 10;
 
-// Both tiers use gpt-5-mini (~$0.002/reading) with JSON mode for reliable output.
-// Free tier gets reduced token budget and timeout since readings are ~800 tokens.
+// GPT-5.4 family: faster than gpt-5-mini (no reasoning overhead), JSON mode enabled.
+// Free: gpt-5.4-nano (~$0.0016/reading) — fastest, 33% cheaper than old gpt-5-mini.
+// Premium: gpt-5.4-mini (~$0.006/reading) — higher quality for paying users.
 const MODEL_CONFIG = {
-  free: { model: "gpt-5-mini", maxCompletionTokens: 2000, timeoutMs: 45000 },
-  premium: { model: "gpt-5-mini", maxCompletionTokens: 4000, timeoutMs: 45000 },
+  free: { model: "gpt-5.4-nano", maxCompletionTokens: 2000, timeoutMs: 30000 },
+  premium: { model: "gpt-5.4-mini", maxCompletionTokens: 4000, timeoutMs: 45000 },
 } as const;
 
 type SubscriptionTier = keyof typeof MODEL_CONFIG;
