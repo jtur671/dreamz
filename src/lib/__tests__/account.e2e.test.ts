@@ -248,7 +248,7 @@ describeE2E('E2E: Export Dreams Flow', () => {
     if (testUser) {
       await deleteAccount(testUser);
     }
-  });
+  }, 60000);
 
   it('should export dreams without internal IDs', async () => {
     const dreams = await getDreams(testUser);

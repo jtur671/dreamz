@@ -77,9 +77,10 @@ async function deleteTestUser(accessToken: string): Promise<void> {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
+      signal: AbortSignal.timeout(15000),
     });
   } catch {
-    // Ignore cleanup errors
+    // Ignore cleanup errors (including timeout aborts)
   }
 }
 
@@ -168,7 +169,7 @@ describeE2E('E2E: Dream Creation - Happy Paths', () => {
     if (testUser) {
       await deleteTestUser(testUser.accessToken);
     }
-  });
+  }, 60000);
 
   // DREAM-001: User can create a dream entry
   it('DREAM-001: should create a dream entry', async () => {
@@ -247,7 +248,7 @@ describeE2E('E2E: Dream Creation - Edge Cases', () => {
     if (testUser) {
       await deleteTestUser(testUser.accessToken);
     }
-  });
+  }, 60000);
 
   // DREAM-E001: Minimum text (10 characters)
   it('DREAM-E001: should accept minimum text length', async () => {
@@ -305,7 +306,7 @@ describeE2E('E2E: Grimoire (Dream History)', () => {
     if (testUser) {
       await deleteTestUser(testUser.accessToken);
     }
-  });
+  }, 60000);
 
   // GRIM-001: All user dreams displayed
   it('GRIM-001: should list all user dreams', async () => {
@@ -364,7 +365,7 @@ describeE2E('E2E: Grimoire - Empty State', () => {
     if (testUser) {
       await deleteTestUser(testUser.accessToken);
     }
-  });
+  }, 60000);
 
   // GRIM-E001: Empty grimoire
   it('GRIM-E001: should return empty array for new user', async () => {

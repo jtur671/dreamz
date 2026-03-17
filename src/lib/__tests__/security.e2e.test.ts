@@ -67,9 +67,10 @@ async function deleteTestUser(accessToken: string): Promise<void> {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
+      signal: AbortSignal.timeout(15000),
     });
   } catch {
-    // Ignore cleanup errors
+    // Ignore cleanup errors (including timeout aborts)
   }
 }
 
@@ -117,9 +118,11 @@ describeE2E('E2E: Row Level Security - Dreams', () => {
   });
 
   afterAll(async () => {
-    if (userA) await deleteTestUser(userA.accessToken);
-    if (userB) await deleteTestUser(userB.accessToken);
-  });
+    const cleanups: Promise<void>[] = [];
+    if (userA) cleanups.push(deleteTestUser(userA.accessToken));
+    if (userB) cleanups.push(deleteTestUser(userB.accessToken));
+    await Promise.all(cleanups);
+  }, 60000);
 
   // SEC-RLS001: User can only read own dreams
   it('SEC-RLS001: should only return own dreams', async () => {
@@ -248,7 +251,7 @@ describeE2E('E2E: Row Level Security - Symbols', () => {
 
   afterAll(async () => {
     if (testUser) await deleteTestUser(testUser.accessToken);
-  });
+  }, 60000);
 
   // SEC-RLS008: Any authenticated user can read symbols
   it('SEC-RLS008: should allow reading symbols', async () => {
@@ -354,7 +357,7 @@ describeE2E('E2E: Data Privacy - Export', () => {
 
   afterAll(async () => {
     if (testUser) await deleteTestUser(testUser.accessToken);
-  });
+  }, 60000);
 
   // SEC-PRIV002: Export has no internal identifiers
   it('SEC-PRIV002: should not expose internal IDs in dreams query', async () => {
