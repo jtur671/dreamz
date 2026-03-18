@@ -96,7 +96,7 @@ The plain_english field should read like advice from a thoughtful friend:
 - Example: "The dream might signify that you are longing for comfort and taking things slow in your life. The turtle typically represents patience, resilience and longevity whereas pizza is usually affiliated with pleasure and comfort food."
 
 ## Symbol Requirements
-- Include exactly ONE symbol - the most significant element from the dream
+- Include 1-3 symbols — the most significant elements from the dream
 - The "interpretation" field should be plain English, conversational, specific to this dream
 - Identify the most powerful symbol: could be concrete (water, house, animal) or abstract (falling, being chased)
 - Balance universal archetypal meanings with personal interpretation space
@@ -111,7 +111,7 @@ Before responding, verify:
 - No trailing commas
 - Arrays are properly formatted
 - JSON parses successfully
-- symbols array has exactly 1 item
+- symbols array has 1-3 items
 - tags array has 3-5 items
 - tldr is under 150 characters
 - plain_english is 3-5 conversational sentences`;
@@ -242,8 +242,8 @@ export function validateReading(reading: unknown): {
   if (!Array.isArray(r.symbols)) {
     return { isValid: false, error: "symbols must be an array" };
   }
-  if (r.symbols.length < 1 || r.symbols.length > 7) {
-    return { isValid: false, error: "symbols must have 1-7 items" };
+  if (r.symbols.length < 1 || r.symbols.length > 3) {
+    return { isValid: false, error: "symbols must have 1-3 items" };
   }
 
   // Validate each symbol

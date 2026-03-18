@@ -65,7 +65,7 @@ Write your dream. Get an AI-powered reading. Save it to your Grimoire. Notice th
 YOUR DREAMS, DIVINED
 Every dream entry receives a personalized reading with:
 - A poetic title and summary
-- 3-7 symbols with meaning, shadow, and guidance
+- 1-3 symbols with meaning, shadow, and guidance
 - An omen to watch for in waking life
 - A ritual to ground the dream's energy
 - A journal prompt for deeper reflection

@@ -50,8 +50,8 @@ WRITE/RECORD DREAM → GET READING → SAVE TO GRIMOIRE → NOTICE PATTERNS
 |-------|------------|
 | Mobile | Expo (React Native) + TypeScript |
 | Backend | Supabase (Auth, Postgres, RLS, Edge Functions) |
-| AI | OpenAI GPT-4o via Supabase Edge Function |
-| Image Gen | OpenAI DALL-E 3 for dream imagery |
+| AI | OpenAI GPT-5.4 family via Supabase Edge Function |
+| Image Gen | OpenAI gpt-image-1 for dream imagery |
 | Voice | OpenAI Whisper API for transcription |
 | State | React Context |
 | Storage | AsyncStorage (offline drafts) |
@@ -90,8 +90,8 @@ WRITE/RECORD DREAM → GET READING → SAVE TO GRIMOIRE → NOTICE PATTERNS
 **3-Step Flow:**
 
 1. **Tier Selection**
-   - Free tier (3 readings/month) - fully functional
-   - Premium tier - "Coming Soon" (UI only)
+   - Free tier - unlimited readings with gpt-5.4-nano
+   - Premium tier - unlimited readings with gpt-5.4-mini + dream images
 
 2. **About You (Optional)**
    - Zodiac sign picker
@@ -162,7 +162,7 @@ interface DreamEntry {
 **Result Layout:**
 ```
 ┌─────────────────────────────────────┐
-│  [AI-Generated Dream Image]         │  ← DALL-E 3 image
+│  [AI-Generated Dream Image]         │  ← gpt-image-1 image
 ├─────────────────────────────────────┤
 │  ✧ THE RIVER & THE LOCKED DOOR ✧   │  ← Title
 ├─────────────────────────────────────┤
@@ -192,7 +192,7 @@ interface DreamEntry {
 │  Shadow: Fear of the unknown        │
 │  Guidance: What waits on the other  │
 │            side?                    │
-│  ... (3-7 symbols total)            │
+│  ... (1-3 symbols total)            │
 ├─────────────────────────────────────┤
 │  ☽ THE OMEN                         │
 │  "Change flows toward you—          │
@@ -221,7 +221,7 @@ interface DreamEntry {
 - [x] Loading state shows for duration of API call
 - [x] AI-generated dream image displays at top
 - [x] All sections render (title, tldr, symbols, omen, ritual, prompt, tags)
-- [x] 3-7 symbols with name, meaning, shadow, guidance
+- [x] 1-3 symbols with name, meaning, shadow, guidance
 - [x] Dream auto-saves to database
 - [x] Share opens modal with shareable card preview
 - [x] Share captures card as image via ViewShot
@@ -380,16 +380,18 @@ interface DreamReading {
   title: string;
   tldr: string;
   plain_english: string;           // NEW: conversational interpretation
-  symbols: DreamSymbol[];          // 3-7 symbols
+  symbols: DreamSymbol[];          // 1-3 symbols
   omen: string;
   ritual: string;
   journal_prompt: string;
   tags: string[];
-  image_url?: string;              // DALL-E generated image
+  content_warnings: string[];      // empty array if none
+  image_url?: string;              // AI-generated dream image
 }
 
 interface DreamSymbol {
   name: string;
+  interpretation: string;         // plain English, specific to this dream
   meaning: string;
   shadow: string;
   guidance: string;
@@ -457,14 +459,14 @@ The AI must return this exact JSON structure:
   "omen": "One mystical sentence—the core message",
   "ritual": "One small, doable action (under 5 minutes)",
   "journal_prompt": "One reflective question",
-  "tags": ["3-7 lowercase tags"]
+  "tags": ["3-5 lowercase tags"]
 }
 ```
 
 **Validation Rules:**
 - All fields required
-- `symbols` array: 3-7 items
-- `tags` array: 3-7 items
+- `symbols` array: 1-3 items
+- `tags` array: 3-5 items
 - Retry on invalid JSON (max 2 retries)
 
 ### Voice Transcription (Edge Function)
@@ -585,7 +587,7 @@ Uses OpenAI Whisper API for transcription.
 | Delete account | COMPLETE | Feb 2026 |
 | Onboarding flow | COMPLETE | Feb 2026 |
 | Profile in AI context | COMPLETE | Feb 2026 |
-| AI dream images (DALL-E) | COMPLETE | Feb 2026 |
+| AI dream images (gpt-image-1) | COMPLETE | Feb 2026 |
 | Shareable reading card | COMPLETE | Feb 2026 |
 | Delete individual dreams | COMPLETE | Feb 2026 |
 | Draft auto-save | COMPLETE | Feb 2026 |
@@ -595,22 +597,23 @@ Uses OpenAI Whisper API for transcription.
 | Symbol dictionary (5,707 symbols) | COMPLETE | Feb 2026 |
 | Symbol enrichment (5,455 enriched) | COMPLETE | Feb 2026 |
 | Voice recording (transcription) | COMPLETE | Feb 2026 |
+| Push notifications (daily reminders) | COMPLETE | Mar 2026 |
 
 ---
 
 ## Monetization
 
 ### Free Tier
-- 3 readings per month
+- Unlimited readings (gpt-5.4-nano)
 - Full journal/history access
 - Basic search
 - Export (JSON)
+- Voice recording
 
 ### Premium Tier ($4.99/month or $29.99/year) - via RevenueCat
-- Unlimited readings
-- Deeper symbol breakdowns
-- Pattern insights ("You've dreamed of water 8 times")
-- Voice recording (longer recordings)
+- Unlimited readings (gpt-5.4-mini — higher quality)
+- AI-generated dream images (gpt-image-1)
+- Voice recording
 - Priority support
 
 ---
@@ -651,7 +654,6 @@ Danger:        #e07a7a (soft red)
 - Social features / following / public profiles
 - Lucid dreaming exercises
 - Sleep tracking / alarm integration
-- Push notifications
 - Multiple languages
 - Apple Watch / widgets
 - Web app
@@ -670,4 +672,4 @@ Danger:        #e07a7a (soft red)
 
 ---
 
-*Last updated: February 6, 2026*
+*Last updated: March 18, 2026*
