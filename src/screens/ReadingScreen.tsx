@@ -416,19 +416,19 @@ function SymbolCard({ symbol, inDictionary }: { symbol: DreamSymbol; inDictionar
 
   return (
     <View style={styles.symbolCard}>
-      {inDictionary ? (
-        <TouchableOpacity
-          onPress={navigateToDictionary}
-          accessibilityRole="link"
-          accessibilityLabel={`View ${symbol.name} in dictionary`}
-          style={styles.symbolNameLink}
-        >
-          <Text style={styles.symbolName}>{symbol.name}</Text>
-          <Text style={styles.symbolLinkHint}>View in Dictionary →</Text>
-        </TouchableOpacity>
-      ) : (
-        <Text style={styles.symbolName}>{symbol.name}</Text>
-      )}
+      <View style={styles.symbolNameRow}>
+        <Text style={[styles.symbolName, inDictionary && styles.symbolNameLinked]}>{symbol.name}</Text>
+        {inDictionary && (
+          <TouchableOpacity
+            onPress={navigateToDictionary}
+            accessibilityRole="link"
+            accessibilityLabel={`View ${symbol.name} in dictionary`}
+            style={styles.dictionaryBadge}
+          >
+            <Text style={styles.dictionaryBadgeText}>📖 Dictionary</Text>
+          </TouchableOpacity>
+        )}
+      </View>
       {renderSection('Meaning', symbol.meaning, styles.symbolMeaning)}
       {renderSection('Shadow', symbol.shadow, styles.symbolShadow)}
       {renderSection('Guidance', symbol.guidance, styles.symbolGuidance)}
@@ -573,20 +573,37 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
+  symbolNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
   symbolName: {
     fontSize: 20,
     fontWeight: '700',
     color: '#f0e8ff',
-    marginBottom: 16,
     letterSpacing: 0.5,
+    flex: 1,
   },
-  symbolNameLink: {
-    marginBottom: 16,
+  symbolNameLinked: {
+    marginBottom: 0,
   },
-  symbolLinkHint: {
-    fontSize: 12,
-    color: '#9b7fd4',
-    marginTop: 4,
+  dictionaryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2e2a4a',
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#5a4a7e',
+    marginLeft: 10,
+  },
+  dictionaryBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#b8a8d8',
     letterSpacing: 0.3,
   },
   symbolSection: {
