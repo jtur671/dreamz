@@ -83,7 +83,7 @@ export default function ReadingScreen() {
       const tagsText = reading.tags?.length > 0 ? `\n\n#${reading.tags.join(' #')}` : '';
       const shareText = `✧ ${reading.title} ✧
 
-"${reading.omen}"
+"${reading.plain_english || reading.omen}"
 
 Ritual: ${reading.ritual}
 
@@ -141,7 +141,7 @@ Interpreted with Dreamz`;
                   <Text style={styles.shareCardTitle}>{reading.title}</Text>
 
                   <View style={styles.shareCardOmen}>
-                    <Text style={styles.shareCardOmenText}>&ldquo;{reading.omen}&rdquo;</Text>
+                    <Text style={styles.shareCardOmenText}>&ldquo;{reading.plain_english || reading.omen}&rdquo;</Text>
                   </View>
 
                   <View style={styles.shareCardTags}>
