@@ -17,7 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.dreamzjournal.app",
       "usesAppleSignIn": true,
-      "buildNumber": "16",
+      "buildNumber": "17",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Dreamz uses your microphone to record dreams by voice.",
         "ITSAppUsesNonExemptEncryption": false
@@ -53,7 +53,14 @@
         }
       ],
       "@config-plugins/detox",
-      "expo-asset"
+      "expo-asset",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-8597027816949059~7210132219",
+          "iosAppId": "ca-app-pub-8597027816949059~7899830102"
+        }
+      ]
     ],
     "extra": {
       "eas": {
