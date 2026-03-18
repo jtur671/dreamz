@@ -200,3 +200,66 @@ Verified working: `curl -X POST .../auth/v1/signup` → HTTP 200 with `access_to
 - **Reported by:** TestFlight testers
 - **Details:** After creating an account with email, the app showed "Check your email for confirmation" but no email was ever sent. Email confirmations are intentionally disabled in Supabase for MVP (`enable_confirmations = false`), and no SMTP is configured. Users are auto-signed-in immediately.
 - **Fix:** Removed the misleading alert. Sign-up now silently proceeds to onboarding via `onAuthStateChange`. Email confirmation can be added post-launch if needed.
+
+---
+
+## Manual Testing Bugs (Mar 18, 2026)
+
+### BUG-005: Grimoire Stale Filter Causes Empty List After Tab Switch
+- **Severity:** Medium — user gets trapped in empty state with no escape
+- **Status:** FIXED (2026-03-18)
+- **Found by:** Manual testing
+- **Steps to reproduce:**
+  1. Open Grimoire tab with enough dreams to show symbol filter pills (threshold: 4+ dreams containing the same symbol)
+  2. Tap a symbol filter pill to activate it
+  3. Delete several dreams (reducing that symbol's count below the threshold of 4)
+  4. Navigate to Settings tab
+  5. Navigate back to Grimoire tab
+- **Expected:** All dreams show (filter auto-cleared since the symbol pill no longer exists)
+- **Actual:** "No dreams match your search" with no pills visible to clear the filter. User is trapped.
+- **Root cause:** `activePill` state persists across tab switches, but `symbolPills` is recomputed from the current dream list on each render. After deletions reduce a symbol's count below 4, the pill disappears from `symbolPills` but `activePill` still holds the stale value. The `filteredDreams` memo applies the stale pill filter, returns zero results, and the empty state renders without any visible pill to tap to clear.
+- **Fix:** Added a `useEffect` in `GrimoireScreen.tsx` that watches `activePill` and `symbolPills`. When `activePill` is set but no longer present in `symbolPills`, it resets `activePill` to `null`.
+- **Files changed:** `src/screens/GrimoireScreen.tsx`
+- **Regression test:** `e2e/grimoire-filter.test.ts`
+
+### BUG-006: Dictionary Deep Link Crashes from ReadingScreen
+- **Severity:** Medium — tapping Dictionary badge on symbol cards throws a navigation error
+- **Status:** FIXED (2026-03-18)
+- **Found by:** Manual testing
+- **Steps to reproduce:**
+  1. Open a dream reading (from Grimoire or after creating a new dream)
+  2. Tap the "Dictionary" badge on any symbol card that links to the curated dictionary
+- **Expected:** Navigate to Dictionary tab with the symbol name pre-filled in search
+- **Actual:** Error: `The action 'NAVIGATE' with payload {"name":"Dictionary","params":{"search":"Lake"}} was not handled by any navigator`
+- **Root cause:** `ReadingScreen` lives in the root Stack navigator, but `Dictionary` is inside the `MainTabs` tab navigator. `CommonActions.navigate` cannot reach across navigator boundaries — it only searches the current navigator and its parents, not nested children.
+- **Fix:** Changed `navigateToDictionary()` in the `SymbolCard` component from `CommonActions.navigate` to `CommonActions.reset`, targeting `MainTabs > Dictionary` with the search param. This is the same pattern already used by `handleViewInGrimoire` in the same file.
+- **Files changed:** `src/screens/ReadingScreen.tsx`
+
+### BUG-007: Grimoire Filter Pills Text Unreadable
+- **Severity:** Low — cosmetic issue, pills are too cramped to read comfortably
+- **Status:** FIXED (2026-03-18)
+- **Found by:** Manual testing
+- **Steps to reproduce:**
+  1. Open Grimoire tab with enough dreams to show symbol filter pills
+  2. Observe the pill row
+- **Expected:** Pill text is clearly readable with comfortable padding
+- **Actual:** Text appears clipped and too small; vertical space is cramped
+- **Root cause:** Style values were too tight: `maxHeight: 44`, `fontSize: 13`, `paddingVertical: 6`. On device, this combination clips text descenders and makes pills feel cramped.
+- **Fix:** Increased `pillRow.maxHeight` to 52, `pillText.fontSize` to 14, `pill.paddingVertical` to 8, and added `alignItems: 'center'` to `pillRowContent` for proper vertical centering.
+- **Files changed:** `src/screens/GrimoireScreen.tsx`
+
+### BUG-008: Dream Images Not Loading for Premium Users
+- **Severity:** Medium — premium feature (AI dream images) silently broken
+- **Status:** FIXED (2026-03-18)
+- **Found by:** Manual testing
+- **Steps to reproduce:**
+  1. Sign in as a premium user
+  2. Create a new dream and submit for reading
+  3. Observe the dream image placeholder animation
+- **Expected:** AI-generated dream image appears after a short delay
+- **Actual:** Placeholder animation plays indefinitely; image never loads
+- **Root cause:** Two issues in the `generate-dream-image` edge function:
+  1. The model was set to `gpt-image-1`, which is deprecated. The current model is `gpt-image-1.5`.
+  2. The API request body was missing `response_format: "url"`, so the response may have defaulted to base64 encoding instead of a URL. The client code expects a URL.
+- **Fix:** Updated `OPENAI_IMAGE_MODEL` to `"gpt-image-1.5"` and added `response_format: "url"` to the API request body.
+- **Files changed:** `supabase/functions/generate-dream-image/index.ts`
