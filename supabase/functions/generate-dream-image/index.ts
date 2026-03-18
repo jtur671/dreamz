@@ -101,7 +101,6 @@ Deno.serve(async (req: Request) => {
         n: 1,
         size: "1024x1024",
         quality: "medium",
-        response_format: "url",
       }),
       signal: controller.signal,
     });
@@ -115,38 +114,32 @@ Deno.serve(async (req: Request) => {
     }
 
     const data = await response.json();
-    const imageUrl = data.data?.[0]?.url;
+    const b64Image = data.data?.[0]?.b64_json;
 
-    if (!imageUrl) {
-      return errorResponse("IMAGE_ERROR", "No image URL in response", 500, true);
+    if (!b64Image) {
+      return errorResponse("IMAGE_ERROR", "No image data in response", 500, true);
     }
 
-    // Download the image and persist to Supabase Storage
-    let permanentUrl = imageUrl; // fallback to temporary URL
-    try {
-      const imgResponse = await fetch(imageUrl);
-      if (imgResponse.ok) {
-        const imgBuffer = await imgResponse.arrayBuffer();
-        const storagePath = `${user.id}/${body.dream_id}.png`;
+    // Decode base64 and upload to Supabase Storage
+    let permanentUrl: string | null = null;
+    const imgBuffer = Uint8Array.from(atob(b64Image), (c) => c.charCodeAt(0));
+    const storagePath = `${user.id}/${body.dream_id}.png`;
 
-        const { error: uploadError } = await supabase.storage
-          .from("dream-images")
-          .upload(storagePath, imgBuffer, {
-            contentType: "image/png",
-            upsert: true,
-          });
+    const { error: uploadError } = await supabase.storage
+      .from("dream-images")
+      .upload(storagePath, imgBuffer, {
+        contentType: "image/png",
+        upsert: true,
+      });
 
-        if (!uploadError) {
-          const { data: publicUrlData } = supabase.storage
-            .from("dream-images")
-            .getPublicUrl(storagePath);
-          permanentUrl = publicUrlData.publicUrl;
-        } else {
-          console.error("Storage upload failed:", uploadError.message);
-        }
-      }
-    } catch (storageErr) {
-      console.error("Image persistence failed, using temporary URL");
+    if (!uploadError) {
+      const { data: publicUrlData } = supabase.storage
+        .from("dream-images")
+        .getPublicUrl(storagePath);
+      permanentUrl = publicUrlData.publicUrl;
+    } else {
+      console.error("Storage upload failed:", uploadError.message);
+      return errorResponse("IMAGE_ERROR", "Failed to store image", 500, true);
     }
 
     // Update the dream record with the permanent image URL
