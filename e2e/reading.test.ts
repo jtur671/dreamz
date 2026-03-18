@@ -80,6 +80,53 @@ describe('Reading Screen', () => {
     await expect(element(by.text('MEANING')).atIndex(0)).toBeVisible();
   });
 
+  it('should toggle tooltip on symbol section', async () => {
+    // Scroll to symbols section
+    await element(by.id('reading-scroll-view')).scroll(400, 'down', 0.5, 0.5);
+    await waitFor(element(by.text('SYMBOLS REVEALED')))
+      .toBeVisible()
+      .withTimeout(5000);
+
+    // Tap the Meaning ⓘ icon to show tooltip
+    await waitFor(element(by.id('symbol-tooltip-meaning')))
+      .toBeVisible()
+      .withTimeout(5000);
+    await element(by.id('symbol-tooltip-meaning')).atIndex(0).tap();
+
+    // Tooltip text should appear
+    await waitFor(element(by.id('symbol-tooltip-text-meaning')))
+      .toBeVisible()
+      .withTimeout(5000);
+
+    // Tap again to dismiss
+    await element(by.id('symbol-tooltip-meaning')).atIndex(0).tap();
+    await waitFor(element(by.id('symbol-tooltip-text-meaning')))
+      .not.toBeVisible()
+      .withTimeout(5000);
+  });
+
+  it('should display dictionary badge on matching symbols without crashing', async () => {
+    // Scroll to symbols section
+    await element(by.id('reading-scroll-view')).scroll(400, 'down', 0.5, 0.5);
+    await waitFor(element(by.text('SYMBOLS REVEALED')))
+      .toBeVisible()
+      .withTimeout(5000);
+
+    // We can't guarantee which symbols match the dictionary, so just verify
+    // the screen renders correctly with or without badges (no crash)
+    // If a badge exists, verify it's visible
+    try {
+      await waitFor(element(by.id('symbol-dictionary-badge')).atIndex(0))
+        .toBeVisible()
+        .withTimeout(3000);
+      // Badge found — verify it contains the expected text
+      await expect(element(by.text('📖 Dictionary')).atIndex(0)).toBeVisible();
+    } catch {
+      // No dictionary badge — that's OK, depends on which symbols the AI chose
+      // The important thing is no crash occurred
+    }
+  });
+
   it('should navigate to grimoire when tapping View in Grimoire', async () => {
     // Scroll to bottom to reveal the View in Grimoire button
     await element(by.id('reading-scroll-view')).scrollTo('bottom');

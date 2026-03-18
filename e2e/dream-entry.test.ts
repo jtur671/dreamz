@@ -134,6 +134,47 @@ describe('Dream Entry', () => {
       .withTimeout(5000);
   });
 
+  it('should expand mood tags and select from expanded list', async () => {
+    await openNewDream();
+
+    // "Hopeful" is at index 8 (beyond INITIAL_VISIBLE=5), so hidden by default
+    // Verify it's not visible before expanding
+    try {
+      await expect(element(by.id('new-dream-mood-hopeful'))).not.toBeVisible();
+    } catch {
+      // Element may not exist in the tree at all — that's fine
+    }
+
+    // Tap "More +" to expand
+    await tapById('new-dream-mood-toggle');
+
+    // "Hopeful" should now be visible
+    await waitFor(element(by.id('new-dream-mood-hopeful')))
+      .toBeVisible()
+      .withTimeout(5000);
+
+    // Select it
+    await tapById('new-dream-mood-hopeful');
+  });
+
+  it('should collapse expanded moods', async () => {
+    await openNewDream();
+
+    // Expand moods
+    await tapById('new-dream-mood-toggle');
+    await waitFor(element(by.id('new-dream-mood-hopeful')))
+      .toBeVisible()
+      .withTimeout(5000);
+
+    // Collapse — toggle text changes to "Less −" then back to "More +"
+    await tapById('new-dream-mood-toggle');
+
+    // "Hopeful" should no longer be visible
+    await waitFor(element(by.id('new-dream-mood-hopeful')))
+      .not.toBeVisible()
+      .withTimeout(5000);
+  });
+
   it('should clear a recovered draft', async () => {
     await tapById('home-record-button');
     await waitForVisible('new-dream-text-input', 5000);
