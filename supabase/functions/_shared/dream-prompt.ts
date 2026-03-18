@@ -97,8 +97,13 @@ The plain_english field should read like advice from a thoughtful friend:
 
 ## Symbol Requirements
 - Include 1-3 symbols — the most significant elements from the dream
+- SYMBOL SELECTION PRIORITY (follow this order):
+  1. Concrete elements the dreamer explicitly mentioned that match the provided symbol dictionary — USE THESE FIRST
+  2. Other concrete elements explicitly mentioned (people, objects, animals, body sensations, places) even if not in the dictionary
+  3. Abstract or thematic symbols ONLY if the dream lacks concrete imagery
+- When dictionary matches are provided, prefer them over invented symbols. Use the dictionary's meaning/shadow/guidance as a starting point, then personalize for this specific dream.
+- NEVER skip an explicit concrete element (e.g., baby, water, house) in favor of an abstract concept (e.g., "space", "transformation")
 - The "interpretation" field should be plain English, conversational, specific to this dream
-- Identify the most powerful symbol: could be concrete (water, house, animal) or abstract (falling, being chased)
 - Balance universal archetypal meanings with personal interpretation space
 
 ## Content Warnings
@@ -127,14 +132,26 @@ export interface DreamerContext {
   ageRange?: string;
 }
 
+export interface MatchedSymbolForPrompt {
+  name: string;
+  meaning: string;
+  shadow_meaning: string | null;
+  guidance: string | null;
+}
+
 /**
  * Builds the user message for the dream interpretation request
  *
  * @param dreamText - The dream narrative from the user
  * @param context - Optional context about the dreamer (mood, zodiac, gender, age)
+ * @param matchedSymbols - Symbols from the curated dictionary that match dream keywords
  * @returns Formatted user prompt string
  */
-export function buildUserPrompt(dreamText: string, context?: DreamerContext): string {
+export function buildUserPrompt(
+  dreamText: string,
+  context?: DreamerContext,
+  matchedSymbols?: MatchedSymbolForPrompt[]
+): string {
   const contextParts: string[] = [];
 
   if (context?.mood) {
@@ -158,11 +175,15 @@ export function buildUserPrompt(dreamText: string, context?: DreamerContext): st
     ? `\n\nDreamer context:\n${contextParts.map(p => `- ${p}`).join('\n')}`
     : "";
 
+  const symbolSection = matchedSymbols && matchedSymbols.length > 0
+    ? `\n\nRelevant symbols from the dream dictionary (prefer these when applicable):\n${matchedSymbols.map((s) => `- ${s.name}: meaning: "${s.meaning}"${s.shadow_meaning ? ` | shadow: "${s.shadow_meaning}"` : ""}${s.guidance ? ` | guidance: "${s.guidance}"` : ""}`).join("\n")}`
+    : "";
+
   return `Please interpret the following dream and return a JSON reading:
 
 ---
 ${dreamText.trim()}
----${contextSection}
+---${contextSection}${symbolSection}
 
 Remember: Return ONLY valid JSON matching the schema. No markdown, no extra text.`;
 }

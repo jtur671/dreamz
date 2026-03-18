@@ -23,6 +23,7 @@ import {
   type DreamReadingSchema,
   type DreamerContext,
 } from "../_shared/dream-prompt.ts";
+import { lookupSymbols } from "../_shared/symbol-lookup.ts";
 
 // ============================================================================
 // Types
@@ -369,10 +370,14 @@ Deno.serve(async (req: Request) => {
       ageRange: age_range,
     };
 
+    // Look up matching symbols from the curated dictionary
+    const matchedSymbols = await lookupSymbols(supabase, dream_text);
+    console.log(`[${correlationId}] Matched ${matchedSymbols.length} symbols from dictionary`);
+
     // Build messages for OpenAI
     const messages: OpenAIMessage[] = [
       { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: buildUserPrompt(dream_text, dreamerContext) },
+      { role: "user", content: buildUserPrompt(dream_text, dreamerContext, matchedSymbols) },
     ];
 
     // Attempt to get reading with retry
