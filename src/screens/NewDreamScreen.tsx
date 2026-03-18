@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,8 @@ import { checkPremiumAccess } from '../lib/purchaseService';
 import { preloadInterstitialAd, showInterstitialAd } from '../lib/adService';
 import VoiceRecorder from '../components/VoiceRecorder';
 import DreamLoadingAnimation from '../components/DreamLoadingAnimation';
+import { useDreams } from '../hooks/useDreams';
+import { getIndividualMoodFrequency } from '../lib/insightsService';
 import type { Profile } from '../types';
 
 type NewDreamScreenProps = {
@@ -28,8 +30,15 @@ type NewDreamScreenProps = {
 
 type LoadingState = 'idle' | 'saving' | 'interpreting' | 'error';
 
-const DREAM_MOODS = ['Peaceful', 'Curious', 'Inspired', 'Joyful', 'Confused', 'Nostalgic', 'Vivid', 'Surreal'];
-const NIGHTMARE_MOODS = ['Anxious', 'Fearful', 'Trapped', 'Chased', 'Confused', 'Helpless', 'Disturbed', 'Unsettled'];
+const DREAM_MOODS = [
+  'Peaceful', 'Curious', 'Inspired', 'Joyful', 'Confused', 'Nostalgic', 'Vivid', 'Surreal',
+  'Hopeful', 'Romantic', 'Adventurous', 'Melancholic', 'Ethereal', 'Powerful', 'Playful', 'Grateful', 'Mystical', 'Tender',
+];
+const NIGHTMARE_MOODS = [
+  'Anxious', 'Fearful', 'Trapped', 'Chased', 'Confused', 'Helpless', 'Disturbed', 'Unsettled',
+  'Paranoid', 'Panicked', 'Disoriented', 'Overwhelmed', 'Violated', 'Abandoned', 'Powerless', 'Haunted', 'Suffocated', 'Frozen',
+];
+const INITIAL_VISIBLE = 5;
 
 export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   const [dreamText, setDreamText] = useState('');
@@ -41,7 +50,34 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   const [hasDraftRecovered, setHasDraftRecovered] = useState(false);
   const [savedDreamId, setSavedDreamId] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState(false);
+  const [moodExpanded, setMoodExpanded] = useState(false);
   const draftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { dreams } = useDreams();
+
+  // Smart-order moods by individual usage frequency, fallback to default order
+  const moodFrequency = useMemo(() => getIndividualMoodFrequency(dreams), [dreams]);
+
+  const orderedDreamMoods = useMemo(() => {
+    if (moodFrequency.length === 0) return DREAM_MOODS;
+    const freqMap = new Map(moodFrequency.map((f) => [f.name, f.count]));
+    return [...DREAM_MOODS].sort((a, b) => {
+      const fa = freqMap.get(a) || 0;
+      const fb = freqMap.get(b) || 0;
+      if (fb !== fa) return fb - fa;
+      return DREAM_MOODS.indexOf(a) - DREAM_MOODS.indexOf(b);
+    });
+  }, [moodFrequency]);
+
+  const orderedNightmareMoods = useMemo(() => {
+    if (moodFrequency.length === 0) return NIGHTMARE_MOODS;
+    const freqMap = new Map(moodFrequency.map((f) => [f.name, f.count]));
+    return [...NIGHTMARE_MOODS].sort((a, b) => {
+      const fa = freqMap.get(a) || 0;
+      const fb = freqMap.get(b) || 0;
+      if (fb !== fa) return fb - fa;
+      return NIGHTMARE_MOODS.indexOf(a) - NIGHTMARE_MOODS.indexOf(b);
+    });
+  }, [moodFrequency]);
 
   const isLoading = loadingState === 'saving' || loadingState === 'interpreting';
 
@@ -300,7 +336,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                   styles.dreamTypeButton,
                   dreamType === 'dream' && styles.dreamTypeButtonSelected,
                 ]}
-                onPress={() => { setDreamType('dream'); setMoods([]); }}
+                onPress={() => { setDreamType('dream'); setMoods([]); setMoodExpanded(false); }}
                 disabled={isLoading}
                 accessibilityRole="button"
                 accessibilityLabel="Dream"
@@ -324,7 +360,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                   styles.dreamTypeButton,
                   dreamType === 'nightmare' && styles.nightmareTypeButtonSelected,
                 ]}
-                onPress={() => { setDreamType('nightmare'); setMoods([]); }}
+                onPress={() => { setDreamType('nightmare'); setMoods([]); setMoodExpanded(false); }}
                 disabled={isLoading}
                 accessibilityRole="button"
                 accessibilityLabel="Nightmare"
@@ -348,42 +384,61 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
               <Text style={styles.moodLabel}>How did it feel?</Text>
               <Text style={styles.moodHint}>(select up to 3)</Text>
               <View style={styles.moodChips}>
-                {(dreamType === 'nightmare' ? NIGHTMARE_MOODS : DREAM_MOODS).map((option) => {
-                  const selected = moods.includes(option);
+                {(() => {
+                  const allMoods = dreamType === 'nightmare' ? orderedNightmareMoods : orderedDreamMoods;
+                  const visibleMoods = moodExpanded ? allMoods : allMoods.slice(0, INITIAL_VISIBLE);
                   return (
-                    <TouchableOpacity
-                      key={option}
-                      testID={`new-dream-mood-${option.toLowerCase()}`}
-                      style={[
-                        styles.moodChip,
-                        dreamType === 'nightmare' && styles.nightmareMoodChip,
-                        selected && (dreamType === 'nightmare' ? styles.nightmareMoodChipSelected : styles.moodChipSelected),
-                      ]}
-                      onPress={() =>
-                        setMoods((current) => {
-                          if (current.includes(option)) {
-                            return current.filter((m) => m !== option);
-                          }
-                          if (current.length >= 3) return current;
-                          return [...current, option];
-                        })
-                      }
-                      disabled={isLoading}
-                      accessibilityLabel={`Mood ${option}`}
-                      accessibilityRole="button"
-                    >
-                      <Text
-                        style={[
-                          styles.moodChipText,
-                          dreamType === 'nightmare' && styles.nightmareMoodChipText,
-                          selected && (dreamType === 'nightmare' ? styles.nightmareMoodChipTextSelected : styles.moodChipTextSelected),
-                        ]}
+                    <>
+                      {visibleMoods.map((option) => {
+                        const selected = moods.includes(option);
+                        return (
+                          <TouchableOpacity
+                            key={option}
+                            testID={`new-dream-mood-${option.toLowerCase()}`}
+                            style={[
+                              styles.moodChip,
+                              dreamType === 'nightmare' && styles.nightmareMoodChip,
+                              selected && (dreamType === 'nightmare' ? styles.nightmareMoodChipSelected : styles.moodChipSelected),
+                            ]}
+                            onPress={() =>
+                              setMoods((current) => {
+                                if (current.includes(option)) {
+                                  return current.filter((m) => m !== option);
+                                }
+                                if (current.length >= 3) return current;
+                                return [...current, option];
+                              })
+                            }
+                            disabled={isLoading}
+                            accessibilityLabel={`Mood ${option}`}
+                            accessibilityRole="button"
+                          >
+                            <Text
+                              style={[
+                                styles.moodChipText,
+                                dreamType === 'nightmare' && styles.nightmareMoodChipText,
+                                selected && (dreamType === 'nightmare' ? styles.nightmareMoodChipTextSelected : styles.moodChipTextSelected),
+                              ]}
+                            >
+                              {option}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                      <TouchableOpacity
+                        testID="new-dream-mood-toggle"
+                        style={styles.moodMoreChip}
+                        onPress={() => setMoodExpanded((v) => !v)}
+                        accessibilityLabel={moodExpanded ? 'Show fewer moods' : 'Show more moods'}
+                        accessibilityRole="button"
                       >
-                        {option}
-                      </Text>
-                    </TouchableOpacity>
+                        <Text style={styles.moodMoreText}>
+                          {moodExpanded ? 'Less \u2212' : 'More +'}
+                        </Text>
+                      </TouchableOpacity>
+                    </>
                   );
-                })}
+                })()}
               </View>
             </View>
 
@@ -564,6 +619,22 @@ const styles = StyleSheet.create({
   },
   nightmareMoodChipTextSelected: {
     color: '#e8b8c8',
+  },
+  moodMoreChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#6b4e9e',
+    borderStyle: 'dashed',
+    backgroundColor: 'transparent',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  moodMoreText: {
+    color: '#9b7fd4',
+    fontSize: 13,
+    fontWeight: '500',
   },
   voiceRecorderContainer: {
     alignItems: 'center',

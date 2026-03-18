@@ -98,6 +98,26 @@ export function getMoodDistribution(dreams: Dream[]): FrequencyItem[] {
 }
 
 /**
+ * Counts individual mood tag frequency across all dreams.
+ * Unlike getMoodDistribution which counts the full comma-separated string,
+ * this splits "Peaceful, Curious" into separate "Peaceful" and "Curious" counts.
+ */
+export function getIndividualMoodFrequency(dreams: Dream[]): FrequencyItem[] {
+  const counts = new Map<string, number>();
+  for (const dream of dreams) {
+    if (!dream.mood) continue;
+    const tags = dream.mood.split(',').map((t) => t.trim()).filter(Boolean);
+    for (const tag of tags) {
+      counts.set(tag, (counts.get(tag) || 0) + 1);
+    }
+  }
+
+  return Array.from(counts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+/**
  * Finds symbols that recur in minCount or more dreams
  */
 export function getRecurringSymbols(
