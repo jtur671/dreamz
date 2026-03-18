@@ -398,6 +398,7 @@ function SymbolCard({ symbol, inDictionary }: { symbol: DreamSymbol; inDictionar
     return (
       <View style={styles.symbolSection}>
         <TouchableOpacity
+          testID={`symbol-tooltip-${label.toLowerCase()}`}
           style={styles.symbolSectionHeader}
           onPress={() => toggleTooltip(label)}
           accessibilityRole="button"
@@ -407,7 +408,7 @@ function SymbolCard({ symbol, inDictionary }: { symbol: DreamSymbol; inDictionar
           <Text style={styles.tooltipIcon}>ⓘ</Text>
         </TouchableOpacity>
         {activeTooltip === label && (
-          <Text style={styles.tooltipText}>{TOOLTIP_TEXT[label]}</Text>
+          <Text testID={`symbol-tooltip-text-${label.toLowerCase()}`} style={styles.tooltipText}>{TOOLTIP_TEXT[label]}</Text>
         )}
         <Text style={textStyle}>{text}</Text>
       </View>
@@ -420,6 +421,7 @@ function SymbolCard({ symbol, inDictionary }: { symbol: DreamSymbol; inDictionar
         <Text style={[styles.symbolName, inDictionary && styles.symbolNameLinked]}>{symbol.name}</Text>
         {inDictionary && (
           <TouchableOpacity
+            testID="symbol-dictionary-badge"
             onPress={navigateToDictionary}
             accessibilityRole="link"
             accessibilityLabel={`View ${symbol.name} in dictionary`}
