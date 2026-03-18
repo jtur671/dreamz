@@ -179,13 +179,14 @@ Test steps:
 4. Verify reading works without zodiac context
 
 ### Symbol Library (Backend)
-- [ ] Symbols table seeded with 28 entries
+- [ ] Symbols table has 45 curated + 5,707 DreamMoods (~5,752 total)
 - [ ] Symbols readable by any authenticated user
 - [ ] Symbol categories: nature, celestial, action, body, object, place, person, animal, theme
 
 Verify with:
 ```sql
-SELECT COUNT(*) FROM symbols; -- should be 28
+SELECT COUNT(*) FROM symbols; -- should be ~5,752
+SELECT COUNT(*) FROM symbols WHERE source = 'curated'; -- should be 45
 SELECT DISTINCT category FROM symbols;
 ```
 

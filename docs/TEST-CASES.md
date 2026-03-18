@@ -2,7 +2,7 @@
 
 This document contains comprehensive test cases for the Dreamz mobile dream journal app. Test cases are organized by feature area and include happy paths, edge cases, error cases, and security tests.
 
-**Last Updated:** 2026-02-04
+**Last Updated:** 2026-03-18
 
 ---
 
@@ -115,8 +115,8 @@ This document contains comprehensive test cases for the Dreamz mobile dream jour
 | ANALYSIS-002 | Reading Saved | Reading auto-saved to dream record | Dream submitted with ID | 1. Submit dream<br>2. Complete analysis<br>3. Check Grimoire | Dream in Grimoire has reading attached | P0 | Yes |
 | ANALYSIS-003 | Zodiac Personalization | Reading includes zodiac context | User has zodiac set | 1. Set zodiac in settings<br>2. Submit new dream | Reading interpretation considers zodiac sign | P1 | Partial |
 | ANALYSIS-004 | Loading States | Appropriate loading messages shown | Submitting dream | 1. Submit dream<br>2. Observe loading screen | Shows "Recording your dream..." then "Consulting the dream oracle..." | P2 | Yes |
-| ANALYSIS-005 | All Reading Sections | All 7 sections render | Reading returned | 1. View completed reading | Title, TL;DR, Symbols (1-3), Omen, Ritual, Journal Prompt, Tags all visible | P0 | Yes |
-| ANALYSIS-006 | Symbol Structure | Each symbol has required fields | Reading returned | 1. View reading<br>2. Check each symbol card | Each symbol shows: name, meaning, shadow, guidance | P1 | Yes |
+| ANALYSIS-005 | All Reading Sections | All sections render | Reading returned | 1. View completed reading | Title, TL;DR, Plain English, Symbols (1-3), Omen, Ritual, Journal Prompt, Tags all visible | P0 | Yes |
+| ANALYSIS-006 | Symbol Structure | Each symbol has required fields | Reading returned | 1. View reading<br>2. Check each symbol card | Each symbol shows: name, interpretation, meaning, shadow, guidance | P1 | Yes |
 | ANALYSIS-007 | Share Reading | User can share reading | On Reading screen | 1. Tap "Share Reading"<br>2. Complete share action | Share sheet opens with reading content (no dream text) | P2 | No |
 
 ### Edge Cases
@@ -139,7 +139,7 @@ This document contains comprehensive test cases for the Dreamz mobile dream jour
 | ANALYSIS-ERR003 | Missing Fields | Reading missing required fields | AI omits fields | 1. Submit dream | Validation fails, retry or fallback | P1 | Yes |
 | ANALYSIS-ERR004 | Retry Limit Exceeded | All retries fail | AI completely down | 1. Submit dream<br>2. All 2 retries fail | Fallback reading shown with fallback flag | P1 | Yes |
 | ANALYSIS-ERR005 | Validation - Too Few Symbols | Reading has 0 symbols | AI returns empty array | 1. Submit dream | Validation fails, retry attempted | P2 | Yes |
-| ANALYSIS-ERR006 | Validation - Too Many Tags | Reading has 8+ tags | AI returns excessive tags | 1. Submit dream | Validation fails (3-7 tags required) | P2 | Yes |
+| ANALYSIS-ERR006 | Validation - Too Many Tags | Reading has 6+ tags | AI returns excessive tags | 1. Submit dream | Validation fails (3-5 tags required) | P2 | Yes |
 | ANALYSIS-ERR007 | Dream Saved but Analysis Fails | Save succeeds, analysis fails | Mixed success | 1. Submit dream<br>2. Analysis fails | Alert offers "Return Home" or "Try Again" | P1 | Yes |
 | ANALYSIS-ERR008 | Retry Analysis | User retries failed analysis | Analysis failed, dream saved | 1. Tap "Try Again" on error | Analysis retried for existing dream | P1 | Yes |
 
@@ -440,3 +440,4 @@ This document contains comprehensive test cases for the Dreamz mobile dream jour
 | Date | Version | Changes |
 |------|---------|---------|
 | 2026-02-04 | 1.0.0 | Initial comprehensive test cases document |
+| 2026-03-18 | 1.1.0 | Updated symbol count (1-3), tag count (3-5), added interpretation field to symbols |
