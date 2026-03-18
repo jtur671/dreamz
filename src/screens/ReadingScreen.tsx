@@ -350,25 +350,45 @@ Interpreted with Dreamz`;
   );
 }
 
+const TOOLTIP_TEXT: Record<string, string> = {
+  Meaning: 'What this symbol traditionally represents across cultures and dream lore.',
+  Shadow: 'The challenging side — hidden fears or tensions this symbol may reveal.',
+  Guidance: 'A suggestion for working with this symbol\u2019s energy in waking life.',
+};
+
 function SymbolCard({ symbol }: { symbol: DreamSymbol }) {
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+
+  function toggleTooltip(section: string) {
+    setActiveTooltip((current) => (current === section ? null : section));
+  }
+
+  function renderSection(label: string, text: string, textStyle: object) {
+    return (
+      <View style={styles.symbolSection}>
+        <TouchableOpacity
+          style={styles.symbolSectionHeader}
+          onPress={() => toggleTooltip(label)}
+          accessibilityRole="button"
+          accessibilityLabel={`Info about ${label}`}
+        >
+          <Text style={styles.symbolSectionLabel}>{label}</Text>
+          <Text style={styles.tooltipIcon}>ⓘ</Text>
+        </TouchableOpacity>
+        {activeTooltip === label && (
+          <Text style={styles.tooltipText}>{TOOLTIP_TEXT[label]}</Text>
+        )}
+        <Text style={textStyle}>{text}</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.symbolCard}>
       <Text style={styles.symbolName}>{symbol.name}</Text>
-
-      <View style={styles.symbolSection}>
-        <Text style={styles.symbolSectionLabel}>Meaning</Text>
-        <Text style={styles.symbolMeaning}>{symbol.meaning}</Text>
-      </View>
-
-      <View style={styles.symbolSection}>
-        <Text style={styles.symbolSectionLabel}>Shadow</Text>
-        <Text style={styles.symbolShadow}>{symbol.shadow}</Text>
-      </View>
-
-      <View style={styles.symbolSection}>
-        <Text style={styles.symbolSectionLabel}>Guidance</Text>
-        <Text style={styles.symbolGuidance}>{symbol.guidance}</Text>
-      </View>
+      {renderSection('Meaning', symbol.meaning, styles.symbolMeaning)}
+      {renderSection('Shadow', symbol.shadow, styles.symbolShadow)}
+      {renderSection('Guidance', symbol.guidance, styles.symbolGuidance)}
     </View>
   );
 }
@@ -523,13 +543,29 @@ const styles = StyleSheet.create({
     borderLeftWidth: 2,
     borderLeftColor: '#5a4a7e',
   },
+  symbolSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
   symbolSectionLabel: {
     fontSize: 11,
     fontWeight: '700',
     color: '#b8a8d8',
     textTransform: 'uppercase',
     letterSpacing: 1.2,
+  },
+  tooltipIcon: {
+    fontSize: 13,
+    color: '#8b7fa8',
+    marginLeft: 6,
+  },
+  tooltipText: {
+    fontSize: 12,
+    color: '#a89cc8',
+    fontStyle: 'italic',
     marginBottom: 6,
+    lineHeight: 18,
   },
   symbolMeaning: {
     fontSize: 15,
