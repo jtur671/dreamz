@@ -13,11 +13,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import ViewShot from 'react-native-view-shot';
 import type { DreamReading, DreamSymbol } from '../types';
 import { generateDreamImage } from '../lib/dreamService';
+import { supabase } from '../lib/supabase';
 import PaintBrushAnimation from '../components/PaintBrushAnimation';
 
 type ReadingScreenParams = {
@@ -41,6 +42,26 @@ export default function ReadingScreen() {
   const [showShareCard, setShowShareCard] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [showDreamText, setShowDreamText] = useState(false);
+  const [dictionarySymbols, setDictionarySymbols] = useState<Set<string>>(new Set());
+
+  // Check which reading symbols exist in the curated dictionary (case-insensitive)
+  useEffect(() => {
+    if (!reading.symbols?.length) return;
+    const names = reading.symbols.map((s) => s.name);
+    // Use ilike filters for case-insensitive matching
+    const filters = names.map((n) => `name.ilike.${n}`).join(',');
+    supabase
+      .from('symbols')
+      .select('name')
+      .or(filters)
+      .then(({ data }) => {
+        if (data?.length) {
+          // Map DB names back to reading symbol names (case-insensitive)
+          const dbNamesLower = new Set(data.map((d: { name: string }) => d.name.toLowerCase()));
+          setDictionarySymbols(new Set(names.filter((n) => dbNamesLower.has(n.toLowerCase()))));
+        }
+      });
+  }, [reading.symbols]);
 
   // Lazy-load dream image if not already present (premium only)
   useEffect(() => {
@@ -269,7 +290,7 @@ Interpreted with Dreamz`;
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Symbols Revealed</Text>
           {reading.symbols.map((symbol, index) => (
-            <SymbolCard key={index} symbol={symbol} />
+            <SymbolCard key={index} symbol={symbol} inDictionary={dictionarySymbols.has(symbol.name)} />
           ))}
         </View>
         )}
@@ -356,11 +377,21 @@ const TOOLTIP_TEXT: Record<string, string> = {
   Guidance: 'A suggestion for working with this symbol\u2019s energy in waking life.',
 };
 
-function SymbolCard({ symbol }: { symbol: DreamSymbol }) {
+function SymbolCard({ symbol, inDictionary }: { symbol: DreamSymbol; inDictionary: boolean }) {
+  const navigation = useNavigation();
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
 
   function toggleTooltip(section: string) {
     setActiveTooltip((current) => (current === section ? null : section));
+  }
+
+  function navigateToDictionary() {
+    navigation.dispatch(
+      CommonActions.navigate({
+        name: 'Dictionary',
+        params: { search: symbol.name },
+      })
+    );
   }
 
   function renderSection(label: string, text: string, textStyle: object) {
@@ -385,7 +416,19 @@ function SymbolCard({ symbol }: { symbol: DreamSymbol }) {
 
   return (
     <View style={styles.symbolCard}>
-      <Text style={styles.symbolName}>{symbol.name}</Text>
+      {inDictionary ? (
+        <TouchableOpacity
+          onPress={navigateToDictionary}
+          accessibilityRole="link"
+          accessibilityLabel={`View ${symbol.name} in dictionary`}
+          style={styles.symbolNameLink}
+        >
+          <Text style={styles.symbolName}>{symbol.name}</Text>
+          <Text style={styles.symbolLinkHint}>View in Dictionary →</Text>
+        </TouchableOpacity>
+      ) : (
+        <Text style={styles.symbolName}>{symbol.name}</Text>
+      )}
       {renderSection('Meaning', symbol.meaning, styles.symbolMeaning)}
       {renderSection('Shadow', symbol.shadow, styles.symbolShadow)}
       {renderSection('Guidance', symbol.guidance, styles.symbolGuidance)}
@@ -536,6 +579,15 @@ const styles = StyleSheet.create({
     color: '#f0e8ff',
     marginBottom: 16,
     letterSpacing: 0.5,
+  },
+  symbolNameLink: {
+    marginBottom: 16,
+  },
+  symbolLinkHint: {
+    fontSize: 12,
+    color: '#9b7fd4',
+    marginTop: 4,
+    letterSpacing: 0.3,
   },
   symbolSection: {
     marginBottom: 14,
