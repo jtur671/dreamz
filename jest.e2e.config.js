@@ -3,6 +3,8 @@
  *
  * E2E tests run against real Supabase backend and need real fetch.
  */
+require('dotenv').config();
+
 module.exports = {
   testEnvironment: 'node',
   transform: {
