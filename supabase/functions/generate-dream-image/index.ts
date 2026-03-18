@@ -17,7 +17,7 @@ import {
 } from "../_shared/cors.ts";
 
 const OPENAI_IMAGE_URL = "https://api.openai.com/v1/images/generations";
-const OPENAI_IMAGE_MODEL = "gpt-image-1";
+const OPENAI_IMAGE_MODEL = "gpt-image-1.5";
 const IMAGE_TIMEOUT_MS = 60000;
 
 Deno.serve(async (req: Request) => {
@@ -101,6 +101,7 @@ Deno.serve(async (req: Request) => {
         n: 1,
         size: "1024x1024",
         quality: "medium",
+        response_format: "url",
       }),
       signal: controller.signal,
     });

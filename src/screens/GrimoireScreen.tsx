@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -59,6 +59,13 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
       .sort((a, b) => b[1] - a[1])
       .map(([name, count]) => ({ name, count }));
   }, [dreams]);
+
+  // Reset active pill if the selected symbol is no longer available
+  useEffect(() => {
+    if (activePill && !symbolPills.some(p => p.name === activePill)) {
+      setActivePill(null);
+    }
+  }, [activePill, symbolPills]);
 
   // Refresh when tab is focused
   useFocusEffect(
@@ -436,16 +443,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   pillRow: {
-    maxHeight: 44,
+    maxHeight: 52,
     marginBottom: 12,
   },
   pillRowContent: {
     gap: 8,
+    alignItems: 'center',
   },
   pill: {
     backgroundColor: '#2a2a4e',
     borderRadius: 16,
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: 14,
     borderWidth: 1,
     borderColor: '#3a3a5e',
@@ -456,7 +464,7 @@ const styles = StyleSheet.create({
   },
   pillText: {
     color: '#8b7fa8',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
   },
   pillTextActive: {
