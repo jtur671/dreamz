@@ -1,6 +1,5 @@
 import { device, element, by, expect, waitFor } from 'detox';
-import { launchApp, tapById, typeById, waitForVisible, pollForVisible, navigateToTab } from './helpers/actions';
-import { TEST_DREAM_TEXT } from './helpers/dreamFactory';
+import { launchApp, tapById, pollForVisible, navigateToTab } from './helpers/actions';
 import { setTestAccountPremium } from './helpers/db';
 
 /**

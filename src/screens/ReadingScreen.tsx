@@ -387,9 +387,12 @@ function SymbolCard({ symbol, inDictionary }: { symbol: DreamSymbol; inDictionar
 
   function navigateToDictionary() {
     navigation.dispatch(
-      CommonActions.navigate({
-        name: 'Dictionary',
-        params: { search: symbol.name },
+      CommonActions.reset({
+        index: 0,
+        routes: [{
+          name: 'MainTabs',
+          params: { screen: 'Dictionary', params: { search: symbol.name } },
+        }],
       })
     );
   }
