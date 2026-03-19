@@ -68,7 +68,7 @@ const MIN_DREAM_TEXT_LENGTH = 10;
 // Free: gpt-5.4-nano (~$0.0016/reading) — fastest, 33% cheaper than old gpt-5-mini.
 // Premium: gpt-5.4-mini (~$0.006/reading) — higher quality for paying users.
 const MODEL_CONFIG = {
-  free: { model: "gpt-5.4-nano", maxCompletionTokens: 2000, timeoutMs: 30000 },
+  free: { model: "gpt-5.4-nano", maxCompletionTokens: 2500, timeoutMs: 30000 },
   premium: { model: "gpt-5.4-mini", maxCompletionTokens: 4000, timeoutMs: 45000 },
 } as const;
 
@@ -82,11 +82,16 @@ type SubscriptionTier = keyof typeof MODEL_CONFIG;
 /**
  * Calls the OpenAI API with the given messages using tier-appropriate model config
  */
+interface OpenAIResult {
+  content: string;
+  finishReason: string;
+}
+
 async function callOpenAI(
   messages: OpenAIMessage[],
   apiKey: string,
   config: typeof MODEL_CONFIG[SubscriptionTier]
-): Promise<string> {
+): Promise<OpenAIResult> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), config.timeoutMs);
 
@@ -123,7 +128,10 @@ async function callOpenAI(
       throw new Error("No response from OpenAI");
     }
 
-    return data.choices[0].message.content;
+    return {
+      content: data.choices[0].message.content,
+      finishReason: data.choices[0].finish_reason || 'stop',
+    };
   } catch (error) {
     clearTimeout(timeoutId);
     if (error instanceof Error && error.name === "AbortError") {
@@ -134,17 +142,55 @@ async function callOpenAI(
 }
 
 /**
+ * Attempts to close truncated JSON by counting open braces/brackets
+ */
+function attemptCloseJson(text: string): string {
+  let openBraces = 0;
+  let openBrackets = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (const ch of text) {
+    if (escaped) { escaped = false; continue; }
+    if (ch === '\\' && inString) { escaped = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === '{') openBraces++;
+    if (ch === '}') openBraces--;
+    if (ch === '[') openBrackets++;
+    if (ch === ']') openBrackets--;
+  }
+
+  // If we're mid-string, close it
+  if (inString) text += '"';
+
+  // Close any open brackets/braces
+  for (let i = 0; i < openBrackets; i++) text += ']';
+  for (let i = 0; i < openBraces; i++) text += '}';
+
+  return text;
+}
+
+/**
  * Parses and validates the AI response, attempting to extract valid JSON
  */
-function parseAIResponse(content: string): DreamReadingSchema | null {
+function parseAIResponse(content: string, finishReason: string): DreamReadingSchema | null {
+  let textToParse = content;
+
+  // If truncated (finish_reason === 'length'), try to close the JSON gracefully
+  if (finishReason === 'length') {
+    console.warn('Response truncated (finish_reason=length), attempting to close JSON');
+    textToParse = attemptCloseJson(textToParse);
+  }
+
   // Try to parse the content directly
   let parsed: unknown;
 
   try {
-    parsed = JSON.parse(content);
+    parsed = JSON.parse(textToParse);
   } catch {
     // If direct parsing fails, try to extract JSON from markdown code blocks
-    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+    const jsonMatch = textToParse.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) {
       try {
         parsed = JSON.parse(jsonMatch[1].trim());
@@ -153,7 +199,7 @@ function parseAIResponse(content: string): DreamReadingSchema | null {
       }
     } else {
       // Try to find JSON object in the content
-      const objectMatch = content.match(/\{[\s\S]*\}/);
+      const objectMatch = textToParse.match(/\{[\s\S]*\}/);
       if (objectMatch) {
         try {
           parsed = JSON.parse(objectMatch[0]);
@@ -351,6 +397,16 @@ Deno.serve(async (req: Request) => {
 
     const { dream_text, mood, dream_id, zodiac_sign, gender, age_range } = validation.data;
 
+    // Reject 'forgot' dream type entries — they should not be analyzed
+    const reqBody = body as Record<string, unknown>;
+    if (reqBody.dream_type === 'forgot') {
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "Forgot-type dreams do not require analysis",
+        400
+      );
+    }
+
     // Determine subscription tier for model selection
     const { data: profile } = await supabase
       .from("profiles")
@@ -389,7 +445,7 @@ Deno.serve(async (req: Request) => {
       try {
         console.log(`[${correlationId}] OpenAI attempt ${attempt + 1}/${MAX_RETRIES} (${modelConfig.model})`);
         const aiResponse = await callOpenAI(messages, openaiApiKey, modelConfig);
-        reading = parseAIResponse(aiResponse);
+        reading = parseAIResponse(aiResponse.content, aiResponse.finishReason);
 
         if (reading) {
           console.log(`[${correlationId}] Successfully parsed reading on attempt ${attempt + 1}`);

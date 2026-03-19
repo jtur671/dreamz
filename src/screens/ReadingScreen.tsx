@@ -311,7 +311,11 @@ Interpreted with Dreamz`;
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Suggested Ritual</Text>
           <View style={styles.ritualCard}>
-            <Text style={styles.ritualText}>{reading.ritual}</Text>
+            <Text style={styles.ritualText}>
+              {reading.ritual && !reading.ritual.match(/[.!?"']$/)
+                ? reading.ritual + '...'
+                : reading.ritual}
+            </Text>
           </View>
         </View>
 

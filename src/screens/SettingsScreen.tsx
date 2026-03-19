@@ -16,6 +16,7 @@ import {
   Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../lib/supabase';
 import { getProfile, updateZodiacSign, updateProfile } from '../lib/profileService';
 import { exportUserDreams, deleteUserAccount } from '../lib/accountService';
@@ -579,30 +580,30 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Danger Zone</Text>
-
-          <TouchableOpacity
-            testID="settings-delete-account-button"
-            style={[styles.menuItem, styles.dangerItem]}
-            onPress={handleDeleteAccount}
-            disabled={loading}
-            accessibilityRole="button"
-            accessibilityLabel="Delete account and all data"
-          >
-            <Text style={styles.dangerText}>Close the Grimoire Forever</Text>
-            <Text style={styles.menuItemSubtext}>Delete your account and all data</Text>
-          </TouchableOpacity>
-        </View>
-
         <TouchableOpacity
           testID="settings-signout-button"
-          style={styles.signOutButton}
+          style={styles.signOutButtonProminent}
           onPress={handleSignOut}
           accessibilityRole="button"
           accessibilityLabel="Sign out"
         >
-          <Text style={styles.signOutText}>Step Away from the Grimoire</Text>
+          <LinearGradient
+            colors={['#3a3a5e', '#2a2a4e']}
+            style={styles.signOutGradient}
+          >
+            <Text style={styles.signOutProminentText}>Step Away from the Grimoire</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          testID="settings-delete-account-button"
+          style={styles.deleteAccountLink}
+          onPress={handleDeleteAccount}
+          disabled={loading}
+          accessibilityRole="button"
+          accessibilityLabel="Delete account and all data"
+        >
+          <Text style={styles.deleteAccountLinkText}>Close the Grimoire Forever</Text>
         </TouchableOpacity>
 
         <View style={styles.legalRow}>
@@ -726,22 +727,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 4,
   },
-  dangerItem: {
-    borderColor: '#5e2a2a',
-  },
-  dangerText: {
-    fontSize: 16,
-    color: '#e07a7a',
-    marginBottom: 4,
-  },
-  signOutButton: {
-    alignItems: 'center',
-    paddingVertical: 16,
+  signOutButtonProminent: {
+    borderRadius: 16,
+    overflow: 'hidden',
     marginTop: 16,
   },
-  signOutText: {
-    color: '#8b7fa8',
+  signOutGradient: {
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#4a4a6e',
+  },
+  signOutProminentText: {
+    color: '#e0d4f7',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  deleteAccountLink: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginTop: 8,
+  },
+  deleteAccountLinkText: {
+    color: '#8b7fa8',
+    fontSize: 12,
+    textDecorationLine: 'underline',
   },
   legalRow: {
     flexDirection: 'row',

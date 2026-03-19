@@ -301,6 +301,13 @@ export default function OnboardingScreen() {
         Your dreams hold messages waiting to be deciphered.
       </Text>
 
+      <View style={styles.grimoireExplainer}>
+        <Text style={styles.grimoireExplainerText}>
+          <Text style={styles.grimoireExplainerBold}>Grimoire</Text>
+          {' \u2014 from the French word for a book of personal spells. Yours will be a private collection of your dreams and their meanings.'}
+        </Text>
+      </View>
+
       <View style={styles.welcomeFeatures}>
         <Text style={styles.welcomeFeature}>Record your nocturnal visions</Text>
         <Text style={styles.welcomeFeature}>Receive mystical interpretations</Text>
@@ -546,6 +553,24 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
+  },
+  grimoireExplainer: {
+    backgroundColor: '#2a2a5e',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(107, 78, 158, 0.4)',
+  },
+  grimoireExplainerText: {
+    fontSize: 14,
+    color: '#c0b8d8',
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  grimoireExplainerBold: {
+    fontWeight: '700',
+    color: '#e0d4f7',
   },
   welcomeFeatures: {
     marginBottom: 40,

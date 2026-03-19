@@ -1,5 +1,5 @@
 import { device, element, by, expect, waitFor } from 'detox';
-import { launchApp, tapById, typeById, waitForVisible, waitForNotVisible } from './helpers/actions';
+import { launchApp, tapById, typeById, waitForVisible, waitForNotVisible, navigateToTab } from './helpers/actions';
 import { TEST_DREAM_TEXT } from './helpers/dreamFactory';
 import { setTestAccountPremium } from './helpers/db';
 
@@ -173,6 +173,39 @@ describe('Dream Entry', () => {
     await waitFor(element(by.id('new-dream-mood-hopeful')))
       .not.toBeVisible()
       .withTimeout(5000);
+  });
+
+  it('should save a forgot dream and show confirmation', async () => {
+    await openNewDream();
+
+    await tapById('new-dream-forgot');
+
+    // Should show "Sleep Logged" confirmation alert
+    await waitFor(element(by.text('Sleep Logged')))
+      .toBeVisible()
+      .withTimeout(10000);
+
+    // Dismiss the alert
+    await element(by.text('OK')).tap();
+
+    // Should navigate back to home
+    await waitFor(element(by.text('Welcome, Dreamer')))
+      .toBeVisible()
+      .withTimeout(10000);
+  });
+
+  it('should show forgot dream in grimoire', async () => {
+    // Navigate to Grimoire tab
+    await navigateToTab('Grimoire');
+    await waitFor(element(by.text('Your Grimoire')))
+      .toBeVisible()
+      .withTimeout(10000);
+
+    // The forgot entry should appear with its muted text
+    await waitFor(element(by.text('No dream recalled')))
+      .toBeVisible()
+      .withTimeout(10000);
+    await expect(element(by.text('You still showed up.'))).toBeVisible();
   });
 
   it('should clear a recovered draft', async () => {

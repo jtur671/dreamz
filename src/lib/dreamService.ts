@@ -27,7 +27,7 @@ export type FetchDreamsResult =
 export async function saveDream(
   dreamText: string,
   mood?: string,
-  dreamType: 'dream' | 'nightmare' = 'dream'
+  dreamType: 'dream' | 'nightmare' | 'forgot' = 'dream'
 ): Promise<SaveDreamResult> {
   try {
     const { data: { user } } = await supabase.auth.getUser();

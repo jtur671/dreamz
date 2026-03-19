@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
-  FlatList,
+  SectionList,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert,
   ScrollView,
+  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,6 +20,7 @@ import { deleteDream as deleteDreamService } from '../lib/dreamService';
 import { getDreamStats } from '../lib/insightsService';
 import type { Dream } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
 
 type GrimoireScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -31,6 +33,26 @@ function formatDate(dateString: string) {
     day: 'numeric',
     year: 'numeric',
   });
+}
+
+function getDateGroupLabel(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dreamDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffDays = Math.floor((today.getTime() - dreamDay.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function getDateBadge(dateString: string): { month: string; day: string } {
+  const date = new Date(dateString);
+  return {
+    month: date.toLocaleDateString('en-US', { month: 'short' }),
+    day: date.getDate().toString(),
+  };
 }
 
 export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
@@ -160,14 +182,111 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
     });
   }, [dreams, activePill, searchQuery]);
 
+  // Group filtered dreams by date for SectionList
+  const sections = useMemo(() => {
+    const groups = new Map<string, Dream[]>();
+    for (const dream of filteredDreams) {
+      const label = getDateGroupLabel(dream.created_at);
+      const existing = groups.get(label);
+      if (existing) {
+        existing.push(dream);
+      } else {
+        groups.set(label, [dream]);
+      }
+    }
+    return Array.from(groups.entries()).map(([title, data]) => ({ title, data }));
+  }, [filteredDreams]);
+
   const renderDream = useCallback(({ item }: { item: Dream }) => {
     const hasReading = !!item.reading;
     const title = item.reading?.title;
     const isNightmare = item.dream_type === 'nightmare';
+    const isForgot = (item as any).dream_type === 'forgot';
     const dateLabel = formatDate(item.created_at);
+    const dateBadge = getDateBadge(item.created_at);
+    const imageUrl = item.reading?.image_url;
     const cardLabel = title
       ? `${title}, ${dateLabel}${item.mood ? ', ' + item.mood : ''}`
       : `Dream from ${dateLabel}`;
+
+    // Forgot-dream entries get a special muted card
+    if (isForgot) {
+      return (
+        <View
+          testID="grimoire-dream-item"
+          style={styles.forgotCard}
+          accessibilityLabel={`No dream recalled, ${dateLabel}`}
+        >
+          <Text style={styles.forgotIcon}>{'\u{1F319}'}</Text>
+          <View style={styles.forgotContent}>
+            <Text style={styles.forgotDate}>{dateLabel}</Text>
+            <Text style={styles.forgotText}>No dream recalled</Text>
+            <Text style={styles.forgotEncouragement}>You still showed up.</Text>
+          </View>
+        </View>
+      );
+    }
+
+    const previewText = item.reading?.tldr || item.dream_text;
+
+    const cardInner = (
+      <>
+        <View style={styles.dateBadge}>
+          <Text style={styles.dateBadgeMonth}>{dateBadge.month}</Text>
+          <Text style={styles.dateBadgeDay}>{dateBadge.day}</Text>
+        </View>
+        <View style={styles.journalCardBottom}>
+          <Text style={styles.typeIcon}>
+            {isNightmare ? '\u{26A1}' : '\u{1F319}'}
+          </Text>
+          {title && (
+            <Text
+              style={[styles.dreamTitle, isNightmare && styles.nightmareTitle]}
+              numberOfLines={1}
+            >
+              {title}
+            </Text>
+          )}
+          <Text
+            style={[styles.dreamPreview, isNightmare && styles.nightmareText]}
+            numberOfLines={2}
+          >
+            {previewText}
+          </Text>
+          {!hasReading && (
+            <Text style={styles.noReadingIndicator}>No reading yet</Text>
+          )}
+        </View>
+      </>
+    );
+
+    if (imageUrl) {
+      return (
+        <TouchableOpacity
+          testID="grimoire-dream-item"
+          accessibilityRole="button"
+          accessibilityLabel={cardLabel}
+          accessibilityHint={hasReading ? 'Double tap to view reading' : 'No reading available'}
+          style={styles.journalCard}
+          onPress={() => handleDreamPress(item)}
+          onLongPress={() => handleDeletePress(item)}
+          disabled={!hasReading}
+        >
+          <ImageBackground
+            source={{ uri: imageUrl }}
+            style={styles.journalCardImage}
+            imageStyle={styles.journalCardImageStyle}
+          >
+            <LinearGradient
+              colors={['transparent', 'rgba(0,0,0,0.7)']}
+              style={styles.journalCardOverlay}
+            >
+              {cardInner}
+            </LinearGradient>
+          </ImageBackground>
+        </TouchableOpacity>
+      );
+    }
 
     return (
       <TouchableOpacity
@@ -175,64 +294,34 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
         accessibilityRole="button"
         accessibilityLabel={cardLabel}
         accessibilityHint={hasReading ? 'Double tap to view reading' : 'No reading available'}
-        style={[
-          styles.dreamCard,
-          isNightmare && styles.nightmareCard,
-        ]}
+        style={styles.journalCard}
         onPress={() => handleDreamPress(item)}
         onLongPress={() => handleDeletePress(item)}
         disabled={!hasReading}
       >
-        <View style={[
-          styles.cardAccent,
-          isNightmare && styles.nightmareAccent,
-        ]} />
-        <View style={styles.cardContent}>
-          <View style={styles.cardHeader}>
-            <View style={styles.cardHeaderText}>
-              <View style={styles.titleRow}>
-                <Text style={styles.typeIcon}>
-                  {isNightmare ? '\u{26A1}' : '\u{1F319}'}
-                </Text>
-                {title && (
-                  <Text style={[
-                    styles.dreamTitle,
-                    isNightmare && styles.nightmareTitle,
-                  ]}>
-                    {title}
-                  </Text>
-                )}
-              </View>
-              <Text style={styles.dreamDate}>{dateLabel}</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={() => handleDeletePress(item)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              accessibilityRole="button"
-              accessibilityLabel="Delete dream"
-            >
-              <Text style={styles.deleteButtonText}>✕</Text>
-            </TouchableOpacity>
+        <LinearGradient
+          colors={isNightmare
+            ? ['#3a1a30', '#2a1528', '#1e1a2a']
+            : ['#2d2860', '#252050', '#1a1a3e']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.journalCardFallback]}
+        >
+          {/* Decorative stars for no-image cards */}
+          <View style={styles.starsOverlay} pointerEvents="none">
+            <View style={[styles.star, styles.star1]} />
+            <View style={[styles.star, styles.star2]} />
+            <View style={[styles.star, styles.starLg, styles.star3]} />
+            <View style={[styles.star, styles.star4]} />
+            <View style={[styles.star, styles.star5]} />
           </View>
-          {item.mood && <Text style={styles.dreamMood}>{item.mood}</Text>}
-          <Text style={[
-            styles.dreamText,
-            isNightmare && styles.nightmareText,
-          ]} numberOfLines={3}>
-            {item.dream_text}
-          </Text>
-          {hasReading ? (
-            <Text style={[
-              styles.readingIndicator,
-              isNightmare && styles.nightmareIndicator,
-            ]}>
-              Tap to view reading
-            </Text>
-          ) : (
-            <Text style={styles.noReadingIndicator}>No reading yet</Text>
-          )}
-        </View>
+          {/* Subtle glow accent */}
+          <View style={[
+            styles.glowAccent,
+            isNightmare && styles.glowAccentNightmare,
+          ]} pointerEvents="none" />
+          {cardInner}
+        </LinearGradient>
       </TouchableOpacity>
     );
   }, [handleDreamPress, handleDeletePress]);
@@ -269,6 +358,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
         style={styles.gradient}
       >
         <Text style={styles.title}>Your Grimoire</Text>
+
         <Text style={styles.subtitle}>{grimoireSubtitle}</Text>
 
         {dreamStreak >= 2 && (
@@ -370,10 +460,13 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
             </Text>
           </View>
         ) : (
-          <FlatList
+          <SectionList
             testID="grimoire-dream-list"
-            data={filteredDreams}
+            sections={sections}
             renderItem={renderDream}
+            renderSectionHeader={({ section: { title } }) => (
+              <Text style={styles.sectionHeader}>{title}</Text>
+            )}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
@@ -381,6 +474,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
             initialNumToRender={10}
             maxToRenderPerBatch={10}
             windowSize={5}
+            stickySectionHeadersEnabled={false}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -495,16 +589,22 @@ const styles = StyleSheet.create({
     color: '#9b7fd4',
     fontSize: 14,
   },
+  sectionHeader: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#8b7fa8',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginTop: 16,
+    marginBottom: 8,
+  },
   listContent: {
     paddingBottom: 24,
   },
-  dreamCard: {
-    backgroundColor: '#2a2a4e',
+  journalCard: {
     borderRadius: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
-    flexDirection: 'row',
+    height: 180,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -512,86 +612,140 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  nightmareCard: {
-    backgroundColor: '#2e1a2a',
-    borderColor: '#5a2a4a',
-  },
-  cardAccent: {
-    width: 4,
-    backgroundColor: '#9b7fd4',
-  },
-  nightmareAccent: {
-    backgroundColor: '#8a3a5a',
-  },
-  cardContent: {
+  journalCardImage: {
     flex: 1,
-    padding: 16,
   },
-  cardHeader: {
-    flexDirection: 'row',
+  journalCardImageStyle: {
+    borderRadius: 16,
+  },
+  journalCardOverlay: {
+    flex: 1,
+    borderRadius: 16,
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    padding: 14,
   },
-  cardHeaderText: {
+  journalCardFallback: {
     flex: 1,
+    borderRadius: 16,
+    justifyContent: 'space-between',
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#4a4a7a',
+    overflow: 'hidden',
   },
-  titleRow: {
-    flexDirection: 'row',
+  starsOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  star: {
+    position: 'absolute',
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: 'rgba(200, 190, 240, 0.25)',
+  },
+  starLg: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(200, 190, 240, 0.35)',
+  },
+  star1: { top: 30, right: 40 },
+  star2: { top: 55, right: 80 },
+  star3: { top: 20, right: 120 },
+  star4: { top: 70, right: 25 },
+  star5: { top: 45, right: 150 },
+  glowAccent: {
+    position: 'absolute',
+    top: -40,
+    right: -40,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(107, 78, 158, 0.15)',
+  },
+  glowAccentNightmare: {
+    backgroundColor: 'rgba(138, 58, 90, 0.15)',
+  },
+  dateBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(26, 26, 46, 0.8)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(107, 78, 158, 0.3)',
+  },
+  dateBadgeMonth: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#a89cc8',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  dateBadgeDay: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#e0d4f7',
+  },
+  journalCardBottom: {
+    gap: 2,
   },
   typeIcon: {
     fontSize: 14,
-    marginRight: 6,
-  },
-  deleteButton: {
-    padding: 4,
-  },
-  deleteButtonText: {
-    color: '#8b7fa8',
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   dreamTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#e0d4f7',
-    marginBottom: 4,
-    flex: 1,
   },
   nightmareTitle: {
     color: '#e8b8c8',
   },
-  dreamDate: {
-    fontSize: 12,
-    color: '#8b7fa8',
-    marginBottom: 4,
-  },
-  dreamMood: {
-    fontSize: 12,
-    color: '#6b4e9e',
-    marginBottom: 8,
-  },
-  dreamText: {
-    fontSize: 15,
-    color: '#a89cc8',
-    lineHeight: 22,
+  dreamPreview: {
+    fontSize: 13,
+    color: '#c0b8d8',
+    lineHeight: 18,
   },
   nightmareText: {
     color: '#b89ca8',
   },
-  readingIndicator: {
-    fontSize: 12,
-    color: '#9b7fd4',
-    marginTop: 12,
-    fontStyle: 'italic',
-  },
-  nightmareIndicator: {
-    color: '#a87898',
-  },
   noReadingIndicator: {
     fontSize: 12,
     color: '#6b5b8a',
-    marginTop: 12,
+    fontStyle: 'italic',
+  },
+  forgotCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2a2a4e',
+    borderRadius: 16,
+    marginBottom: 12,
+    padding: 16,
+    opacity: 0.6,
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
+  },
+  forgotIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  forgotContent: {
+    flex: 1,
+  },
+  forgotDate: {
+    fontSize: 12,
+    color: '#8b7fa8',
+    marginBottom: 2,
+  },
+  forgotText: {
+    fontSize: 14,
+    color: '#a89cc8',
+    marginBottom: 2,
+  },
+  forgotEncouragement: {
+    fontSize: 12,
+    color: '#8b7fa8',
     fontStyle: 'italic',
   },
   emptyContainer: {
