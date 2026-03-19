@@ -270,6 +270,25 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     });
   }
 
+  async function handleForgotDream() {
+    setLoadingState('saving');
+    const saveResult = await saveDream('No dream recalled', undefined, 'forgot');
+
+    if (!saveResult.success) {
+      setLoadingState('error');
+      Alert.alert('Error', saveResult.error);
+      return;
+    }
+
+    setLoadingState('idle');
+    await clearDraft();
+    Alert.alert(
+      'Sleep Logged',
+      'Sweet dreams next time.',
+      [{ text: 'OK', onPress: () => navigation.goBack() }]
+    );
+  }
+
   function handleVoiceTranscription(text: string) {
     // Append transcribed text to existing dream text
     if (dreamText.trim()) {
@@ -380,6 +399,19 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
               </TouchableOpacity>
             </View>
 
+            <TouchableOpacity
+              testID="new-dream-forgot"
+              style={styles.forgotButton}
+              onPress={handleForgotDream}
+              disabled={isLoading}
+              accessibilityRole="button"
+              accessibilityLabel="I don't remember my dream"
+              activeOpacity={0.7}
+            >
+              <Text style={styles.forgotButtonIcon}>{'\u{1F319}'}</Text>
+              <Text style={styles.forgotButtonText}>{"I don't remember"}</Text>
+            </TouchableOpacity>
+
             <View style={styles.moodContainer}>
               <Text style={styles.moodLabel}>How did it feel?</Text>
               <Text style={styles.moodHint}>(select up to 3)</Text>
@@ -442,15 +474,6 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
               </View>
             </View>
 
-            {/* Voice Recorder */}
-            <View style={styles.voiceRecorderContainer}>
-              <Text style={styles.voiceLabel}>Or speak your dream</Text>
-              <VoiceRecorder
-                onTranscription={handleVoiceTranscription}
-                disabled={isLoading}
-              />
-            </View>
-
             <TextInput
               testID="new-dream-text-input"
               style={styles.dreamInput}
@@ -469,22 +492,29 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
               </View>
             )}
 
-            <TouchableOpacity
-              testID="new-dream-submit"
-              style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
-              onPress={handleSubmit}
-              disabled={isLoading}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={['#6b4e9e', '#8b6cc1']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.ctaGradient}
+            <View style={styles.submitRow}>
+              <VoiceRecorder
+                onTranscription={handleVoiceTranscription}
+                disabled={isLoading}
+                compact
+              />
+              <TouchableOpacity
+                testID="new-dream-submit"
+                style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
+                onPress={handleSubmit}
+                disabled={isLoading}
+                activeOpacity={0.8}
               >
-                <Text style={styles.submitButtonText}>Interpret Dream</Text>
-              </LinearGradient>
-            </TouchableOpacity>
+                <LinearGradient
+                  colors={['#6b4e9e', '#8b6cc1']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.ctaGradient}
+                >
+                  <Text style={styles.submitButtonText}>Interpret Dream</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
         )}
       </KeyboardAvoidingView>
@@ -559,6 +589,28 @@ const styles = StyleSheet.create({
   draftClearText: {
     fontSize: 13,
     color: '#9b7fd4',
+    fontWeight: '500',
+  },
+  forgotButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    backgroundColor: '#252542',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
+    gap: 8,
+  },
+  forgotButtonIcon: {
+    fontSize: 14,
+  },
+  forgotButtonText: {
+    color: '#8b7fa8',
+    fontSize: 14,
     fontWeight: '500',
   },
   moodContainer: {
@@ -636,20 +688,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
   },
-  voiceRecorderContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
-    paddingVertical: 16,
-    backgroundColor: '#252542',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
-  },
-  voiceLabel: {
-    fontSize: 14,
-    color: '#8b7fa8',
-    marginBottom: 12,
-  },
   dreamTypeContainer: {
     flexDirection: 'row',
     marginBottom: 16,
@@ -718,9 +756,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
   },
-  submitButton: {
-    borderRadius: 16,
+  submitRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 12,
     marginTop: 32,
+  },
+  submitButton: {
+    flex: 1,
+    borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },

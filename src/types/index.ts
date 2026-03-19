@@ -25,7 +25,7 @@ export interface Dream {
   dream_text: string;
   mood?: string;
   reading?: DreamReading;
-  dream_type: 'dream' | 'nightmare';
+  dream_type: 'dream' | 'nightmare' | 'forgot';
   created_at: string;
   updated_at: string;
   deleted_at?: string;

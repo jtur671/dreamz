@@ -76,11 +76,12 @@ async function findRecordingFile(): Promise<string | null> {
 interface VoiceRecorderProps {
   onTranscription: (text: string) => void;
   disabled?: boolean;
+  compact?: boolean;
 }
 
 type RecordingState = 'idle' | 'recording' | 'transcribing';
 
-export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecorderProps) {
+export default function VoiceRecorder({ onTranscription, disabled, compact }: VoiceRecorderProps) {
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [recordingDuration, setRecordingDuration] = useState(0);
   // Track actual duration from recorder status (more reliable than manual timer)
@@ -308,6 +309,51 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
 
   const isDisabled = disabled || recordingState === 'transcribing';
 
+  if (compact) {
+    return (
+      <View style={styles.compactContainer}>
+        {recordingState === 'recording' && (
+          <View style={styles.compactBanner}>
+            <WaveformBars />
+            <View style={styles.recordingDot} />
+            <Text style={styles.durationText}>{formatDuration(recordingDuration)}</Text>
+          </View>
+        )}
+        {recordingState === 'transcribing' && (
+          <View style={styles.compactBanner}>
+            <ActivityIndicator size="small" color="#9b7fd4" />
+            <Text style={styles.statusText}>Transcribing...</Text>
+          </View>
+        )}
+        <TouchableOpacity
+          style={[
+            styles.compactButton,
+            recordingState === 'recording' && styles.compactButtonRecording,
+            isDisabled && styles.buttonDisabled,
+          ]}
+          onPress={handlePress}
+          disabled={isDisabled}
+          accessibilityRole="button"
+          accessibilityLabel={
+            recordingState === 'idle'
+              ? 'Start voice recording'
+              : recordingState === 'recording'
+              ? 'Stop recording'
+              : 'Transcribing'
+          }
+        >
+          {recordingState === 'transcribing' ? (
+            <ActivityIndicator size="small" color="#e0d4f7" />
+          ) : (
+            <Text style={styles.compactButtonIcon}>
+              {recordingState === 'recording' ? '⏹' : '🎙'}
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {recordingState === 'recording' && (
@@ -405,6 +451,33 @@ function WaveformBars() {
 }
 
 const styles = StyleSheet.create({
+  compactContainer: {
+    alignItems: 'center',
+  },
+  compactBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  compactButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#3a3a5e',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#4a4a6e',
+  },
+  compactButtonRecording: {
+    backgroundColor: '#5e3a3a',
+    borderColor: '#8a4a4a',
+  },
+  compactButtonIcon: {
+    fontSize: 18,
+  },
   container: {
     alignItems: 'center',
     marginBottom: 16,
