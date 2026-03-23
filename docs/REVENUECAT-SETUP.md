@@ -12,7 +12,7 @@ The app code is fully wired. This doc covers the external setup you need to do b
 | `initPurchases()` called on app start | ✅ |
 | `PaywallScreen` with pricing, free trial, purchase/restore | ✅ |
 | `checkPremiumAccess()` checks `entitlements.active['premium']` | ✅ |
-| Reading limit (3/month free, unlimited premium) enforced in edge function | ✅ |
+| Unlimited readings for all tiers; free tier sees ads, premium is ad-free | ✅ |
 | Profile `subscription_tier` updated in Supabase after successful purchase | ✅ |
 | Env vars wired: `EXPO_PUBLIC_REVENUECAT_API_KEY_IOS` | ✅ (needs real key) |
 
@@ -41,14 +41,14 @@ There are two parts: **App Store Connect** (Apple) and **RevenueCat dashboard**.
    - **Reference Name**: `Dreamz Premium Monthly`
    - **Product ID**: `dreamz_premium_monthly`
    - **Subscription Duration**: 1 Month
-   - **Pricing**: **$4.99/month** (Tier 5)
+   - **Pricing**: **$5.99/month** (Tier 6)
    - Optional: add a **7-day free trial** — click "Add Introductory Offer" → Free Trial → 7 Days
 
    **Annual:**
    - **Reference Name**: `Dreamz Premium Yearly`
    - **Product ID**: `dreamz_premium_yearly`
    - **Subscription Duration**: 1 Year
-   - **Pricing**: **$29.99/year** (Tier 30) — ~50% savings vs monthly
+   - **Pricing**: **$35.99/year** (Tier 36) — ~50% savings vs monthly
 
 5. For each product, add **Localization** (required):
    - Display Name: `Dreamz Premium`
@@ -140,7 +140,7 @@ This is a Phase 2 item — not needed to ship.
 
 - [ ] Apple Developer account active ($99/yr)
 - [ ] App created in App Store Connect
-- [ ] Subscription products created: `dreamz_premium_monthly` ($4.99/mo) and `dreamz_premium_yearly` ($29.99/yr)
+- [ ] Subscription products created: `dreamz_premium_monthly` ($5.99/mo) and `dreamz_premium_yearly` ($35.99/yr)
 - [ ] (Optional) 7-day free trial added to monthly subscription
 - [ ] RevenueCat project created with iOS app
 - [ ] Entitlement `premium` created in RevenueCat

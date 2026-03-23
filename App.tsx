@@ -4,6 +4,7 @@ import { ActivityIndicator, View, StyleSheet, Text } from 'react-native';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Notifications from 'expo-notifications';
+import * as Linking from 'expo-linking';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Session } from '@supabase/supabase-js';
@@ -19,6 +20,7 @@ import ReadingScreen from './src/screens/ReadingScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import PaywallScreen from './src/screens/PaywallScreen';
+import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import { DreamProvider } from './src/context/DreamContext';
 import { getProfile } from './src/lib/profileService';
 import { initPurchases } from './src/lib/purchaseService';
@@ -26,6 +28,15 @@ import { initializeNotifications } from './src/lib/notificationService';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+const linking = {
+  prefixes: [Linking.createURL('/'), 'dreamz://'],
+  config: {
+    screens: {
+      ResetPassword: 'reset-password',
+    },
+  },
+};
 
 // Tab icon component
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
@@ -145,6 +156,17 @@ export default function App() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (event === 'PASSWORD_RECOVERY' && session) {
+          setSession(session);
+          // Navigate to reset password screen after a short delay to ensure nav is ready
+          setTimeout(() => {
+            if (navigationRef.current?.isReady()) {
+              (navigationRef.current as any).navigate('ResetPassword');
+            }
+          }, 300);
+          return;
+        }
+
         if (event === 'SIGNED_IN' && session) {
           // Check profile before setting session so the app goes directly to
           // OnboardingScreen (if needed) without a flash of MainTabs.
@@ -185,7 +207,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer ref={navigationRef} linking={linking}>
         <StatusBar style="light" />
         {session ? (
           <Stack.Navigator
@@ -212,6 +234,11 @@ export default function App() {
             <Stack.Screen
               name="Paywall"
               component={PaywallScreen}
+              options={{ presentation: 'modal' }}
+            />
+            <Stack.Screen
+              name="ResetPassword"
+              component={ResetPasswordScreen}
               options={{ presentation: 'modal' }}
             />
           </Stack.Navigator>
