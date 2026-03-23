@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Effective Date:** February 18, 2026
+**Effective Date:** March 23, 2026
 
 ## Introduction
 
@@ -28,10 +28,12 @@ We believe your dreams are deeply personal. Our guiding principle is simple: you
 - Precise location or GPS data
 - Exact date of birth
 - Contacts or address book data
-- Device identifiers for advertising purposes
 - Browsing history or activity outside the app
-- We do not use analytics services, tracking pixels, or advertising SDKs
-- We do not serve ads of any kind
+- We do not use analytics services or tracking pixels
+
+### Advertising
+
+Dreamz displays occasional interstitial ads to users on the free tier via Google AdMob. These ads appear between dream readings. Premium subscribers do not see ads. AdMob may collect device advertising identifiers and general usage data in accordance with Google's privacy policy. We do not use your dream content, email address, or profile data for ad targeting.
 
 ## How We Use Your Information
 
@@ -71,6 +73,7 @@ Dreamz relies on the following third-party services to operate:
 | **Supabase** | Authentication and database hosting | Email address, dream entries, profile data |
 | **RevenueCat** | Subscription and payment processing | Anonymous user ID, subscription status |
 | **Apple App Store / Google Play Store** | In-app purchase processing | Payment details (handled entirely by Apple/Google) |
+| **Google AdMob** | Advertising (free tier only) | Device advertising identifier, general usage data (no dream content or PII) |
 
 We encourage you to review the privacy policies of these services:
 

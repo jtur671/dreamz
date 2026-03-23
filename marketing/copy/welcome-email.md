@@ -25,7 +25,7 @@ Here is how it works. Write your dream or record it with your voice before the d
 
 Your dreams are encrypted and private. We do not read them, share them, or train on them. Your grimoire belongs to you — exportable, deletable, always under your control. The only person who sees what moves through your sleep is you.
 
-You have three free readings this month. Use the first one tonight.
+Your readings are unlimited. Use the first one tonight.
 
 ---
 

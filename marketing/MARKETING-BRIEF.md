@@ -21,10 +21,10 @@ Dreamz is a mystical dream journal that transforms dream entries into AI-powered
 
 ## Key Features
 
-| Feature | Free | Premium ($4.99/mo or $29.99/yr) |
+| Feature | Free | Premium ($5.99/mo or $35.99/yr) |
 |---------|------|----------------------------------|
 | Dream journal (text + voice) | Yes | Yes |
-| AI mystical readings | 3/month | Unlimited |
+| AI mystical readings | Unlimited (with ads) | Unlimited (ad-free) |
 | Symbol dictionary (5,700+) | Yes | Yes |
 | Grimoire (dream history) | Yes | Yes |
 | Advanced insights & patterns | - | Yes |
@@ -76,9 +76,9 @@ Dreamz is a mystical dream journal that transforms dream entries into AI-powered
 
 ## Pricing
 
-- **Free tier:** 3 AI readings/month, full journal + dictionary access
-- **Premium monthly:** $4.99/month — unlimited readings + advanced features
-- **Premium annual:** $29.99/year (50% savings) — same as monthly
+- **Free tier:** Unlimited AI readings (with ads), full journal + dictionary access
+- **Premium monthly:** $5.99/month — ad-free, deeper AI, dream imagery
+- **Premium annual:** $35.99/year (save 50%)
 
 ## Assets Available
 
@@ -120,7 +120,7 @@ Dreamz is a mystical dream journal that transforms dream entries into AI-powered
 
 - App is Expo/React Native (iOS first, Android possible later)
 - Backend: Supabase (Postgres + Auth + Edge Functions)
-- AI: OpenAI GPT-5-mini for readings, DALL-E 3 for dream images
+- AI: OpenAI GPT-5.4-nano (free) / GPT-5.4-mini (premium) for readings, gpt-image-1.5 for dream images
 - Privacy: encrypted at rest (pgcrypto), RLS enforced, no PII collection beyond email
 - RevenueCat for subscription management
 

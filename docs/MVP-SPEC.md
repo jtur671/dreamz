@@ -51,7 +51,7 @@ WRITE/RECORD DREAM → GET READING → SAVE TO GRIMOIRE → NOTICE PATTERNS
 | Mobile | Expo (React Native) + TypeScript |
 | Backend | Supabase (Auth, Postgres, RLS, Edge Functions) |
 | AI | OpenAI GPT-5.4 family via Supabase Edge Function |
-| Image Gen | OpenAI gpt-image-1 for dream imagery |
+| Image Gen | OpenAI gpt-image-1.5 for dream imagery |
 | Voice | OpenAI Whisper API for transcription |
 | State | React Context |
 | Storage | AsyncStorage (offline drafts) |
@@ -162,7 +162,7 @@ interface DreamEntry {
 **Result Layout:**
 ```
 ┌─────────────────────────────────────┐
-│  [AI-Generated Dream Image]         │  ← gpt-image-1 image
+│  [AI-Generated Dream Image]         │  ← gpt-image-1.5 image
 ├─────────────────────────────────────┤
 │  ✧ THE RIVER & THE LOCKED DOOR ✧   │  ← Title
 ├─────────────────────────────────────┤
@@ -587,7 +587,7 @@ Uses OpenAI Whisper API for transcription.
 | Delete account | COMPLETE | Feb 2026 |
 | Onboarding flow | COMPLETE | Feb 2026 |
 | Profile in AI context | COMPLETE | Feb 2026 |
-| AI dream images (gpt-image-1) | COMPLETE | Feb 2026 |
+| AI dream images (gpt-image-1.5) | COMPLETE | Feb 2026 |
 | Shareable reading card | COMPLETE | Feb 2026 |
 | Delete individual dreams | COMPLETE | Feb 2026 |
 | Draft auto-save | COMPLETE | Feb 2026 |
@@ -610,9 +610,9 @@ Uses OpenAI Whisper API for transcription.
 - Export (JSON)
 - Voice recording
 
-### Premium Tier ($4.99/month or $29.99/year) - via RevenueCat
+### Premium Tier ($5.99/month or $35.99/year) - via RevenueCat
 - Unlimited readings (gpt-5.4-mini — higher quality)
-- AI-generated dream images (gpt-image-1)
+- AI-generated dream images (gpt-image-1.5)
 - Voice recording
 - Priority support
 

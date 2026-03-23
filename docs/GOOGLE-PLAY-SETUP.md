@@ -80,17 +80,19 @@ VOICE RECORDING
 Speak your dreams aloud and let Dreamz transcribe them. Perfect for capturing details before they fade.
 
 PRIVATE BY DEFAULT
-Your dreams are yours alone. We use encryption, row-level security, and collect only what's necessary. No ads. No tracking. No data selling. Export or delete your data anytime.
+Your dreams are yours alone. We use encryption, row-level security, and collect only what's necessary. No tracking. No data selling. Export or delete your data anytime.
 
 FREE TIER
-- 3 dream readings per month
+- Unlimited dream readings
 - Unlimited dream journaling
 - Full symbol dictionary access
+- Occasional ads between readings
 
 PREMIUM
-- Unlimited dream readings
-- Priority analysis
-- All future features included
+- Deeper AI readings
+- Dream imagery
+- Ad-free experience
+- Pattern tracking & export
 
 Dreamz is for the curious, the mystical, and anyone who believes their dreams have something to say.
 ```
@@ -165,7 +167,7 @@ Go to **Policy > App content > App access**:
 ## Step 7: Ads Declaration
 
 Go to **Policy > App content > Ads**:
-- Select **No, my app does not contain ads**
+- Select **Yes, my app contains ads**
 
 ---
 
@@ -188,7 +190,7 @@ Go to **Policy > App content > Target audience**:
 - Name: `Dreamz Premium Monthly`
 - Add a base plan:
   - Billing period: 1 month
-  - Price: $4.99
+  - Price: $5.99
   - (Optional) Add a free trial offer: 7 days
 
 **Annual:**
@@ -196,7 +198,7 @@ Go to **Policy > App content > Target audience**:
 - Name: `Dreamz Premium Yearly`
 - Add a base plan:
   - Billing period: 1 year
-  - Price: $29.99
+  - Price: $35.99
 
 ### 9b. Connect RevenueCat to Google Play
 
@@ -343,9 +345,9 @@ Apple Sign-In is not available on Android — the button is already conditionall
 - [ ] Content rating questionnaire completed
 - [ ] Data safety section completed
 - [ ] App access credentials provided for review
-- [ ] Ads declaration: no ads
+- [ ] Ads declaration: yes, contains ads
 - [ ] Target audience: 18+
-- [ ] Subscription products created: `dreamz_premium_monthly` ($4.99) and `dreamz_premium_yearly` ($29.99)
+- [ ] Subscription products created: `dreamz_premium_monthly` ($5.99) and `dreamz_premium_yearly` ($35.99)
 - [ ] Google Play service account created and JSON key downloaded
 - [ ] RevenueCat: Google Play app added with service account JSON
 - [ ] RevenueCat: Google Play products added and linked to `premium` entitlement
