@@ -1,5 +1,5 @@
 import { device, element, by, expect, waitFor } from 'detox';
-import { launchApp, tapById, waitForVisible, waitForAnyVisible, navigateToTab } from './helpers/actions';
+import { launchApp, tapById, waitForVisible, waitForAnyVisible, pollForVisible, pollForVisibleByText, pollForNotVisibleByText, navigateToTab } from './helpers/actions';
 import { SHORT_DREAM_TEXT, TEST_DREAM_TEXT, SQL_WILDCARD_TEXT } from './helpers/dreamFactory';
 import { setTestAccountPremium } from './helpers/db';
 
@@ -22,7 +22,7 @@ async function navigateBackToHome() {
     await element(by.id('reading-scroll-view')).scrollTo('bottom');
     await new Promise(r => setTimeout(r, 500));
     await tapById('reading-grimoire-button');
-    await waitFor(element(by.text('Your Grimoire'))).toBeVisible().withTimeout(8000);
+    await pollForVisibleByText('Your Grimoire', 8000);
     // Already in MainTabs (Grimoire tab) — navigate to Dream tab
     await navigateToTab('Dream');
     return;
@@ -53,9 +53,7 @@ describe('Negative Tests', () => {
     // DreamContext background image backfill fires DALL-E 3 network requests
     // on fresh launch. Disable sync so all subsequent actions are immediate.
     await device.disableSynchronization();
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(30000);
+    await pollForVisible('home-record-button', 30000);
   });
 
   it('should handle very short dream text', async () => {
@@ -84,9 +82,7 @@ describe('Negative Tests', () => {
   });
 
   it('should not create duplicate dreams on rapid double-tap submit', async () => {
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisible('home-record-button', 10000);
 
     await tapById('home-record-button');
     await waitForVisible('new-dream-text-input', 5000);
@@ -123,9 +119,7 @@ describe('Negative Tests', () => {
 
   it('should navigate back from reading without getting stuck', async () => {
     await navigateToTab('Grimoire');
-    await waitFor(element(by.text('Your Grimoire')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisibleByText('Your Grimoire', 10000);
 
     try {
       await waitForVisible('grimoire-dream-item', 5000);
@@ -136,9 +130,7 @@ describe('Negative Tests', () => {
       await tapById('reading-back');
 
       // Should be back on grimoire
-      await waitFor(element(by.text('Your Grimoire')))
-        .toBeVisible()
-        .withTimeout(5000);
+      await pollForVisibleByText('Your Grimoire', 5000);
     } catch {
       // No dreams available - that's OK for this test
       await expect(element(by.text('Your Grimoire'))).toBeVisible();
@@ -157,9 +149,7 @@ describe('Negative Tests', () => {
 
     // Open dream picker
     await tapById('settings-delete-dream-button');
-    await waitFor(element(by.text('Select Dream to Delete')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisibleByText('Select Dream to Delete', 10000);
 
     // Wait for Done button to be rendered + animation to complete
     await waitForVisible('settings-dream-picker-done', 10000);
@@ -167,15 +157,11 @@ describe('Negative Tests', () => {
 
     // Close without deleting
     await tapById('settings-dream-picker-done');
-    await waitFor(element(by.text('Select Dream to Delete')))
-      .not.toBeVisible()
-      .withTimeout(10000);
+    await pollForNotVisibleByText('Select Dream to Delete', 10000);
 
     // Navigate away and back - should not crash
     await navigateToTab('Grimoire');
-    await waitFor(element(by.text('Your Grimoire')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisibleByText('Your Grimoire', 5000);
     // Let GrimoireScreen's FlatList fully render so the React 18 scheduler
     // clears its pending work items. Without this pause, the scheduler keeps
     // the dispatch queue busy and the subsequent Settings tab-switch animation
@@ -194,9 +180,7 @@ describe('Negative Tests', () => {
 
   it('should handle SQL wildcard characters in dictionary search', async () => {
     await navigateToTab('Dictionary');
-    await waitFor(element(by.text('Symbol Dictionary')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisibleByText('Symbol Dictionary', 10000);
 
     // Use replaceText (atomic) instead of typeText to avoid leaving the keyboard open,
     // which would block tab bar taps in the next test.
@@ -217,8 +201,6 @@ describe('Negative Tests', () => {
     await navigateToTab('Dream');
 
     // Should still be functional
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisible('home-record-button', 5000);
   });
 });

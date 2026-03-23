@@ -1,5 +1,5 @@
 import { device, element, by, expect, waitFor } from 'detox';
-import { launchApp, tapById, typeById, waitForVisible, waitForNotVisible, navigateToTab } from './helpers/actions';
+import { launchApp, tapById, typeById, waitForVisible, waitForNotVisible, pollForVisible, pollForVisibleByText, navigateToTab } from './helpers/actions';
 import { TEST_DREAM_TEXT } from './helpers/dreamFactory';
 import { setTestAccountPremium } from './helpers/db';
 
@@ -15,7 +15,7 @@ async function openNewDream() {
   await element(by.id('new-dream-scroll-view')).scrollTo('top');
   // Clear any stale draft (nightmare type from a prior run causes "No elements found" for dream moods)
   try {
-    await waitFor(element(by.id('new-dream-draft-clear'))).toBeVisible().withTimeout(1000);
+    await pollForVisible('new-dream-draft-clear', 1000);
     await tapById('new-dream-draft-clear');
   } catch {
     // No draft — that's the happy path
@@ -40,9 +40,7 @@ describe('Dream Entry', () => {
     // Re-disable sync after JS reload (reloadReactNative may reset sync state)
     // so DreamContext backfill network requests don't block Detox idle-waiting.
     await device.disableSynchronization();
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(20000);
+    await pollForVisible('home-record-button', 20000);
     // HomeScreen fires loadStats() on focus which fetches the last dream title
     // from Supabase and inserts a card ABOVE home-record-button, causing a layout
     // shift. Wait for the layout to stabilize before trying to tap the button.
@@ -79,12 +77,8 @@ describe('Dream Entry', () => {
 
     // Nightmare moods should appear — use waitFor since sync is disabled
     // and React needs a tick to re-render the mood chips
-    await waitFor(element(by.id('new-dream-mood-anxious')))
-      .toBeVisible()
-      .withTimeout(5000);
-    await waitFor(element(by.id('new-dream-mood-fearful')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisible('new-dream-mood-anxious', 5000);
+    await pollForVisible('new-dream-mood-fearful', 5000);
   });
 
   it('should show alert when submitting without text', async () => {
@@ -95,9 +89,7 @@ describe('Dream Entry', () => {
     await element(by.id('new-dream-scroll-view')).scrollTo('bottom');
     await tapById('new-dream-submit');
 
-    await waitFor(element(by.text('Please describe your dream')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisibleByText('Please describe your dream', 5000);
   });
 
   it('should show alert when submitting without mood', async () => {
@@ -108,9 +100,7 @@ describe('Dream Entry', () => {
     await element(by.id('new-dream-scroll-view')).scroll(600, 'down', 0.5, 0.5);
     await tapById('new-dream-submit');
 
-    await waitFor(element(by.text('Please select how your dream felt')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisibleByText('Please select how your dream felt', 5000);
   });
 
   it('should recover a draft after navigating away and back', async () => {
@@ -129,9 +119,7 @@ describe('Dream Entry', () => {
     await tapById('home-record-button');
 
     // Should see draft recovered banner
-    await waitFor(element(by.text('Draft recovered')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisibleByText('Draft recovered', 5000);
   });
 
   it('should expand mood tags and select from expanded list', async () => {
@@ -149,9 +137,7 @@ describe('Dream Entry', () => {
     await tapById('new-dream-mood-toggle');
 
     // "Hopeful" should now be visible
-    await waitFor(element(by.id('new-dream-mood-hopeful')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisible('new-dream-mood-hopeful', 5000);
 
     // Select it
     await tapById('new-dream-mood-hopeful');
@@ -162,17 +148,13 @@ describe('Dream Entry', () => {
 
     // Expand moods
     await tapById('new-dream-mood-toggle');
-    await waitFor(element(by.id('new-dream-mood-hopeful')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisible('new-dream-mood-hopeful', 5000);
 
     // Collapse — toggle text changes to "Less −" then back to "More +"
     await tapById('new-dream-mood-toggle');
 
     // "Hopeful" should no longer be visible
-    await waitFor(element(by.id('new-dream-mood-hopeful')))
-      .not.toBeVisible()
-      .withTimeout(5000);
+    await waitForNotVisible('new-dream-mood-hopeful', 5000);
   });
 
   it('should save a forgot dream and show confirmation', async () => {
@@ -181,30 +163,22 @@ describe('Dream Entry', () => {
     await tapById('new-dream-forgot');
 
     // Should show "Sleep Logged" confirmation alert
-    await waitFor(element(by.text('Sleep Logged')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisibleByText('Sleep Logged', 10000);
 
     // Dismiss the alert
     await element(by.text('OK')).tap();
 
     // Should navigate back to home
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisible('home-record-button', 10000);
   });
 
   it('should show forgot dream in grimoire', async () => {
     // Navigate to Grimoire tab
     await navigateToTab('Grimoire');
-    await waitFor(element(by.text('Your Grimoire')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisibleByText('Your Grimoire', 10000);
 
     // The forgot entry should appear with its muted text
-    await waitFor(element(by.text('No dream recalled')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisibleByText('No dream recalled', 10000);
     await expect(element(by.text('You still showed up.'))).toBeVisible();
   });
 
@@ -215,9 +189,7 @@ describe('Dream Entry', () => {
 
     // If there's a draft, clear it
     try {
-      await waitFor(element(by.text('Draft recovered')))
-        .toBeVisible()
-        .withTimeout(3000);
+      await pollForVisibleByText('Draft recovered', 3000);
       await tapById('new-dream-draft-clear');
 
       // Draft banner should disappear
@@ -231,9 +203,7 @@ describe('Dream Entry', () => {
       await waitForVisible('home-record-button', 5000);
       await tapById('home-record-button');
 
-      await waitFor(element(by.text('Draft recovered')))
-        .toBeVisible()
-        .withTimeout(5000);
+      await pollForVisibleByText('Draft recovered', 5000);
       await tapById('new-dream-draft-clear');
       await waitForNotVisible('new-dream-draft-clear', 3000);
     }

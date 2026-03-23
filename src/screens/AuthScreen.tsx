@@ -53,7 +53,18 @@ export default function AuthScreen() {
         password: trimmedPassword,
       });
       if (error) {
-        Alert.alert('Sign Up Error', error.message);
+        if (error.message.includes('already registered')) {
+          Alert.alert(
+            'Account Exists',
+            'This email is already registered. Would you like to sign in instead?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Sign In', onPress: () => setIsSignUp(false) },
+            ]
+          );
+        } else {
+          Alert.alert('Sign Up Error', error.message);
+        }
       } else {
         // New user — auto-signed-in, onAuthStateChange handles navigation
         onNewUserSignup?.();
@@ -64,11 +75,41 @@ export default function AuthScreen() {
         password: trimmedPassword,
       });
       if (error) {
-        Alert.alert('Sign In Error', error.message);
+        if (error.message.includes('Invalid login credentials')) {
+          Alert.alert(
+            'Sign In Failed',
+            'Invalid credentials. Would you like to create a new account with this email?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Create Account', onPress: () => setIsSignUp(true) },
+            ]
+          );
+        } else {
+          Alert.alert('Sign In Error', error.message);
+        }
       }
     }
 
     setLoading(false);
+  }
+
+  async function handleForgotPassword() {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      Alert.alert('Email Required', 'Please enter your email address first.');
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail);
+    setLoading(false);
+    if (error) {
+      Alert.alert('Reset Error', error.message);
+    } else {
+      Alert.alert(
+        'Check Your Email',
+        'If an account exists for this email, a password reset link has been sent.'
+      );
+    }
   }
 
   async function handleAppleSignIn() {
@@ -297,6 +338,19 @@ export default function AuthScreen() {
               </TouchableOpacity>
             </View>
 
+            {!isSignUp && (
+              <TouchableOpacity
+                testID="auth-forgot-password"
+                style={styles.forgotPassword}
+                onPress={handleForgotPassword}
+                disabled={loading}
+                accessibilityRole="button"
+                accessibilityLabel="Forgot Password?"
+              >
+                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity
               testID="auth-submit-button"
               style={[styles.button, loading && styles.buttonDisabled]}
@@ -443,6 +497,15 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     fontSize: 20,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginTop: -8,
+    marginBottom: 8,
+  },
+  forgotPasswordText: {
+    color: '#9b7fd4',
+    fontSize: 13,
   },
   button: {
     backgroundColor: '#6b4e9e',

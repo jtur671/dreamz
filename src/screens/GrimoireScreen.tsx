@@ -22,6 +22,18 @@ import type { Dream } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 
+// Stop words for normalizing AI symbol names ("River full of blood" → "river")
+const SYMBOL_STOP_WORDS = new Set([
+  'the', 'a', 'an', 'of', 'in', 'on', 'at', 'to', 'for', 'with', 'by',
+  'from', 'into', 'through', 'my', 'your', 'his', 'her', 'its', 'our',
+  'their', 'full', 'dark', 'old', 'big', 'huge', 'small', 'little',
+]);
+
+/** Extract all meaningful keywords from a symbol name for grouping. */
+function extractSymbolKeywords(name: string): string[] {
+  return name.toLowerCase().split(/\s+/).filter(w => !SYMBOL_STOP_WORDS.has(w) && w.length >= 2);
+}
+
 type GrimoireScreenProps = {
   navigation: NativeStackNavigationProp<any>;
 };
@@ -62,22 +74,24 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
   const [activePill, setActivePill] = useState<string | null>(null);
 
   // Compute recurring symbol pills (threshold: 4+ dreams containing the symbol)
+  // Normalizes compound names ("River full of blood" → "river") to group variants
   const symbolPills = useMemo(() => {
     const symbolCounts = new Map<string, number>();
     for (const dream of dreams) {
       if (!dream.reading?.symbols) continue;
       const seen = new Set<string>();
       for (const symbol of dream.reading.symbols) {
-        const name = symbol.name.toLowerCase();
-        if (!seen.has(name)) {
-          seen.add(name);
-          symbolCounts.set(name, (symbolCounts.get(name) || 0) + 1);
+        for (const keyword of extractSymbolKeywords(symbol.name)) {
+          if (!seen.has(keyword)) {
+            seen.add(keyword);
+            symbolCounts.set(keyword, (symbolCounts.get(keyword) || 0) + 1);
+          }
         }
       }
     }
 
     return Array.from(symbolCounts.entries())
-      .filter(([, count]) => count >= 4)
+      .filter(([, count]) => count >= 3)
       .sort((a, b) => b[1] - a[1])
       .map(([name, count]) => ({ name, count }));
   }, [dreams]);
@@ -152,10 +166,10 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
   // Filter dreams based on pill selection + search query (additive)
   const filteredDreams = useMemo(() => {
     return dreams.filter(dream => {
-      // Pill filter
+      // Pill filter (uses same keyword extraction as symbolPills computation)
       if (activePill) {
         const hasSymbol = dream.reading?.symbols?.some(
-          s => s.name.toLowerCase() === activePill
+          s => extractSymbolKeywords(s.name).includes(activePill)
         );
         if (!hasSymbol) return false;
       }
@@ -359,15 +373,16 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
       >
         <Text style={styles.title}>Your Grimoire</Text>
 
-        <Text style={styles.subtitle}>{grimoireSubtitle}</Text>
-
-        {dreamStreak >= 2 && (
+        <View style={styles.subtitleRow}>
+          <Text style={styles.subtitle}>{grimoireSubtitle}</Text>
+          {dreamStreak >= 2 && (
             <View style={styles.streakBadge}>
               <Text style={styles.streakText}>
                 {dreamStreak}-day streak
               </Text>
             </View>
-        )}
+          )}
+        </View>
 
         {dreams.length > 0 && symbolPills.length > 0 && (
           <ScrollView
@@ -514,22 +529,20 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: '#8b7fa8',
+  },
+  subtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
     marginBottom: 12,
   },
   streakBadge: {
-    alignSelf: 'flex-start',
     backgroundColor: '#3a2a5e',
     borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginBottom: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderWidth: 1,
     borderColor: '#6b4e9e',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
   },
   streakText: {
     color: '#c9b8f0',
@@ -537,8 +550,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   pillRow: {
-    maxHeight: 52,
+    height: 44,
     marginBottom: 12,
+    flexShrink: 0,
   },
   pillRowContent: {
     gap: 8,

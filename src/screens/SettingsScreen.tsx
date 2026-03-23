@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { getProfile, updateZodiacSign, updateProfile } from '../lib/profileService';
 import { exportUserDreams, deleteUserAccount } from '../lib/accountService';
@@ -47,10 +48,16 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [reminderHour, setReminderHour] = useState(8);
   const [reminderMinute, setReminderMinute] = useState(0);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+  const [deleteCountdown, setDeleteCountdown] = useState(5);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
-    fetchUserData();
-  }, []);
+  // Re-fetch profile every time screen gains focus (fixes stale tier after upgrade)
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserData();
+    }, [])
+  );
 
   async function fetchUserData() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -160,8 +167,29 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     }
   }
 
+  function startDeleteCountdown() {
+    setDeleteCountdown(5);
+    setShowDeleteWarning(true);
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    countdownRef.current = setInterval(() => {
+      setDeleteCountdown(prev => {
+        if (prev <= 1) {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }
+
+  function cancelDelete() {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    setShowDeleteWarning(false);
+    setDeleteCountdown(5);
+  }
+
   async function handleDeleteAccount() {
-    // First confirmation
+    // First quick confirmation via Alert
     Alert.alert(
       'Delete Account',
       'This will permanently delete your account and all your dreams. This action cannot be undone.\n\nAre you sure you want to continue?',
@@ -170,27 +198,14 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         {
           text: 'Yes, Continue',
           style: 'destructive',
-          onPress: () => {
-            // Second confirmation
-            Alert.alert(
-              'Final Confirmation',
-              'All your dreams, readings, and account data will be permanently erased.\n\nThis is your last chance to cancel.',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Delete Everything',
-                  style: 'destructive',
-                  onPress: performAccountDeletion,
-                },
-              ]
-            );
-          },
+          onPress: startDeleteCountdown,
         },
       ]
     );
   }
 
   async function performAccountDeletion() {
+    cancelDelete();
     try {
       setLoading(true);
       const result = await deleteUserAccount();
@@ -414,7 +429,92 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         </View>
       </Modal>
 
-      <ScrollView testID="settings-scroll-view" style={styles.container}>
+      <Modal
+        visible={showDeleteWarning}
+        transparent
+        animationType="fade"
+        accessibilityViewIsModal={true}
+        onRequestClose={cancelDelete}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.deleteWarningModal}>
+            <Text style={styles.deleteWarningIcon}>{'\u26A0\uFE0F'}</Text>
+            <Text style={styles.deleteWarningTitle}>This Cannot Be Undone</Text>
+
+            <Text style={styles.deleteWarningBody}>
+              All your dreams, readings, symbols, and account data will be{' '}
+              <Text style={styles.deleteWarningBold}>permanently erased</Text>.
+            </Text>
+
+            {subscriptionTier === 'premium' && (
+              <View style={styles.subscriptionWarning}>
+                <Text style={styles.subscriptionWarningTitle}>
+                  You have an active subscription
+                </Text>
+                <Text style={styles.subscriptionWarningBody}>
+                  Deleting your account will{' '}
+                  <Text style={styles.deleteWarningBold}>not</Text>{' '}
+                  cancel your {Platform.OS === 'ios' ? 'Apple' : 'Google Play'} subscription.
+                  You will continue to be charged unless you cancel it first.
+                </Text>
+                <TouchableOpacity
+                  style={styles.manageSubButton}
+                  onPress={() => {
+                    if (Platform.OS === 'ios') {
+                      Linking.openURL('https://apps.apple.com/account/subscriptions');
+                    } else {
+                      Linking.openURL('https://play.google.com/store/account/subscriptions');
+                    }
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel subscription first"
+                >
+                  <Text style={styles.manageSubButtonText}>
+                    Cancel Subscription First
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <TouchableOpacity
+              testID="settings-delete-confirm-button"
+              style={[
+                styles.deleteConfirmButton,
+                deleteCountdown > 0 && styles.deleteConfirmButtonDisabled,
+              ]}
+              onPress={performAccountDeletion}
+              disabled={deleteCountdown > 0}
+              accessibilityRole="button"
+              accessibilityLabel={
+                deleteCountdown > 0
+                  ? `Delete everything, available in ${deleteCountdown} seconds`
+                  : 'Delete everything'
+              }
+            >
+              <Text style={[
+                styles.deleteConfirmButtonText,
+                deleteCountdown > 0 && styles.deleteConfirmButtonTextDisabled,
+              ]}>
+                {deleteCountdown > 0
+                  ? `Delete Everything (${deleteCountdown})`
+                  : 'Delete Everything'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              testID="settings-delete-cancel-button"
+              style={styles.deleteWarningCancelButton}
+              onPress={cancelDelete}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel and go back"
+            >
+              <Text style={styles.deleteWarningCancelText}>No, Keep My Account</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <ScrollView testID="settings-scroll-view" style={styles.container} contentContainerStyle={styles.scrollContent}>
         <Text testID="settings-title" style={styles.title}>Settings</Text>
 
         <View style={styles.section}>
@@ -630,6 +730,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 24,
+  },
+  scrollContent: {
+    paddingBottom: 100,
   },
   title: {
     fontSize: 28,
@@ -885,5 +988,95 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#e07a7a',
     paddingLeft: 12,
+  },
+  deleteWarningModal: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 20,
+    padding: 28,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#5a3a3a',
+  },
+  deleteWarningIcon: {
+    fontSize: 40,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  deleteWarningTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#e07a7a',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  deleteWarningBody: {
+    fontSize: 15,
+    color: '#c0b4e0',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  deleteWarningBold: {
+    fontWeight: '700',
+    color: '#e0d4f7',
+  },
+  subscriptionWarning: {
+    backgroundColor: '#2a2040',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#6b4e9e',
+  },
+  subscriptionWarningTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#e0d4f7',
+    marginBottom: 8,
+  },
+  subscriptionWarningBody: {
+    fontSize: 14,
+    color: '#a89cc8',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  manageSubButton: {
+    backgroundColor: '#6b4e9e',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  manageSubButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  deleteConfirmButton: {
+    backgroundColor: '#8b2a2a',
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  deleteConfirmButtonDisabled: {
+    backgroundColor: '#3a2a2a',
+    opacity: 0.6,
+  },
+  deleteConfirmButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  deleteConfirmButtonTextDisabled: {
+    color: '#8b7fa8',
+  },
+  deleteWarningCancelButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  deleteWarningCancelText: {
+    color: '#9b7fd4',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

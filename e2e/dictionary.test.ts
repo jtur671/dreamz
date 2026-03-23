@@ -1,26 +1,20 @@
 import { device, element, by, expect, waitFor } from 'detox';
-import { launchApp, tapById, waitForVisible, navigateToTab } from './helpers/actions';
+import { launchApp, tapById, waitForVisible, pollForVisible, pollForVisibleByText, navigateToTab } from './helpers/actions';
 
 describe('Dictionary Screen', () => {
   beforeAll(async () => {
     await launchApp(true);
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(30000);
+    await pollForVisible('home-record-button', 30000);
     // DreamContext background image backfill fires DALL-E 3 network requests
     // on fresh launch. Disable sync so subsequent actions are immediate.
     await device.disableSynchronization();
     await navigateToTab('Dictionary');
-    await waitFor(element(by.text('Symbol Dictionary')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisibleByText('Symbol Dictionary', 10000);
   });
 
   beforeEach(async () => {
     await navigateToTab('Dictionary');
-    await waitFor(element(by.text('Symbol Dictionary')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisibleByText('Symbol Dictionary', 10000);
     // Clear any active search left by the previous test.
     // The clear button is only rendered when searchQuery.length > 0.
     try {
@@ -47,9 +41,7 @@ describe('Dictionary Screen', () => {
     await new Promise(resolve => setTimeout(resolve, 2000));
     await waitForVisible('dictionary-list', 10000);
 
-    await waitFor(element(by.text('Water')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisibleByText('Water', 5000);
   });
 
   it('should show empty state for nonexistent search', async () => {
@@ -87,9 +79,7 @@ describe('Dictionary Screen', () => {
 
     // The detailLabel uses textTransform: 'uppercase' — Detox on iOS may match
     // against the displayed text "MEANING" rather than the prop value "Meaning"
-    await waitFor(element(by.text('MEANING')).atIndex(0))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisibleByText('MEANING', 5000);
   });
 
   it('should navigate search when tapping a related symbol pill', async () => {
@@ -101,9 +91,7 @@ describe('Dictionary Screen', () => {
       await element(by.text('Moon')).tap();
 
       // Look for Related Symbols section
-      await waitFor(element(by.text('Related Symbols')))
-        .toBeVisible()
-        .withTimeout(3000);
+      await pollForVisibleByText('Related Symbols', 3000);
 
       // Tap the first related pill — it should update the search
     } catch {
