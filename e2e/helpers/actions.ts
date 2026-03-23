@@ -34,9 +34,18 @@ export async function dismissSavePasswordDialog(): Promise<void> {
  * Launch the app. If withLogin=true, performs the sign-in flow if the auth
  * screen appears (Supabase persists the session so this is usually only
  * needed on the first test of a simulator boot).
+ *
+ * Google Mobile Ads SDK keeps the main run loop perpetually busy, so we
+ * disable Detox synchronization immediately after launch — before any waits.
  */
 export async function launchApp(withLogin = true) {
-  await device.launchApp({ newInstance: true });
+  await device.launchApp({
+    newInstance: true,
+    permissions: { notifications: 'YES' },
+  });
+  // Must disable sync before any waits — AdMob keeps the main thread busy,
+  // causing waitFor().withTimeout() to never poll.
+  await device.disableSynchronization();
   if (withLogin) {
     await signInForTesting();
   }
@@ -45,25 +54,26 @@ export async function launchApp(withLogin = true) {
 /**
  * Sign in with test credentials if the auth screen is currently showing.
  * No-op if the home screen is already visible (session was persisted).
+ *
+ * Uses poll-based waits (expect() instant checks) because Detox sync is
+ * disabled due to Google Mobile Ads keeping the main run loop busy.
  */
 export async function signInForTesting() {
-  // Check if auth screen or home screen appears first
-  const AUTH_TIMEOUT = 5000;
+  const AUTH_TIMEOUT = 10000;
   const HOME_TIMEOUT = 30000;
 
-  try {
-    // If home screen is already visible, we're done
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(AUTH_TIMEOUT);
-    return;
-  } catch {
-    // Not on home — auth screen must be showing, proceed with sign-in
-  }
+  // Poll for either home screen or auth screen to appear
+  const landed = await waitForAnyVisible(
+    [
+      { id: 'home-record-button' },  // 0 — home (persisted session)
+      { id: 'auth-email-input' },    // 1 — auth screen
+    ],
+    AUTH_TIMEOUT,
+  );
 
-  await waitFor(element(by.id('auth-email-input')))
-    .toBeVisible()
-    .withTimeout(AUTH_TIMEOUT);
+  if (landed === 0) {
+    return; // Already signed in
+  }
 
   await element(by.id('auth-email-input')).typeText(TEST_EMAIL);
   await element(by.id('auth-password-input')).typeText(TEST_PASSWORD);
@@ -74,10 +84,8 @@ export async function signInForTesting() {
   await new Promise(r => setTimeout(r, 800));
   await dismissSavePasswordDialog();
 
-  // Wait for home screen after sign-in
-  await waitFor(element(by.text('Welcome, Dreamer')))
-    .toBeVisible()
-    .withTimeout(HOME_TIMEOUT);
+  // Wait for home screen after sign-in (poll-based, not sync-dependent)
+  await pollForVisible('home-record-button', HOME_TIMEOUT);
 }
 
 /**
@@ -103,9 +111,10 @@ export async function clearById(id: string) {
 
 /**
  * Wait for an element to be visible by testID.
+ * Delegates to pollForVisible since Detox sync is globally disabled (AdMob).
  */
 export async function waitForVisible(id: string, timeout = 10000) {
-  await waitFor(element(by.id(id))).toBeVisible().withTimeout(timeout);
+  await pollForVisible(id, timeout);
 }
 
 /**
@@ -136,10 +145,62 @@ export async function pollForVisible(id: string, timeout = 10000): Promise<void>
 }
 
 /**
+ * Poll for an element to be visible by text using expect() rather than waitFor().
+ * Same rationale as pollForVisible() — works when Detox sync is disabled.
+ */
+export async function pollForVisibleByText(text: string, timeout = 10000): Promise<void> {
+  const INTERVAL = 500;
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    try {
+      await expect(element(by.text(text)).atIndex(0)).toBeVisible();
+      return;
+    } catch {
+      // not visible yet
+    }
+    await new Promise(resolve => setTimeout(resolve, INTERVAL));
+  }
+  // Final attempt — let it throw
+  await expect(element(by.text(text)).atIndex(0)).toBeVisible();
+}
+
+/**
  * Wait for an element to not be visible by testID.
+ * Uses polling since Detox sync is globally disabled (AdMob).
  */
 export async function waitForNotVisible(id: string, timeout = 10000) {
-  await waitFor(element(by.id(id))).not.toBeVisible().withTimeout(timeout);
+  const INTERVAL = 500;
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    try {
+      await expect(element(by.id(id)).atIndex(0)).not.toBeVisible();
+      return;
+    } catch {
+      // still visible — keep polling
+    }
+    await new Promise(resolve => setTimeout(resolve, INTERVAL));
+  }
+  // Final attempt — let it throw
+  await expect(element(by.id(id)).atIndex(0)).not.toBeVisible();
+}
+
+/**
+ * Poll for text element to NOT be visible.
+ * Uses polling since Detox sync is globally disabled (AdMob).
+ */
+export async function pollForNotVisibleByText(text: string, timeout = 10000): Promise<void> {
+  const INTERVAL = 500;
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    try {
+      await expect(element(by.text(text)).atIndex(0)).not.toBeVisible();
+      return;
+    } catch {
+      // still visible — keep polling
+    }
+    await new Promise(resolve => setTimeout(resolve, INTERVAL));
+  }
+  await expect(element(by.text(text)).atIndex(0)).not.toBeVisible();
 }
 
 /**

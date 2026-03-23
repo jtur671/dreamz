@@ -16,6 +16,33 @@ type HomeScreenProps = {
   navigation: NativeStackNavigationProp<any>;
 };
 
+const DREAM_QUOTES = [
+  { text: 'All that we see or seem is but a dream within a dream.', author: 'Edgar Allan Poe' },
+  { text: 'Dreams are the royal road to the unconscious.', author: 'Sigmund Freud' },
+  { text: 'Those who dream by day are cognizant of many things which escape those who dream only by night.', author: 'Edgar Allan Poe' },
+  { text: 'A dream unexamined is like a letter unopened.', author: 'The Talmud' },
+  { text: 'Dreams are illustrations from the book your soul is writing about you.', author: 'Marsha Norman' },
+  { text: 'The future belongs to those who believe in the beauty of their dreams.', author: 'Eleanor Roosevelt' },
+  { text: 'In dreams begins responsibility.', author: 'W.B. Yeats' },
+  { text: 'Dreams are the seedlings of realities.', author: 'James Allen' },
+  { text: 'Sleep is the best meditation.', author: 'Dalai Lama' },
+  { text: 'We are such stuff as dreams are made on.', author: 'William Shakespeare' },
+  { text: 'The dream is the small hidden door in the deepest and most intimate sanctum of the soul.', author: 'Carl Jung' },
+  { text: 'Dreams are today\u2019s answers to tomorrow\u2019s questions.', author: 'Edgar Cayce' },
+  { text: 'Who looks outside, dreams; who looks inside, awakes.', author: 'Carl Jung' },
+  { text: 'One thing I am certain of: I do not want to be loved as much as I want to be understood.', author: 'Anais Nin' },
+  { text: 'Dreaming permits each and every one of us to be quietly and safely insane every night.', author: 'William Dement' },
+  { text: 'There is a time for many words, and there is also a time for sleep.', author: 'Homer' },
+];
+
+function getDailyQuote() {
+  const now = new Date();
+  const dayOfYear = Math.floor(
+    (now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000
+  );
+  return DREAM_QUOTES[dayOfYear % DREAM_QUOTES.length];
+}
+
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const [lastDreamTitle, setLastDreamTitle] = useState<string | null>(null);
   const [dreamCount, setDreamCount] = useState(0);
@@ -124,7 +151,10 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.tagline}>Your dreams are private. Always.</Text>
+          <View style={styles.quoteContainer}>
+            <Text style={styles.quoteText}>"{getDailyQuote().text}"</Text>
+            <Text style={styles.quoteAuthor}>— {getDailyQuote().author}</Text>
+          </View>
         </View>
       </LinearGradient>
     </SafeAreaView>
@@ -245,10 +275,21 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  tagline: {
-    color: '#5a5a7a',
-    fontSize: 12,
-    textAlign: 'center',
+  quoteContainer: {
     paddingBottom: 24,
+    paddingHorizontal: 8,
+  },
+  quoteText: {
+    color: '#8b7fa8',
+    fontSize: 13,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    lineHeight: 19,
+    marginBottom: 4,
+  },
+  quoteAuthor: {
+    color: '#7a7a9a',
+    fontSize: 11,
+    textAlign: 'center',
   },
 });

@@ -1,5 +1,5 @@
 import { device, element, by, expect, waitFor } from 'detox';
-import { launchApp, tapById, typeById, waitForVisible, navigateToTab } from './helpers/actions';
+import { launchApp, tapById, typeById, waitForVisible, waitForNotVisible, pollForVisible, pollForVisibleByText, pollForNotVisibleByText, navigateToTab } from './helpers/actions';
 import { TEST_DREAM_TEXT } from './helpers/dreamFactory';
 import { setTestAccountPremium } from './helpers/db';
 
@@ -13,9 +13,7 @@ describe('Reading Screen', () => {
     // perspective. Disable sync now so all waitFor calls use real-time polling
     // instead of waiting for app idle — which never happens during backfill.
     await device.disableSynchronization();
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(30000);
+    await pollForVisible('home-record-button', 30000);
 
     // Create a dream to get a reading
     await tapById('home-record-button');
@@ -60,20 +58,18 @@ describe('Reading Screen', () => {
 
     await tapById('reading-dream-toggle');
     // Dream text should now be visible
-    await waitFor(element(by.text(TEST_DREAM_TEXT)))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisibleByText(TEST_DREAM_TEXT, 5000);
 
     // Collapse it
     await tapById('reading-dream-toggle');
-    await waitFor(element(by.text(TEST_DREAM_TEXT)))
-      .not.toBeVisible()
-      .withTimeout(3000);
+    await pollForNotVisibleByText(TEST_DREAM_TEXT, 3000);
   });
 
   it('should display symbol cards with name, meaning, shadow, and guidance', async () => {
-    // Scroll to symbols section
-    await element(by.id('reading-scroll-view')).scroll(400, 'down', 0.5, 0.5);
+    // Scroll to symbols section — with dream image (~300pt) + title + TLDR,
+    // symbols start around 500-600pt down. Scroll enough to reveal card interior.
+    await element(by.id('reading-scroll-view')).scrollTo('top');
+    await element(by.id('reading-scroll-view')).scroll(600, 'down', 0.5, 0.5);
 
     await expect(element(by.text('SYMBOLS REVEALED'))).toBeVisible();
     // At least one symbol card should show meaning/shadow/guidance labels (also uppercase)
@@ -83,42 +79,31 @@ describe('Reading Screen', () => {
   it('should toggle tooltip on symbol section', async () => {
     // Scroll to symbols section
     await element(by.id('reading-scroll-view')).scroll(400, 'down', 0.5, 0.5);
-    await waitFor(element(by.text('SYMBOLS REVEALED')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisibleByText('SYMBOLS REVEALED', 5000);
 
     // Tap the Meaning ⓘ icon to show tooltip
-    await waitFor(element(by.id('symbol-tooltip-meaning')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisible('symbol-tooltip-meaning', 5000);
     await element(by.id('symbol-tooltip-meaning')).atIndex(0).tap();
 
     // Tooltip text should appear
-    await waitFor(element(by.id('symbol-tooltip-text-meaning')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisible('symbol-tooltip-text-meaning', 5000);
 
     // Tap again to dismiss
     await element(by.id('symbol-tooltip-meaning')).atIndex(0).tap();
-    await waitFor(element(by.id('symbol-tooltip-text-meaning')))
-      .not.toBeVisible()
-      .withTimeout(5000);
+    await waitForNotVisible('symbol-tooltip-text-meaning', 5000);
   });
 
   it('should display dictionary badge on matching symbols without crashing', async () => {
-    // Scroll to symbols section
-    await element(by.id('reading-scroll-view')).scroll(400, 'down', 0.5, 0.5);
-    await waitFor(element(by.text('SYMBOLS REVEALED')))
-      .toBeVisible()
-      .withTimeout(5000);
+    // Reset scroll and re-scroll to symbols (previous test may have left scroll in different position)
+    await element(by.id('reading-scroll-view')).scrollTo('top');
+    await element(by.id('reading-scroll-view')).scroll(600, 'down', 0.5, 0.5);
+    await pollForVisibleByText('SYMBOLS REVEALED', 5000);
 
     // We can't guarantee which symbols match the dictionary, so just verify
     // the screen renders correctly with or without badges (no crash)
     // If a badge exists, verify it's visible
     try {
-      await waitFor(element(by.id('symbol-dictionary-badge')).atIndex(0))
-        .toBeVisible()
-        .withTimeout(3000);
+      await pollForVisible('symbol-dictionary-badge', 3000);
       // Badge found — verify it contains the expected text
       await expect(element(by.text('📖 Dictionary')).atIndex(0)).toBeVisible();
     } catch {
@@ -134,17 +119,13 @@ describe('Reading Screen', () => {
     await tapById('reading-grimoire-button');
 
     // Should land on Grimoire tab
-    await waitFor(element(by.text('Your Grimoire')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisibleByText('Your Grimoire', 10000);
   });
 
   it('should open share modal when tapping Share Reading', async () => {
     // Navigate to Grimoire tab (we should already be there from test 4)
     await navigateToTab('Grimoire');
-    await waitFor(element(by.id('grimoire-dream-list')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisible('grimoire-dream-list', 10000);
 
     // Tap the first dream card to open it
     await element(by.id('grimoire-dream-item')).atIndex(0).tap();
@@ -158,8 +139,6 @@ describe('Reading Screen', () => {
     await tapById('reading-share-button');
 
     // Share modal should appear
-    await waitFor(element(by.text('Share Your Reading')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisibleByText('Share Your Reading', 5000);
   });
 });

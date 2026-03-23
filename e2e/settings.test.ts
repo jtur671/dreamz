@@ -1,12 +1,11 @@
 import { device, element, by, expect, waitFor } from 'detox';
-import { launchApp, tapById, waitForVisible, navigateToTab } from './helpers/actions';
+import { launchApp, tapById, typeById, waitForVisible, pollForVisible, pollForVisibleByText, pollForNotVisibleByText, navigateToTab } from './helpers/actions';
+import { setTestAccountPremium, setTestAccountFree } from './helpers/db';
 
 describe('Settings Screen', () => {
   beforeAll(async () => {
     await launchApp(true);
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(30000);
+    await pollForVisible('home-record-button', 30000);
     // DreamContext background image backfill fires DALL-E 3 network requests
     // on fresh launch. Disable sync once so all subsequent actions are immediate.
     await device.disableSynchronization();
@@ -55,9 +54,7 @@ describe('Settings Screen', () => {
     await tapById('settings-zodiac-edit');
 
     // Modal should appear
-    await waitFor(element(by.text('Select Your Sign')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisibleByText('Select Your Sign', 5000);
 
     // Let the fade-in animation complete before tapping — with sync disabled
     // a tap fired mid-animation may not register with the React touch responder.
@@ -69,12 +66,13 @@ describe('Settings Screen', () => {
     await tapById('zodiac-option-aries');
 
     // Wait for the modal to CLOSE (Supabase write completes then setShowZodiacPicker(false))
-    await waitFor(element(by.text('Select Your Sign')))
-      .not.toBeVisible()
-      .withTimeout(15000);
+    await pollForNotVisibleByText('Select Your Sign', 15000);
   });
 
   it('should open share sheet on export (no crash)', async () => {
+    // Export button is in "Your Data" section — scroll to make it visible
+    await element(by.id('settings-scroll-view')).scroll(300, 'down', 0.5, 0.5);
+    await pollForVisible('settings-export-button', 5000);
     await tapById('settings-export-button');
 
     // Wait for share sheet to appear
@@ -107,9 +105,7 @@ describe('Settings Screen', () => {
     await tapById('settings-delete-dream-button');
 
     // Dream picker modal should appear
-    await waitFor(element(by.text('Select Dream to Delete')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisibleByText('Select Dream to Delete', 10000);
 
     // Wait for the Done button to be rendered and for any animations to complete
     // before tapping — tapping mid-animation with sync disabled may not register.
@@ -119,9 +115,86 @@ describe('Settings Screen', () => {
     // Close it
     await tapById('settings-dream-picker-done');
 
-    await waitFor(element(by.text('Select Dream to Delete')))
-      .not.toBeVisible()
-      .withTimeout(10000);
+    await pollForNotVisibleByText('Select Dream to Delete', 10000);
+  });
+
+  // --- Delete account countdown modal tests ---
+
+  it('should show countdown modal when deleting account', async () => {
+    // Scroll to delete account link at the very bottom
+    await element(by.id('settings-scroll-view')).scrollTo('bottom');
+    await pollForVisible('settings-delete-account-button', 5000);
+    await tapById('settings-delete-account-button');
+
+    // First confirmation alert
+    await pollForVisibleByText('Delete Account', 5000);
+    await element(by.text('Yes, Continue')).tap();
+
+    // Countdown modal should appear with disabled button
+    await pollForVisibleByText('This Cannot Be Undone', 5000);
+    await pollForVisible('settings-delete-confirm-button', 5000);
+
+    // Button should show countdown text
+    await pollForVisibleByText('Delete Everything (', 3000);
+
+    // Cancel via "No, Keep My Account"
+    await tapById('settings-delete-cancel-button');
+    await pollForNotVisibleByText('This Cannot Be Undone', 5000);
+  });
+
+  it('should enable delete button after countdown completes', async () => {
+    await element(by.id('settings-scroll-view')).scrollTo('bottom');
+    await pollForVisible('settings-delete-account-button', 5000);
+    await tapById('settings-delete-account-button');
+
+    await pollForVisibleByText('Delete Account', 5000);
+    await element(by.text('Yes, Continue')).tap();
+
+    await pollForVisibleByText('This Cannot Be Undone', 5000);
+
+    // Wait for countdown to finish (5 seconds + buffer)
+    await new Promise(r => setTimeout(r, 6000));
+
+    // Button text should now show "Delete Everything" without countdown number
+    await pollForVisibleByText('Delete Everything', 3000);
+
+    // Cancel rather than actually deleting the test account
+    await tapById('settings-delete-cancel-button');
+  });
+
+  // --- Premium tier display test ---
+
+  it('should show Manage Subscription for premium users', async () => {
+    await setTestAccountPremium();
+    // Relaunch to pick up the new tier
+    await launchApp(false);
+    await pollForVisible('home-record-button', 30000);
+    await device.disableSynchronization();
+    await navigateToTab('Settings');
+    await waitForVisible('settings-zodiac-edit', 10000);
+
+    // Premium user should see "Manage Subscription" not "Upgrade to Premium"
+    await pollForVisibleByText('Manage Subscription', 5000);
+
+    // Restore free tier for remaining tests
+    await setTestAccountFree();
+  });
+
+  // --- Reminder toggle test ---
+
+  it('should show time picker when reminders are toggled on', async () => {
+    // Scroll to reminders section
+    await element(by.id('settings-scroll-view')).scroll(200, 'down', 0.5, 0.5);
+    await pollForVisible('settings-reminder-toggle', 5000);
+
+    // Toggle reminders on
+    await tapById('settings-reminder-toggle');
+
+    // Time picker button should appear
+    await pollForVisible('settings-reminder-time', 5000);
+
+    // Toggle back off
+    await tapById('settings-reminder-toggle');
   });
 
   it('should sign out and return to auth screen', async () => {
@@ -131,9 +204,7 @@ describe('Settings Screen', () => {
     await tapById('settings-signout-button');
 
     // Confirm alert
-    await waitFor(element(by.text('Sign Out')).atIndex(1))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisibleByText('Sign Out', 5000);
     await element(by.text('Sign Out')).atIndex(1).tap();
 
     // Should return to auth screen

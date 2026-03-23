@@ -1,5 +1,5 @@
 import { device, element, by, expect, waitFor } from 'detox';
-import { launchApp, tapById, typeById, waitForVisible, pollForVisible, navigateToTab } from './helpers/actions';
+import { launchApp, tapById, typeById, waitForVisible, pollForVisible, pollForVisibleByText, navigateToTab } from './helpers/actions';
 import { TEST_DREAM_TEXT } from './helpers/dreamFactory';
 import { setTestAccountPremium } from './helpers/db';
 
@@ -13,9 +13,7 @@ describe('Grimoire Screen', () => {
     // perspective. Disable sync now so all waitFor calls use real-time polling
     // instead of waiting for app idle — which never happens during backfill.
     await device.disableSynchronization();
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(30000);
+    await pollForVisible('home-record-button', 30000);
 
     // Create a dream so tests always have data to work with (even after delete tests)
     await tapById('home-record-button');
@@ -78,9 +76,7 @@ describe('Grimoire Screen', () => {
     // Navigate to Grimoire after reading appears (button is at bottom of reading)
     await element(by.id('reading-scroll-view')).scrollTo('bottom');
     await tapById('reading-grimoire-button');
-    await waitFor(element(by.text('Your Grimoire')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisibleByText('Your Grimoire', 10000);
   });
 
   beforeEach(async () => {
@@ -100,9 +96,7 @@ describe('Grimoire Screen', () => {
       // No focused keyboard input — that's fine
     }
     await navigateToTab('Grimoire');
-    await waitFor(element(by.text('Your Grimoire')))
-      .toBeVisible()
-      .withTimeout(30000);
+    await pollForVisibleByText('Your Grimoire', 30000);
     // Clear any active search from a previous test so dream list is always visible
     try {
       await tapById('grimoire-search-clear');
@@ -175,9 +169,7 @@ describe('Grimoire Screen', () => {
     await element(by.id('grimoire-dream-item')).atIndex(0).longPress();
 
     // Confirm alert should appear
-    await waitFor(element(by.text('Delete Dream')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisibleByText('Delete Dream', 5000);
 
     await element(by.text('Delete')).tap();
 

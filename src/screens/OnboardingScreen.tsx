@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -21,6 +22,7 @@ export default function OnboardingScreen() {
   const [selectedZodiac, setSelectedZodiac] = useState<string | null>(null);
   const [selectedGender, setSelectedGender] = useState<Gender | null>(null);
   const [selectedAge, setSelectedAge] = useState<AgeRange | null>(null);
+  const [displayName, setDisplayName] = useState('');
   const [saving, setSaving] = useState(false);
 
   const handleTierContinue = async () => {
@@ -43,6 +45,7 @@ export default function OnboardingScreen() {
     const updates: Parameters<typeof updateProfile>[0] = {
       subscription_tier: tier,
     };
+    if (displayName.trim()) updates.display_name = displayName.trim();
     if (selectedZodiac) updates.zodiac_sign = selectedZodiac;
     if (selectedGender) updates.gender = selectedGender;
     if (selectedAge) updates.age_range = selectedAge;
@@ -177,6 +180,22 @@ export default function OnboardingScreen() {
       <Text style={styles.stepSubtitle}>
         Personalize your readings (all optional)
       </Text>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>What Should We Call You?</Text>
+        <TextInput
+          testID="onboarding-display-name"
+          style={styles.nameInput}
+          value={displayName}
+          onChangeText={setDisplayName}
+          placeholder="Your name (optional)"
+          placeholderTextColor="#6b5b8a"
+          autoCapitalize="words"
+          autoCorrect={false}
+          maxLength={50}
+          returnKeyType="done"
+        />
+      </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Your Sign</Text>
@@ -488,6 +507,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#e0d4f7',
     marginBottom: 12,
+  },
+  nameInput: {
+    backgroundColor: '#2a2a4e',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#e0d4f7',
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
   },
   optionsGrid: {
     flexDirection: 'row',

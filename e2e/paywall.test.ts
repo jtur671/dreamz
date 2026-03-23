@@ -1,5 +1,5 @@
 import { device, element, by, expect, waitFor } from 'detox';
-import { launchApp, tapById, waitForVisible, navigateToTab, waitForAnyVisible } from './helpers/actions';
+import { launchApp, tapById, waitForVisible, waitForNotVisible, navigateToTab, waitForAnyVisible } from './helpers/actions';
 import { setTestAccountFree, setTestAccountPremium } from './helpers/db';
 
 describe('Paywall Screen', () => {
@@ -15,8 +15,9 @@ describe('Paywall Screen', () => {
     await navigateToTab('Settings');
     await waitForVisible('settings-zodiac-edit', 15000);
 
-    // Scroll down to find upgrade button (only visible for free tier)
-    await element(by.id('settings-scroll-view')).scrollTo('bottom');
+    // Scroll to the Subscription section where upgrade button lives.
+    // scrollTo('bottom') puts it behind the tab bar — use targeted scroll instead.
+    await element(by.id('settings-scroll-view')).scroll(400, 'down', 0.5, 0.5);
     await waitForVisible('settings-upgrade-button', 10000);
     await tapById('settings-upgrade-button');
 
@@ -54,19 +55,19 @@ describe('Paywall Screen', () => {
     await element(by.id('paywall-scroll-view')).scroll(200, 'up', 0.5, 0.5);
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // On simulator, RevenueCat returns null → fallback with static prices
-    // Check for fallback pricing text; if live pricing loaded, check plan cards
+    // On simulator, RevenueCat may return partial data (monthly only, no annual)
+    // or null (fallback with static prices). Check whichever pricing UI rendered.
     const match = await waitForAnyVisible(
-      [{ text: '$5.99' }, { id: 'paywall-plan-monthly' }],
+      [{ id: 'paywall-pricing-fallback' }, { id: 'paywall-plan-monthly' }],
       10000,
     );
 
     if (match === 0) {
-      // Fallback UI
+      // Fallback UI — both static prices should be visible
       await expect(element(by.text('$5.99'))).toBeVisible();
       await expect(element(by.text('$35.99'))).toBeVisible();
     } else {
-      // Live pricing from RevenueCat
+      // Live pricing from RevenueCat (may have monthly only, no annual)
       await expect(element(by.id('paywall-plan-monthly'))).toBeVisible();
     }
   });
@@ -99,9 +100,7 @@ describe('Paywall Screen', () => {
     await tapById('paywall-close-button');
 
     // Paywall should dismiss
-    await waitFor(element(by.id('paywall-title')))
-      .not.toBeVisible()
-      .withTimeout(5000);
+    await waitForNotVisible('paywall-title', 5000);
 
     // Should be back on Settings
     await waitForVisible('settings-scroll-view', 5000);

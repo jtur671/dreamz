@@ -1,5 +1,5 @@
 import { device, element, by, expect, waitFor } from 'detox';
-import { launchApp, tapById, pollForVisible, navigateToTab } from './helpers/actions';
+import { launchApp, tapById, pollForVisible, pollForVisibleByText, navigateToTab } from './helpers/actions';
 import { setTestAccountPremium } from './helpers/db';
 
 /**
@@ -24,9 +24,7 @@ describe('Grimoire Filter Pills', () => {
     // perspective. Disable sync now so all waitFor calls use real-time polling
     // instead of waiting for app idle — which never happens during backfill.
     await device.disableSynchronization();
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(30000);
+    await pollForVisible('home-record-button', 30000);
   });
 
   beforeEach(async () => {
@@ -44,9 +42,7 @@ describe('Grimoire Filter Pills', () => {
       // No focused input — that's fine
     }
     await navigateToTab('Grimoire');
-    await waitFor(element(by.text('Your Grimoire')))
-      .toBeVisible()
-      .withTimeout(30000);
+    await pollForVisibleByText('Your Grimoire', 30000);
     // Clear any active search from a previous test so dream list is always visible
     try {
       await tapById('grimoire-search-clear');
@@ -57,9 +53,7 @@ describe('Grimoire Filter Pills', () => {
 
   it('should not trap user in empty state after tab switch with stale filter', async () => {
     // Step 1: Verify the Grimoire has dreams visible (list or at least the title)
-    await waitFor(element(by.text('Your Grimoire')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisibleByText('Your Grimoire', 10000);
 
     // Step 2: Check if filter pills are visible. If they are, tap one to activate
     // a symbol filter. If no pills exist (not enough recurring symbols), we still
@@ -86,9 +80,7 @@ describe('Grimoire Filter Pills', () => {
 
     // Step 5: Navigate back to Grimoire tab
     await navigateToTab('Grimoire');
-    await waitFor(element(by.text('Your Grimoire')))
-      .toBeVisible()
-      .withTimeout(30000);
+    await pollForVisibleByText('Your Grimoire', 30000);
 
     // Brief settle time for useFocusEffect refresh
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -136,9 +128,7 @@ describe('Grimoire Filter Pills', () => {
     await navigateToTab('Dictionary');
     await new Promise(resolve => setTimeout(resolve, 1000));
     await navigateToTab('Grimoire');
-    await waitFor(element(by.text('Your Grimoire')))
-      .toBeVisible()
-      .withTimeout(30000);
+    await pollForVisibleByText('Your Grimoire', 30000);
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Dreams should still be visible

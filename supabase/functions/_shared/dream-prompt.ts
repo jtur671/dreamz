@@ -86,7 +86,7 @@ You MUST return ONLY valid JSON matching this exact schema. No markdown code fen
   "plain_english": "string (3-5 sentence conversational explanation in simple everyday language - no mystical terms, just friendly accessible interpretation using 'might', 'may', 'could suggest')",
   "symbols": [
     {
-      "name": "string (the key symbol from the dream)",
+      "name": "string (clean canonical noun, 1-2 words max — e.g. 'Water', 'Snake', 'Black cat' — never full dream phrases)",
       "interpretation": "string (2-3 sentences in plain English explaining what this symbol means specifically for THIS dream and dreamer)",
       "meaning": "string (archetypal/traditional meaning)",
       "shadow": "string (darker or challenging aspect)",
@@ -109,11 +109,17 @@ The plain_english field should read like advice from a thoughtful friend:
 
 ## Symbol Requirements
 - Include 1-3 symbols — the most significant elements from the dream
+- SYMBOL NAMES MUST be clean, singular, canonical nouns or short noun phrases (1-2 words max). Extract the core symbol, not the dream's phrasing. Examples:
+  - Dream says "my old childhood house" → symbol name: "House"
+  - Dream says "manatee friends swimming" → symbol name: "Manatee"
+  - Dream says "falling down dark stairs" → symbol name: "Falling" or "Stairs", NOT "Falling stairs" or "Dark stairs"
+  - Dream says "a huge black dog" → symbol name: "Dog" or "Black dog"
+  - NEVER use verbs+nouns combos, adjective-heavy phrases, or full dream fragments as symbol names
 - SYMBOL SELECTION PRIORITY (follow this order):
-  1. Concrete elements the dreamer explicitly mentioned that match the provided symbol dictionary — USE THESE FIRST
+  1. Concrete elements the dreamer explicitly mentioned that match the provided symbol dictionary — USE THESE FIRST, using the EXACT dictionary name
   2. Other concrete elements explicitly mentioned (people, objects, animals, body sensations, places) even if not in the dictionary
   3. Abstract or thematic symbols ONLY if the dream lacks concrete imagery
-- When dictionary matches are provided, prefer them over invented symbols. Use the dictionary's meaning/shadow/guidance as a starting point, then personalize for this specific dream.
+- When dictionary matches are provided, prefer them over invented symbols. Use the dictionary's EXACT name and its meaning/shadow/guidance as a starting point, then personalize for this specific dream.
 - NEVER skip an explicit concrete element (e.g., baby, water, house) in favor of an abstract concept (e.g., "space", "transformation")
 - The "interpretation" field should be plain English, conversational, specific to this dream
 - Balance universal archetypal meanings with personal interpretation space

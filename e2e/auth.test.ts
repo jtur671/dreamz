@@ -1,5 +1,5 @@
 import { device, element, by, expect, waitFor } from 'detox';
-import { launchApp, tapById, typeById, dismissKeyboard, waitForVisible, waitForAnyVisible, dismissSavePasswordDialog } from './helpers/actions';
+import { launchApp, tapById, typeById, dismissKeyboard, waitForVisible, waitForAnyVisible, dismissSavePasswordDialog, pollForVisible, pollForVisibleByText, pollForNotVisibleByText } from './helpers/actions';
 import { randomTestEmail } from './helpers/dreamFactory';
 import { TEST_EMAIL, TEST_PASSWORD } from './helpers/session';
 
@@ -9,7 +9,7 @@ describe('Auth Screen', () => {
     // Wait for app to settle: home, onboarding, or auth screen
     const landed = await waitForAnyVisible(
       [
-        { text: 'Welcome, Dreamer' },   // 0 — home screen (persisted session)
+        { id: 'home-record-button' },   // 0 — home screen (persisted session)
         { id: 'auth-email-input' },      // 1 — auth screen (no session)
         { text: 'Choose Your Path' },    // 2 — onboarding (new user, incomplete)
       ],
@@ -26,11 +26,11 @@ describe('Auth Screen', () => {
       // Scroll the ScrollView to the bottom so the Skip button is in the viewport before tapping.
       await new Promise(r => setTimeout(r, 500)); // let about step render
       await element(by.id('onboarding-about-scroll')).scrollTo('bottom');
-      await waitFor(element(by.id('onboarding-about-skip'))).toBeVisible().withTimeout(5000);
+      await pollForVisible('onboarding-about-skip', 5000);
       await tapById('onboarding-about-skip');     // skip about → welcome step (sync waits for updateProfile)
-      await waitFor(element(by.id('onboarding-welcome-begin'))).toBeVisible().withTimeout(15000);
+      await pollForVisible('onboarding-welcome-begin', 15000);
       await tapById('onboarding-welcome-begin');  // complete onboarding → home (sync)
-      await waitFor(element(by.text('Welcome, Dreamer'))).toBeVisible().withTimeout(15000);
+      await pollForVisible('home-record-button', 15000);
       // Fall through to sign-out logic below (landed = 0 path)
     }
 
@@ -39,14 +39,14 @@ describe('Auth Screen', () => {
       // Disable sync then sign out so the auth screen appears for the test.
       await device.disableSynchronization();
       await element(by.id('tab-settings')).tap();
-      await waitFor(element(by.id('settings-scroll-view'))).toBeVisible().withTimeout(5000);
+      await pollForVisible('settings-scroll-view', 5000);
       await element(by.id('settings-scroll-view')).scrollTo('bottom');
-      await waitFor(element(by.id('settings-signout-button'))).toBeVisible().withTimeout(5000);
+      await pollForVisible('settings-signout-button', 5000);
       await element(by.id('settings-signout-button')).tap();
       // Alert has title "Sign Out" + button "Sign Out" — tap the button (index 1)
-      await waitFor(element(by.text('Sign Out')).atIndex(1)).toBeVisible().withTimeout(5000);
+      await pollForVisibleByText('Sign Out', 5000);
       await element(by.text('Sign Out')).atIndex(1).tap();
-      await waitFor(element(by.id('auth-email-input'))).toBeVisible().withTimeout(10000);
+      await pollForVisible('auth-email-input', 10000);
       await device.enableSynchronization();
     }
     // landed === 1 means auth screen already showing — nothing to do
@@ -70,7 +70,7 @@ describe('Auth Screen', () => {
       [
         { text: 'Success' },
         { text: 'Choose Your Path' },
-        { text: 'Welcome, Dreamer' },
+        { id: 'home-record-button' },
         { text: 'Sign Up Error' },
       ],
       60000,
@@ -83,9 +83,7 @@ describe('Auth Screen', () => {
     await dismissKeyboard('auth-password-input');
     await tapById('auth-submit-button');
 
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(30000);
+    await pollForVisible('home-record-button', 30000);
   });
 
   it('should show error for invalid email format', async () => {
@@ -100,23 +98,19 @@ describe('Auth Screen', () => {
     );
   });
 
-  it('should show error for wrong password', async () => {
+  it('should show error for wrong password and offer to create account', async () => {
     await typeById('auth-email-input', TEST_EMAIL);
     await typeById('auth-password-input', 'WrongPassword999');
     await dismissKeyboard('auth-password-input');
     await tapById('auth-submit-button');
 
-    await waitFor(element(by.text('Sign In Error')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisibleByText('Sign In Failed', 10000);
   });
 
   it('should show error for empty fields', async () => {
     await tapById('auth-submit-button');
 
-    await waitFor(element(by.text('Please enter email and password')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisibleByText('Please enter email and password', 5000);
   });
 
   it('should toggle password visibility', async () => {
@@ -143,5 +137,79 @@ describe('Auth Screen', () => {
     // Switch back
     await tapById('auth-mode-switch');
     await expect(element(by.text('Sign In'))).toBeVisible();
+  });
+
+  // --- Smart error switching tests ---
+
+  it('should offer to switch to sign-in when sign-up gets "already registered"', async () => {
+    // Switch to sign-up mode
+    await tapById('auth-mode-switch');
+    await expect(element(by.text('Create Account'))).toBeVisible();
+
+    // Use existing test account email
+    await typeById('auth-email-input', TEST_EMAIL);
+    await typeById('auth-password-input', TEST_PASSWORD);
+    await dismissKeyboard('auth-password-input');
+    await tapById('auth-submit-button');
+
+    await new Promise(r => setTimeout(r, 800));
+    await dismissSavePasswordDialog();
+
+    // Should see smart alert with "Account Exists"
+    await pollForVisibleByText('Account Exists', 15000);
+
+    // Tap "Sign In" in the alert to auto-switch modes
+    await element(by.text('Sign In')).tap();
+
+    // Should now be in sign-in mode (button says "Sign In")
+    await pollForVisibleByText('Sign In', 5000);
+  });
+
+  it('should offer to create account when sign-in gets invalid credentials', async () => {
+    await typeById('auth-email-input', 'nonexistent-xyz-test@example.com');
+    await typeById('auth-password-input', 'SomePassword123');
+    await dismissKeyboard('auth-password-input');
+    await tapById('auth-submit-button');
+
+    // Should see smart alert with "Sign In Failed"
+    await pollForVisibleByText('Sign In Failed', 15000);
+
+    // Tap "Create Account" to auto-switch modes
+    await element(by.text('Create Account')).tap();
+
+    // Should now be in sign-up mode (button says "Create Account")
+    await pollForVisibleByText('Create Account', 5000);
+  });
+
+  // --- Forgot password tests ---
+
+  it('should show Forgot Password link only in sign-in mode', async () => {
+    // In sign-in mode (default), forgot password should be visible
+    await expect(element(by.id('auth-forgot-password'))).toBeVisible();
+
+    // Switch to sign-up mode
+    await tapById('auth-mode-switch');
+
+    // Forgot password should not be visible
+    await expect(element(by.id('auth-forgot-password'))).not.toBeVisible();
+
+    // Switch back to sign-in
+    await tapById('auth-mode-switch');
+    await expect(element(by.id('auth-forgot-password'))).toBeVisible();
+  });
+
+  it('should show confirmation after tapping Forgot Password with valid email', async () => {
+    await typeById('auth-email-input', TEST_EMAIL);
+    await dismissKeyboard('auth-email-input');
+    await tapById('auth-forgot-password');
+
+    await pollForVisibleByText('Check Your Email', 15000);
+  });
+
+  it('should show error when tapping Forgot Password with empty email', async () => {
+    // Don't type any email
+    await tapById('auth-forgot-password');
+
+    await pollForVisibleByText('Email Required', 5000);
   });
 });

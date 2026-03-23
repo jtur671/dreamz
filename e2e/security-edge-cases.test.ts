@@ -1,5 +1,5 @@
 import { device, element, by, expect, waitFor } from 'detox';
-import { launchApp, tapById, typeById, dismissKeyboard, waitForVisible, pollForVisible, waitForAnyVisible, navigateToTab } from './helpers/actions';
+import { launchApp, tapById, typeById, dismissKeyboard, waitForVisible, pollForVisible, pollForVisibleByText, waitForAnyVisible, navigateToTab } from './helpers/actions';
 import { XSS_DREAM_TEXT, EMOJI_DREAM_TEXT, LONG_DREAM_TEXT } from './helpers/dreamFactory';
 import { setTestAccountPremium } from './helpers/db';
 
@@ -34,7 +34,7 @@ async function submitDreamAndWait(text: string, mood: string) {
   try {
     await element(by.id('reading-scroll-view')).scrollTo('bottom');
     await tapById('reading-grimoire-button');
-    await waitFor(element(by.text('Your Grimoire'))).toBeVisible().withTimeout(8000);
+    await pollForVisibleByText('Your Grimoire', 8000);
     await navigateToTab('Dream');
     return;
   } catch {}
@@ -46,9 +46,7 @@ async function submitDreamAndWait(text: string, mood: string) {
   try { await tapById('new-dream-back'); await new Promise(r => setTimeout(r, 1000)); } catch {}
   await new Promise(r => setTimeout(r, 1000));
   await navigateToTab('Dream');
-  await waitFor(element(by.text('Welcome, Dreamer')))
-    .toBeVisible()
-    .withTimeout(10000);
+  await pollForVisible('home-record-button', 10000);
 }
 
 describe('Security & Edge Cases', () => {
@@ -57,16 +55,14 @@ describe('Security & Edge Cases', () => {
     await setTestAccountPremium();
 
     await launchApp(true);
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(30000);
+    await pollForVisible('home-record-button', 30000);
     // DreamContext background image backfill fires DALL-E 3 network requests
     // on fresh launch. Disable sync so all subsequent actions are immediate.
     await device.disableSynchronization();
   });
 
   it('should handle XSS input safely', async () => {
-    await submitDreamAndWait(XSS_DREAM_TEXT, 'vivid');
+    await submitDreamAndWait(XSS_DREAM_TEXT, 'curious');
   });
 
   it('should handle emoji input normally', async () => {
@@ -82,8 +78,8 @@ describe('Security & Edge Cases', () => {
     await new Promise(r => setTimeout(r, 2000));
 
     // Select mood BEFORE typing so the chips are fully visible.
-    await waitFor(element(by.id('new-dream-mood-vivid'))).toBeVisible().withTimeout(3000);
-    await tapById('new-dream-mood-vivid');
+    await pollForVisible('new-dream-mood-curious', 3000);
+    await tapById('new-dream-mood-curious');
 
     // Type a long string — 500 chars is enough to stress the layout without
     // making the TextInput so tall that Detox's scrollTo('bottom') fails to
@@ -114,7 +110,7 @@ describe('Security & Edge Cases', () => {
     try {
       await element(by.id('reading-scroll-view')).scrollTo('bottom');
       await tapById('reading-grimoire-button');
-      await waitFor(element(by.text('Your Grimoire'))).toBeVisible().withTimeout(8000);
+      await pollForVisibleByText('Your Grimoire', 8000);
       await navigateToTab('Dream');
     } catch {
       try { await tapById('reading-back'); await new Promise(r => setTimeout(r, 1000)); } catch {}
@@ -137,17 +133,13 @@ describe('Security & Edge Cases', () => {
     // DreamContext backfill fires again for any dreams created in tests 1-3.
     await device.disableSynchronization();
 
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(30000);
+    await pollForVisible('home-record-button', 30000);
   });
 
   it('should show grimoire state correctly', async () => {
     await navigateToTab('Grimoire');
     // waitFor handles timing; no redundant expect needed
-    await waitFor(element(by.text('Your Grimoire')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await pollForVisibleByText('Your Grimoire', 10000);
   });
 
   it('should handle insights screen with few dreams gracefully', async () => {

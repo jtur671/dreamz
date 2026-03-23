@@ -1,5 +1,5 @@
-import { device, element, by, waitFor } from 'detox';
-import { tapById, typeById, waitForVisible, waitForAnyVisible } from './helpers/actions';
+import { device, element, by, waitFor, expect } from 'detox';
+import { tapById, typeById, waitForVisible, waitForAnyVisible, pollForVisible, pollForVisibleByText } from './helpers/actions';
 import { TEST_EMAIL, TEST_PASSWORD } from './helpers/session';
 import { resetOnboardingState } from './helpers/db';
 
@@ -12,16 +12,14 @@ import { resetOnboardingState } from './helpers/db';
  * OnboardingScreen instead of MainTabs.
  */
 async function signInAndExpectOnboarding() {
-  await waitForVisible('auth-email-input', 10000);
+  await pollForVisible('auth-email-input', 10000);
   await typeById('auth-email-input', TEST_EMAIL);
   await typeById('auth-password-input', TEST_PASSWORD);
   await element(by.id('auth-password-input')).tapReturnKey();
   await tapById('auth-submit-button');
 
   // Wait for the tier screen (profile check via onAuthStateChange → needsOnboarding = true)
-  await waitFor(element(by.id('onboarding-tier-free')))
-    .toBeVisible()
-    .withTimeout(30000);
+  await pollForVisible('onboarding-tier-free', 30000);
 }
 
 describe('Onboarding Flow', () => {
@@ -30,13 +28,19 @@ describe('Onboarding Flow', () => {
     // so getSession() on startup or onAuthStateChange on sign-in will trigger onboarding.
     await resetOnboardingState();
 
-    await device.launchApp({ newInstance: true });
+    await device.launchApp({
+      newInstance: true,
+      permissions: { notifications: 'YES' },
+    });
+    // AdMob keeps the main dispatch queue perpetually busy — disable sync
+    // so poll-based waits (waitForAnyVisible, pollForVisible) can function.
+    await device.disableSynchronization();
 
     // Detect which screen appeared after launch.
     const landed = await waitForAnyVisible(
       [
         { id: 'auth-email-input' },   // 0 — no session / signed out
-        { text: 'Welcome, Dreamer' }, // 1 — session with onboarding already complete
+        { id: 'home-record-button' }, // 1 — session with onboarding already complete
         { text: 'Choose Your Path' }, // 2 — session with onboarding_completed=false (happy path)
       ],
       30000,
@@ -52,13 +56,13 @@ describe('Onboarding Flow', () => {
       // app used a cached value). Sign out so we can sign back in.
       await device.disableSynchronization();
       await element(by.id('tab-settings')).tap();
-      await waitForVisible('settings-scroll-view', 5000);
+      await pollForVisible('settings-scroll-view', 5000);
       await element(by.id('settings-scroll-view')).scrollTo('bottom');
-      await waitForVisible('settings-signout-button', 5000);
+      await pollForVisible('settings-signout-button', 5000);
       await element(by.id('settings-signout-button')).tap();
-      await waitFor(element(by.text('Sign Out')).atIndex(1)).toBeVisible().withTimeout(5000);
+      await pollForVisibleByText('Sign Out', 5000);
       await element(by.text('Sign Out')).atIndex(1).tap();
-      await waitForVisible('auth-email-input', 20000);
+      await pollForVisible('auth-email-input', 20000);
       await device.enableSynchronization();
     }
 
@@ -69,68 +73,92 @@ describe('Onboarding Flow', () => {
   it('should complete full onboarding: tier -> about -> welcome -> home', async () => {
     // Select free tier and continue
     await tapById('onboarding-tier-free');
+    await new Promise(r => setTimeout(r, 300));
     await tapById('onboarding-tier-continue');
 
     // About step - select zodiac, gender, age (items near top visible without scrolling)
-    await waitForVisible('onboarding-zodiac-aries', 5000);
+    // Wait for step transition animation to finish (CASpringAnimation overlay blocks taps)
+    await pollForVisible('onboarding-zodiac-aries', 5000);
+    await new Promise(r => setTimeout(r, 800));
     await tapById('onboarding-zodiac-aries');
     await tapById('onboarding-gender-female');
     await tapById('onboarding-age-25-34');
     // Continue button is below the fold — scroll to bottom first
     await element(by.id('onboarding-about-scroll')).scrollTo('bottom');
-    await waitForVisible('onboarding-about-continue', 3000);
+    await pollForVisible('onboarding-about-continue', 3000);
     await tapById('onboarding-about-continue');
 
     // Welcome step
-    await waitForVisible('onboarding-welcome-begin', 10000);
+    await pollForVisible('onboarding-welcome-begin', 10000);
     await tapById('onboarding-welcome-begin');
 
     // Should land on home
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(15000);
+    await pollForVisible('home-record-button', 15000);
   });
 
   it('should skip about-you step and still reach home', async () => {
     await tapById('onboarding-tier-free');
+    await new Promise(r => setTimeout(r, 300));
     await tapById('onboarding-tier-continue');
 
     // Skip button is below the fold — scroll to bottom first
     await element(by.id('onboarding-about-scroll')).scrollTo('bottom');
-    await waitForVisible('onboarding-about-skip', 5000);
+    await pollForVisible('onboarding-about-skip', 5000);
     await tapById('onboarding-about-skip');
 
     // Welcome step
-    await waitForVisible('onboarding-welcome-begin', 10000);
+    await pollForVisible('onboarding-welcome-begin', 10000);
     await tapById('onboarding-welcome-begin');
 
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(15000);
+    await pollForVisible('home-record-button', 15000);
+  });
+
+  it('should persist display name from onboarding in settings', async () => {
+    await tapById('onboarding-tier-free');
+    await new Promise(r => setTimeout(r, 300));
+    await tapById('onboarding-tier-continue');
+
+    // About step — type display name
+    await pollForVisible('onboarding-display-name', 5000);
+    await new Promise(r => setTimeout(r, 800));
+    await typeById('onboarding-display-name', 'Luna');
+
+    // Scroll to continue button and tap
+    await element(by.id('onboarding-about-scroll')).scrollTo('bottom');
+    await pollForVisible('onboarding-about-continue', 3000);
+    await tapById('onboarding-about-continue');
+
+    // Welcome step
+    await pollForVisible('onboarding-welcome-begin', 10000);
+    await tapById('onboarding-welcome-begin');
+
+    await pollForVisible('home-record-button', 15000);
+
+    // Navigate to Settings and verify display name persisted
+    await element(by.id('tab-settings')).tap();
+    await pollForVisibleByText('Luna', 5000);
   });
 
   it('should persist zodiac choice in settings after onboarding', async () => {
     await tapById('onboarding-tier-free');
+    await new Promise(r => setTimeout(r, 300));
     await tapById('onboarding-tier-continue');
 
-    await waitForVisible('onboarding-zodiac-leo', 5000);
+    await pollForVisible('onboarding-zodiac-leo', 5000);
+    await new Promise(r => setTimeout(r, 800));
     await tapById('onboarding-zodiac-leo');
     // Continue button is below the fold — scroll to bottom first
     await element(by.id('onboarding-about-scroll')).scrollTo('bottom');
-    await waitForVisible('onboarding-about-continue', 3000);
+    await pollForVisible('onboarding-about-continue', 3000);
     await tapById('onboarding-about-continue');
 
-    await waitForVisible('onboarding-welcome-begin', 10000);
+    await pollForVisible('onboarding-welcome-begin', 10000);
     await tapById('onboarding-welcome-begin');
 
-    await waitFor(element(by.text('Welcome, Dreamer')))
-      .toBeVisible()
-      .withTimeout(15000);
+    await pollForVisible('home-record-button', 15000);
 
     // Navigate to Settings and verify zodiac persisted
     await element(by.id('tab-settings')).tap();
-    await waitFor(element(by.text('Leo')))
-      .toBeVisible()
-      .withTimeout(5000);
+    await pollForVisibleByText('Leo', 5000);
   });
 });
