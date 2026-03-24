@@ -150,17 +150,22 @@ export default function App() {
       const type = params.get('type');
 
       if (accessToken && refreshToken && type === 'recovery') {
-        await supabase.auth.setSession({
+        const { error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
         });
+        if (error) {
+          console.error('[App] Failed to set recovery session:', error.message);
+        }
       }
     }
 
     // Check if app was opened via a deep link (cold start)
-    Linking.getInitialURL().then((url) => {
-      if (url) handleDeepLinkRecovery(url);
-    });
+    Linking.getInitialURL()
+      .then((url) => {
+        if (url) handleDeepLinkRecovery(url);
+      })
+      .catch((e) => console.error('[App] getInitialURL error:', e));
 
     // Listen for deep links while app is running (warm start)
     const linkingSub = Linking.addEventListener('url', ({ url }) => {

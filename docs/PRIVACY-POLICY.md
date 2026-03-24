@@ -29,11 +29,17 @@ We believe your dreams are deeply personal. Our guiding principle is simple: you
 - Exact date of birth
 - Contacts or address book data
 - Browsing history or activity outside the app
-- We do not use analytics services or tracking pixels
+- We do not use first-party analytics services or tracking pixels (third-party ad SDKs may collect data as described below)
 
 ### Advertising
 
-Dreamz displays occasional interstitial ads to users on the free tier via Google AdMob. These ads appear between dream readings. Premium subscribers do not see ads. AdMob may collect device advertising identifiers and general usage data in accordance with Google's privacy policy. We do not use your dream content, email address, or profile data for ad targeting.
+Dreamz displays interstitial ads to users on the free tier via Google AdMob. These ads appear between dream readings. Premium subscribers do not see ads. AdMob may collect device advertising identifiers (such as IDFA on iOS or AAID on Android), device information, and app interaction data in accordance with Google's privacy policy. We do not use your dream content, email address, or profile data for ad targeting.
+
+You can limit ad tracking through your device settings:
+- **iOS:** Settings > Privacy & Security > Tracking
+- **Android:** Settings > Google > Ads > Opt out of Ads Personalization
+
+For more information about how AdMob collects and uses data, see: https://support.google.com/admob/answer/6128543
 
 ## How We Use Your Information
 
@@ -44,7 +50,7 @@ We use your information solely to provide and operate the Dreamz service:
 - **Authentication.** Your email address is used to create and secure your account.
 - **Subscription management.** Your subscription status is tracked to determine which features are available to you.
 
-We do not sell, rent, or share your personal data with advertisers, data brokers, or any third party for marketing purposes. We do not use your data to train AI models. We do not send marketing emails.
+We do not sell, rent, or share your personal data with data brokers or any third party for marketing purposes. Limited technical identifiers (device advertising IDs) may be shared with ad networks like AdMob for ad delivery as described in the Advertising section above. We do not use your data to train AI models. We do not send marketing emails.
 
 ## Data Storage and Security
 
@@ -73,7 +79,7 @@ Dreamz relies on the following third-party services to operate:
 | **Supabase** | Authentication and database hosting | Email address, dream entries, profile data |
 | **RevenueCat** | Subscription and payment processing | Anonymous user ID, subscription status |
 | **Apple App Store / Google Play Store** | In-app purchase processing | Payment details (handled entirely by Apple/Google) |
-| **Google AdMob** | Advertising (free tier only) | Device advertising identifier, general usage data (no dream content or PII) |
+| **Google AdMob** | Advertising (free tier only) | Device advertising identifier, device info, app interaction data (no dream content, email, or profile data) |
 
 We encourage you to review the privacy policies of these services:
 
