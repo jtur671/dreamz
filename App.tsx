@@ -137,6 +137,36 @@ export default function App() {
       setNeedsOnboarding(true);
     });
 
+    // Handle deep link recovery tokens (password reset)
+    // Supabase can't auto-detect URL tokens in React Native (detectSessionInUrl: false),
+    // so we manually extract tokens from the incoming deep link and set the session.
+    async function handleDeepLinkRecovery(url: string) {
+      const hashIndex = url.indexOf('#');
+      if (hashIndex === -1) return;
+
+      const params = new URLSearchParams(url.substring(hashIndex + 1));
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+      const type = params.get('type');
+
+      if (accessToken && refreshToken && type === 'recovery') {
+        await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+      }
+    }
+
+    // Check if app was opened via a deep link (cold start)
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLinkRecovery(url);
+    });
+
+    // Listen for deep links while app is running (warm start)
+    const linkingSub = Linking.addEventListener('url', ({ url }) => {
+      handleDeepLinkRecovery(url);
+    });
+
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       // Check profile BEFORE setting session to avoid a flash of MainTabs
@@ -192,6 +222,7 @@ export default function App() {
     return () => {
       subscription.unsubscribe();
       notificationResponseSub.remove();
+      linkingSub.remove();
       setOnNewUserSignup(null);
     };
   }, []);
@@ -250,6 +281,11 @@ export default function App() {
             }}
           >
             <Stack.Screen name="Auth" component={AuthScreen} />
+            <Stack.Screen
+              name="ResetPassword"
+              component={ResetPasswordScreen}
+              options={{ presentation: 'modal' }}
+            />
           </Stack.Navigator>
         )}
       </NavigationContainer>
