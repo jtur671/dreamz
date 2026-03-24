@@ -48,8 +48,12 @@ export default function ResetPasswordScreen({ navigation }: ResetPasswordScreenP
         Alert.alert('Reset Failed', error.message);
       } else {
         // Sign out so user can log in with their new password
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // Sign-out failed, but password was updated — still show success
+        }
         setPendingPasswordReset(false);
-        await supabase.auth.signOut();
         Alert.alert(
           'Password Updated',
           'Your password has been updated. Please sign in with your new password.'
