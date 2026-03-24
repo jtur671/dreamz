@@ -11,7 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
-import { setPendingPasswordReset } from '../../App';
+import { setPendingPasswordReset } from '../lib/resetState';
 
 interface VerifyResetCodeScreenProps {
   navigation: any;
