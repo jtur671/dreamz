@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
+import { setPendingPasswordReset } from '../../App';
 
 interface VerifyResetCodeScreenProps {
   navigation: any;
@@ -140,12 +141,14 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
                 onChangeText={(text) => handleCodeChange(text, index)}
                 onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
                 keyboardType="number-pad"
-                maxLength={1}
+
                 autoFocus={index === 0}
                 selectTextOnFocus
               />
             ))}
           </View>
+
+          <Text style={styles.expiryNote}>Code expires in 1 hour</Text>
 
           <TouchableOpacity
             testID="verify-submit-button"
@@ -175,7 +178,7 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
 
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => { setPendingPasswordReset(false); navigation.goBack(); }}
             accessibilityRole="button"
             accessibilityLabel="Back to Sign In"
           >
@@ -223,7 +226,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 10,
-    marginBottom: 32,
+    marginBottom: 8,
+  },
+  expiryNote: {
+    color: '#6b5b8a',
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 24,
   },
   codeInput: {
     width: 48,

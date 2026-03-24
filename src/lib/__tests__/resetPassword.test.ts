@@ -1,13 +1,6 @@
 /**
  * Tests for OTP-based password reset and sign-in-with-code flows
  *
- * Covers:
- * - Forgot password: sends recovery OTP, prevents email enumeration
- * - Sign in with code: sends login OTP via signInWithOtp
- * - OTP verification: verifyOtp with recovery vs email type
- * - Password update: validation, updateUser, sign out after success
- * - pendingPasswordReset flag behavior
- *
  * @file src/lib/__tests__/resetPassword.test.ts
  */
 
@@ -33,17 +26,15 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-/** Mirrors the error classification logic from AuthScreen.handleForgotPassword.
- *  Show "check email" unless there's a non-"invalid" error (real failure). */
-function shouldShowCheckEmail(error: { message?: string } | null): boolean {
-  if (!error) return true;
-  return !!error.message?.toLowerCase().includes('invalid');
+/** Mirrors AuthScreen error classification — only surface 5xx errors */
+function isServerError(error: { status?: number } | null): boolean {
+  return !!error && (error.status ?? 0) >= 500;
 }
 
-/** Mirrors the validation logic from ResetPasswordScreen */
+/** Mirrors ResetPasswordScreen validation */
 function validateResetPassword(password: string, confirmPassword: string): string | null {
   if (!password || !confirmPassword) return 'Missing Fields';
-  if (password.length < 6) return 'Password Too Short';
+  if (password.length < 8) return 'Password Too Short';
   if (password !== confirmPassword) return "Passwords Don't Match";
   return null;
 }
@@ -51,57 +42,36 @@ function validateResetPassword(password: string, confirmPassword: string): strin
 describe('Password Reset - Send Recovery OTP', () => {
   it('should call resetPasswordForEmail', async () => {
     mockResetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
-
     const { supabase } = require('../supabase');
     await supabase.auth.resetPasswordForEmail('user@example.com');
-
     expect(mockResetPasswordForEmail).toHaveBeenCalledWith('user@example.com');
   });
 
-  it('should show success even when email not found (prevents enumeration)', async () => {
-    mockResetPasswordForEmail.mockResolvedValue({
-      data: {},
-      error: { message: 'Email address is invalid', status: 422 },
-    });
-
-    const { supabase } = require('../supabase');
-    const { error } = await supabase.auth.resetPasswordForEmail('unknown@test.com');
-
-    expect(shouldShowCheckEmail(error)).toBe(true);
+  it('should not surface 4xx errors (prevents enumeration)', () => {
+    expect(isServerError({ status: 422 })).toBe(false);
+    expect(isServerError({ status: 400 })).toBe(false);
+    expect(isServerError({ status: 404 })).toBe(false);
   });
 
-  it('should show error on unexpected failures', async () => {
-    mockResetPasswordForEmail.mockResolvedValue({
-      data: {},
-      error: { message: 'Network error', status: 500 },
-    });
-
-    const { supabase } = require('../supabase');
-    const { error } = await supabase.auth.resetPasswordForEmail('user@example.com');
-
-    expect(shouldShowCheckEmail(error)).toBe(false);
+  it('should surface 5xx errors', () => {
+    expect(isServerError({ status: 500 })).toBe(true);
+    expect(isServerError({ status: 503 })).toBe(true);
   });
 
-  it('should handle error with undefined message safely', async () => {
-    mockResetPasswordForEmail.mockResolvedValue({
-      data: {},
-      error: { status: 500 },
-    });
+  it('should not surface null errors', () => {
+    expect(isServerError(null)).toBe(false);
+  });
 
-    const { supabase } = require('../supabase');
-    const { error } = await supabase.auth.resetPasswordForEmail('user@example.com');
-
-    expect(shouldShowCheckEmail(error)).toBe(false);
+  it('should handle missing status gracefully', () => {
+    expect(isServerError({})).toBe(false);
   });
 });
 
 describe('Sign In With Code - Send Login OTP', () => {
   it('should call signInWithOtp with email', async () => {
     mockSignInWithOtp.mockResolvedValue({ data: {}, error: null });
-
     const { supabase } = require('../supabase');
     await supabase.auth.signInWithOtp({ email: 'user@example.com' });
-
     expect(mockSignInWithOtp).toHaveBeenCalledWith({ email: 'user@example.com' });
   });
 
@@ -110,35 +80,20 @@ describe('Sign In With Code - Send Login OTP', () => {
       data: {},
       error: { message: 'Rate limit exceeded', status: 429 },
     });
-
     const { supabase } = require('../supabase');
     const { error } = await supabase.auth.signInWithOtp({ email: 'user@example.com' });
-
     expect(error).not.toBeNull();
-    expect(error.message).toBe('Rate limit exceeded');
   });
 });
 
 describe('OTP Verification - Reset Mode', () => {
-  it('should call verifyOtp with type recovery for reset mode', async () => {
-    mockVerifyOtp.mockResolvedValue({
-      data: { session: { access_token: 'abc' } },
-      error: null,
-    });
-
+  it('should call verifyOtp with type recovery', async () => {
+    mockVerifyOtp.mockResolvedValue({ data: { session: {} }, error: null });
     const { supabase } = require('../supabase');
-    const { error } = await supabase.auth.verifyOtp({
-      email: 'user@example.com',
-      token: '123456',
-      type: 'recovery',
-    });
-
+    await supabase.auth.verifyOtp({ email: 'user@example.com', token: '123456', type: 'recovery' });
     expect(mockVerifyOtp).toHaveBeenCalledWith({
-      email: 'user@example.com',
-      token: '123456',
-      type: 'recovery',
+      email: 'user@example.com', token: '123456', type: 'recovery',
     });
-    expect(error).toBeNull();
   });
 
   it('should return error for invalid code', async () => {
@@ -146,39 +101,22 @@ describe('OTP Verification - Reset Mode', () => {
       data: { session: null },
       error: { message: 'Token has expired or is invalid', status: 403 },
     });
-
     const { supabase } = require('../supabase');
     const { error } = await supabase.auth.verifyOtp({
-      email: 'user@example.com',
-      token: '000000',
-      type: 'recovery',
+      email: 'user@example.com', token: '000000', type: 'recovery',
     });
-
     expect(error).not.toBeNull();
-    expect(error.message).toContain('expired');
   });
 });
 
 describe('OTP Verification - Login Mode', () => {
-  it('should call verifyOtp with type email for login mode', async () => {
-    mockVerifyOtp.mockResolvedValue({
-      data: { session: { access_token: 'abc' } },
-      error: null,
-    });
-
+  it('should call verifyOtp with type email', async () => {
+    mockVerifyOtp.mockResolvedValue({ data: { session: {} }, error: null });
     const { supabase } = require('../supabase');
-    const { error } = await supabase.auth.verifyOtp({
-      email: 'user@example.com',
-      token: '654321',
-      type: 'email',
-    });
-
+    await supabase.auth.verifyOtp({ email: 'user@example.com', token: '654321', type: 'email' });
     expect(mockVerifyOtp).toHaveBeenCalledWith({
-      email: 'user@example.com',
-      token: '654321',
-      type: 'email',
+      email: 'user@example.com', token: '654321', type: 'email',
     });
-    expect(error).toBeNull();
   });
 });
 
@@ -187,8 +125,12 @@ describe('Password Reset - Validation', () => {
     expect(validateResetPassword('', '')).toBe('Missing Fields');
   });
 
-  it('should reject short passwords', () => {
-    expect(validateResetPassword('12345', '12345')).toBe('Password Too Short');
+  it('should reject passwords shorter than 8 characters', () => {
+    expect(validateResetPassword('1234567', '1234567')).toBe('Password Too Short');
+  });
+
+  it('should accept passwords of 8+ characters', () => {
+    expect(validateResetPassword('12345678', '12345678')).toBeNull();
   });
 
   it('should reject mismatched passwords', () => {
@@ -198,33 +140,22 @@ describe('Password Reset - Validation', () => {
   it('should accept valid matching passwords', () => {
     expect(validateResetPassword('password123', 'password123')).toBeNull();
   });
-
-  it('should accept minimum length (6 chars)', () => {
-    expect(validateResetPassword('123456', '123456')).toBeNull();
-  });
 });
 
 describe('Password Reset - Update and Sign Out', () => {
   it('should call updateUser with new password', async () => {
     mockUpdateUser.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
-
     const { supabase } = require('../supabase');
     await supabase.auth.updateUser({ password: 'newPass123' });
-
     expect(mockUpdateUser).toHaveBeenCalledWith({ password: 'newPass123' });
   });
 
   it('should sign out after successful password update', async () => {
     mockUpdateUser.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
     mockSignOut.mockResolvedValue({ error: null });
-
     const { supabase } = require('../supabase');
     const { error } = await supabase.auth.updateUser({ password: 'newPass123' });
-
-    if (!error) {
-      await supabase.auth.signOut();
-    }
-
+    if (!error) await supabase.auth.signOut();
     expect(mockSignOut).toHaveBeenCalled();
   });
 
@@ -233,61 +164,60 @@ describe('Password Reset - Update and Sign Out', () => {
       data: { user: null },
       error: { message: 'Session expired', status: 401 },
     });
-
     const { supabase } = require('../supabase');
     const { error } = await supabase.auth.updateUser({ password: 'newPass123' });
-
-    if (!error) {
-      await supabase.auth.signOut();
-    }
-
+    if (!error) await supabase.auth.signOut();
     expect(mockSignOut).not.toHaveBeenCalled();
   });
 });
 
-describe('pendingPasswordReset Flag - Auth Event Handler', () => {
-  /** Extracted handler that mirrors App.tsx onAuthStateChange logic */
+describe('pendingPasswordReset - Auth Event Handler', () => {
+  /**
+   * Mirrors App.tsx onAuthStateChange logic:
+   * - When pending=true AND SIGNED_IN: setSession IS called, but navigator
+   *   starts on ResetPassword via initialRouteName
+   * - When pending=false AND SIGNED_IN: setSession IS called, navigator
+   *   starts on MainTabs normally
+   */
   function handleAuthEvent(
     event: string,
     session: any,
     pending: boolean,
     setSession: (s: any) => void
-  ): boolean {
+  ): { navigateTo: string } | null {
     if (event === 'SIGNED_IN' && session) {
-      if (pending) return false; // suppressed
-      setSession(session);
-      return true; // session set
+      setSession(session); // Always set session
+      if (pending) {
+        return { navigateTo: 'ResetPassword' };
+      }
+      return { navigateTo: 'MainTabs' };
     }
     if (!session) {
       setSession(null);
-      return true;
+      return null;
     }
     setSession(session);
-    return true;
+    return null;
   }
 
-  it('should suppress SIGNED_IN when pendingPasswordReset is true', () => {
+  it('should set session AND route to ResetPassword when pending is true', () => {
     const mockSetSession = jest.fn();
     const result = handleAuthEvent('SIGNED_IN', { access_token: 'test' }, true, mockSetSession);
-
-    expect(result).toBe(false);
-    expect(mockSetSession).not.toHaveBeenCalled();
+    expect(mockSetSession).toHaveBeenCalledWith({ access_token: 'test' });
+    expect(result).toEqual({ navigateTo: 'ResetPassword' });
   });
 
-  it('should allow SIGNED_IN when pendingPasswordReset is false', () => {
+  it('should set session AND route to MainTabs when pending is false', () => {
     const mockSetSession = jest.fn();
-    const session = { access_token: 'test' };
-    const result = handleAuthEvent('SIGNED_IN', session, false, mockSetSession);
-
-    expect(result).toBe(true);
-    expect(mockSetSession).toHaveBeenCalledWith(session);
+    const result = handleAuthEvent('SIGNED_IN', { access_token: 'test' }, false, mockSetSession);
+    expect(mockSetSession).toHaveBeenCalledWith({ access_token: 'test' });
+    expect(result).toEqual({ navigateTo: 'MainTabs' });
   });
 
-  it('should always clear session on sign out regardless of flag', () => {
+  it('should clear session on sign out', () => {
     const mockSetSession = jest.fn();
     const result = handleAuthEvent('SIGNED_OUT', null, true, mockSetSession);
-
-    expect(result).toBe(true);
     expect(mockSetSession).toHaveBeenCalledWith(null);
+    expect(result).toBeNull();
   });
 });

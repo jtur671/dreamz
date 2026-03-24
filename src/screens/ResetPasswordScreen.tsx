@@ -30,8 +30,8 @@ export default function ResetPasswordScreen({ navigation }: ResetPasswordScreenP
       return;
     }
 
-    if (password.length < 6) {
-      Alert.alert('Password Too Short', 'Password must be at least 6 characters.');
+    if (password.length < 8) {
+      Alert.alert('Password Too Short', 'Password must be at least 8 characters.');
       return;
     }
 
@@ -47,13 +47,13 @@ export default function ResetPasswordScreen({ navigation }: ResetPasswordScreenP
       if (error) {
         Alert.alert('Reset Failed', error.message);
       } else {
-        // Sign out so user can log in with their new password
+        // Clear reset flag before signing out
+        setPendingPasswordReset(false);
         try {
           await supabase.auth.signOut();
         } catch {
           // Sign-out failed, but password was updated — still show success
         }
-        setPendingPasswordReset(false);
         Alert.alert(
           'Password Updated',
           'Your password has been updated. Please sign in with your new password.'
@@ -135,6 +135,18 @@ export default function ResetPasswordScreen({ navigation }: ResetPasswordScreenP
                 {loading ? 'Updating...' : 'Update Password'}
               </Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={async () => {
+                setPendingPasswordReset(false);
+                try { await supabase.auth.signOut(); } catch {}
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel"
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -205,5 +217,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
+  },
+  cancelButton: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  cancelText: {
+    color: '#6b5b8a',
+    fontSize: 14,
   },
 });
