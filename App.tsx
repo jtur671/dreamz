@@ -32,6 +32,7 @@ const Tab = createBottomTabNavigator();
 // Flag to suppress auto-login during password reset flow.
 // When true, onAuthStateChange won't switch to the authenticated navigator,
 // allowing the user to stay on the ResetPassword screen.
+// When true, onAuthStateChange navigates to ResetPassword instead of MainTabs
 let pendingPasswordReset = false;
 export function setPendingPasswordReset(value: boolean) {
   pendingPasswordReset = value;
@@ -156,10 +157,15 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
-          // During password reset, verifyOtp creates a session but we don't want
-          // to switch to the authenticated navigator yet — user needs to set
-          // their new password first.
           if (pendingPasswordReset) {
+            // verifyOtp created a recovery session — switch to authenticated
+            // navigator, then immediately navigate to ResetPassword screen
+            setSession(session);
+            setTimeout(() => {
+              if (navigationRef.current?.isReady()) {
+                (navigationRef.current as any).navigate('ResetPassword');
+              }
+            }, 100);
             return;
           }
           // Check profile before setting session so the app goes directly to
@@ -229,6 +235,11 @@ export default function App() {
             <Stack.Screen
               name="Paywall"
               component={PaywallScreen}
+              options={{ presentation: 'modal' }}
+            />
+            <Stack.Screen
+              name="ResetPassword"
+              component={ResetPasswordScreen}
               options={{ presentation: 'modal' }}
             />
           </Stack.Navigator>
