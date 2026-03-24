@@ -124,7 +124,8 @@ export default function AuthScreen() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({ email: trimmedEmail });
     setLoading(false);
-    if (error) {
+    // Only show error for unexpected failures, not "invalid email" (prevents enumeration)
+    if (error && !error.message?.toLowerCase().includes('invalid')) {
       Alert.alert('Error', 'Something went wrong. Please try again.');
     } else {
       navigation.navigate('VerifyResetCode', { email: trimmedEmail, mode: 'login' });

@@ -96,13 +96,21 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
 
   async function handleResend() {
     setResending(true);
-    if (isReset) {
-      await supabase.auth.resetPasswordForEmail(email);
-    } else {
-      await supabase.auth.signInWithOtp({ email });
+    try {
+      const { error } = isReset
+        ? await supabase.auth.resetPasswordForEmail(email)
+        : await supabase.auth.signInWithOtp({ email });
+
+      if (error) {
+        Alert.alert('Error', 'Failed to resend code. Please try again.');
+      } else {
+        Alert.alert('Code Sent', 'A new code has been sent to your email.');
+      }
+    } catch {
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+    } finally {
+      setResending(false);
     }
-    setResending(false);
-    Alert.alert('Code Sent', 'A new code has been sent to your email.');
   }
 
   return (

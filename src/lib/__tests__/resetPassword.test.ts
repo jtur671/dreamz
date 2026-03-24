@@ -33,11 +33,11 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-/** Mirrors the error classification logic from AuthScreen.handleForgotPassword */
+/** Mirrors the error classification logic from AuthScreen.handleForgotPassword.
+ *  Show "check email" unless there's a non-"invalid" error (real failure). */
 function shouldShowCheckEmail(error: { message?: string } | null): boolean {
-  return !error || !error.message?.toLowerCase().includes('invalid') === false
-    ? true
-    : !(error && !error.message?.toLowerCase().includes('invalid'));
+  if (!error) return true;
+  return !!error.message?.toLowerCase().includes('invalid');
 }
 
 /** Mirrors the validation logic from ResetPasswordScreen */
@@ -245,47 +245,49 @@ describe('Password Reset - Update and Sign Out', () => {
   });
 });
 
-describe('pendingPasswordReset Flag', () => {
-  it('should suppress SIGNED_IN when flag is true', () => {
-    let pendingPasswordReset = true;
-    const mockSetSession = jest.fn();
-    const event = 'SIGNED_IN';
-    const session = { access_token: 'test' };
-
-    // Mirrors the onAuthStateChange logic in App.tsx
+describe('pendingPasswordReset Flag - Auth Event Handler', () => {
+  /** Extracted handler that mirrors App.tsx onAuthStateChange logic */
+  function handleAuthEvent(
+    event: string,
+    session: any,
+    pending: boolean,
+    setSession: (s: any) => void
+  ): boolean {
     if (event === 'SIGNED_IN' && session) {
-      if (pendingPasswordReset) {
-        // Don't set session — stay on auth navigator
-        return;
-      }
-      mockSetSession(session);
+      if (pending) return false; // suppressed
+      setSession(session);
+      return true; // session set
     }
+    if (!session) {
+      setSession(null);
+      return true;
+    }
+    setSession(session);
+    return true;
+  }
 
+  it('should suppress SIGNED_IN when pendingPasswordReset is true', () => {
+    const mockSetSession = jest.fn();
+    const result = handleAuthEvent('SIGNED_IN', { access_token: 'test' }, true, mockSetSession);
+
+    expect(result).toBe(false);
     expect(mockSetSession).not.toHaveBeenCalled();
   });
 
-  it('should allow SIGNED_IN when flag is false', () => {
-    let pendingPasswordReset = false;
+  it('should allow SIGNED_IN when pendingPasswordReset is false', () => {
     const mockSetSession = jest.fn();
-    const event = 'SIGNED_IN';
     const session = { access_token: 'test' };
+    const result = handleAuthEvent('SIGNED_IN', session, false, mockSetSession);
 
-    if (event === 'SIGNED_IN' && session) {
-      if (pendingPasswordReset) {
-        return;
-      }
-      mockSetSession(session);
-    }
-
+    expect(result).toBe(true);
     expect(mockSetSession).toHaveBeenCalledWith(session);
   });
 
-  it('should clear flag after sign out in reset flow', () => {
-    let pendingPasswordReset = true;
+  it('should always clear session on sign out regardless of flag', () => {
+    const mockSetSession = jest.fn();
+    const result = handleAuthEvent('SIGNED_OUT', null, true, mockSetSession);
 
-    // Simulate ResetPasswordScreen clearing the flag
-    pendingPasswordReset = false;
-
-    expect(pendingPasswordReset).toBe(false);
+    expect(result).toBe(true);
+    expect(mockSetSession).toHaveBeenCalledWith(null);
   });
 });
