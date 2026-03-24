@@ -80,13 +80,10 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
         Alert.alert('Invalid Code', 'The code is incorrect or has expired. Please try again.');
         setCode(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
-      } else if (isReset) {
-        // In reset mode, navigate to password screen (pendingPasswordReset flag
-        // prevents onAuthStateChange from switching to authenticated navigator)
-        navigation.replace('ResetPassword');
       }
-      // In login mode, verifyOtp sets the session and onAuthStateChange
-      // handles navigation to MainTabs automatically
+      // On success, verifyOtp sets the session → onAuthStateChange fires:
+      // - Reset mode: pendingPasswordReset flag → navigates to ResetPassword
+      // - Login mode: normal SIGNED_IN → navigates to MainTabs
     } catch {
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
