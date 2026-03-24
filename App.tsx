@@ -29,6 +29,14 @@ import { initializeNotifications } from './src/lib/notificationService';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+// Flag to suppress auto-login during password reset flow.
+// When true, onAuthStateChange won't switch to the authenticated navigator,
+// allowing the user to stay on the ResetPassword screen.
+let pendingPasswordReset = false;
+export function setPendingPasswordReset(value: boolean) {
+  pendingPasswordReset = value;
+}
+
 // Tab icon component
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
   const icons: Record<string, string> = {
@@ -148,6 +156,12 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
+          // During password reset, verifyOtp creates a session but we don't want
+          // to switch to the authenticated navigator yet — user needs to set
+          // their new password first.
+          if (pendingPasswordReset) {
+            return;
+          }
           // Check profile before setting session so the app goes directly to
           // OnboardingScreen (if needed) without a flash of MainTabs.
           try {

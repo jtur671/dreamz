@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
+import { setPendingPasswordReset } from '../../App';
 
 interface ResetPasswordScreenProps {
   navigation: any;
@@ -47,6 +48,7 @@ export default function ResetPasswordScreen({ navigation }: ResetPasswordScreenP
         Alert.alert('Reset Failed', error.message);
       } else {
         // Sign out so user can log in with their new password
+        setPendingPasswordReset(false);
         await supabase.auth.signOut();
         Alert.alert(
           'Password Updated',
