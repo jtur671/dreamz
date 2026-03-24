@@ -27,7 +27,22 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
   const isReset = mode === 'reset';
 
   function handleCodeChange(text: string, index: number) {
-    const digit = text.replace(/[^0-9]/g, '').slice(-1);
+    const digits = text.replace(/[^0-9]/g, '');
+
+    // Handle paste — if multiple digits, fill all inputs
+    if (digits.length > 1) {
+      const newCode = [...code];
+      for (let i = 0; i < 6; i++) {
+        newCode[i] = digits[i] || '';
+      }
+      setCode(newCode);
+      // Focus last filled input or submit-ready position
+      const lastIndex = Math.min(digits.length - 1, 5);
+      inputRefs.current[lastIndex]?.focus();
+      return;
+    }
+
+    const digit = digits.slice(-1);
     const newCode = [...code];
     newCode[index] = digit;
     setCode(newCode);
