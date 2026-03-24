@@ -46,21 +46,11 @@ export default function ResetPasswordScreen({ navigation }: ResetPasswordScreenP
       if (error) {
         Alert.alert('Reset Failed', error.message);
       } else {
+        // Sign out so user can log in with their new password
+        await supabase.auth.signOut();
         Alert.alert(
           'Password Updated',
-          'Your password has been successfully updated.',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                if (navigation.canGoBack()) {
-                  navigation.goBack();
-                } else {
-                  navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
-                }
-              },
-            },
-          ]
+          'Your password has been updated. Please sign in with your new password.'
         );
       }
     } catch {

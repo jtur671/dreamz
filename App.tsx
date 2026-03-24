@@ -4,7 +4,6 @@ import { ActivityIndicator, View, StyleSheet, Text } from 'react-native';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Notifications from 'expo-notifications';
-import * as Linking from 'expo-linking';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Session } from '@supabase/supabase-js';
@@ -20,6 +19,7 @@ import ReadingScreen from './src/screens/ReadingScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import PaywallScreen from './src/screens/PaywallScreen';
+import VerifyResetCodeScreen from './src/screens/VerifyResetCodeScreen';
 import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import { DreamProvider } from './src/context/DreamContext';
 import { getProfile } from './src/lib/profileService';
@@ -28,15 +28,6 @@ import { initializeNotifications } from './src/lib/notificationService';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
-
-const linking = {
-  prefixes: [Linking.createURL('/'), 'dreamz://'],
-  config: {
-    screens: {
-      ResetPassword: 'reset-password',
-    },
-  },
-};
 
 // Tab icon component
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
@@ -137,41 +128,6 @@ export default function App() {
       setNeedsOnboarding(true);
     });
 
-    // Handle deep link recovery tokens (password reset)
-    // Supabase can't auto-detect URL tokens in React Native (detectSessionInUrl: false),
-    // so we manually extract tokens from the incoming deep link and set the session.
-    async function handleDeepLinkRecovery(url: string) {
-      const hashIndex = url.indexOf('#');
-      if (hashIndex === -1) return;
-
-      const params = new URLSearchParams(url.substring(hashIndex + 1));
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-      const type = params.get('type');
-
-      if (accessToken && refreshToken && type === 'recovery') {
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-        if (error) {
-          console.error('[App] Failed to set recovery session:', error.message);
-        }
-      }
-    }
-
-    // Check if app was opened via a deep link (cold start)
-    Linking.getInitialURL()
-      .then((url) => {
-        if (url) handleDeepLinkRecovery(url);
-      })
-      .catch((e) => console.error('[App] getInitialURL error:', e));
-
-    // Listen for deep links while app is running (warm start)
-    const linkingSub = Linking.addEventListener('url', ({ url }) => {
-      handleDeepLinkRecovery(url);
-    });
-
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       // Check profile BEFORE setting session to avoid a flash of MainTabs
@@ -191,17 +147,6 @@ export default function App() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'PASSWORD_RECOVERY' && session) {
-          setSession(session);
-          // Navigate to reset password screen after a short delay to ensure nav is ready
-          setTimeout(() => {
-            if (navigationRef.current?.isReady()) {
-              (navigationRef.current as any).navigate('ResetPassword');
-            }
-          }, 300);
-          return;
-        }
-
         if (event === 'SIGNED_IN' && session) {
           // Check profile before setting session so the app goes directly to
           // OnboardingScreen (if needed) without a flash of MainTabs.
@@ -227,7 +172,6 @@ export default function App() {
     return () => {
       subscription.unsubscribe();
       notificationResponseSub.remove();
-      linkingSub.remove();
       setOnNewUserSignup(null);
     };
   }, []);
@@ -243,7 +187,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer ref={navigationRef} linking={linking}>
+      <NavigationContainer ref={navigationRef}>
         <StatusBar style="light" />
         {session ? (
           <Stack.Navigator
@@ -272,11 +216,6 @@ export default function App() {
               component={PaywallScreen}
               options={{ presentation: 'modal' }}
             />
-            <Stack.Screen
-              name="ResetPassword"
-              component={ResetPasswordScreen}
-              options={{ presentation: 'modal' }}
-            />
           </Stack.Navigator>
         ) : (
           <Stack.Navigator
@@ -286,11 +225,8 @@ export default function App() {
             }}
           >
             <Stack.Screen name="Auth" component={AuthScreen} />
-            <Stack.Screen
-              name="ResetPassword"
-              component={ResetPasswordScreen}
-              options={{ presentation: 'modal' }}
-            />
+            <Stack.Screen name="VerifyResetCode" component={VerifyResetCodeScreen} />
+            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
           </Stack.Navigator>
         )}
       </NavigationContainer>

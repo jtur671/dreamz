@@ -14,6 +14,7 @@ import {
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
+import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { updateProfile } from '../lib/profileService';
 
@@ -29,6 +30,7 @@ const OAUTH_TIMEOUT_MS = 60000;
 const RETRY_HINT_DELAY_MS = 10000;
 
 export default function AuthScreen() {
+  const navigation = useNavigation<any>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -100,19 +102,14 @@ export default function AuthScreen() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
-      redirectTo: 'dreamz://reset-password',
-    });
+    const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail);
     setLoading(false);
     // Always show the same message to prevent email enumeration
     if (error && !error.message?.toLowerCase().includes('invalid')) {
-      // Only surface unexpected errors (e.g. network issues), not "email not found"
       Alert.alert('Reset Error', 'Something went wrong. Please try again.');
     } else {
-      Alert.alert(
-        'Check Your Email',
-        'If an account exists for this email, a password reset link has been sent.'
-      );
+      // Navigate to OTP verification screen regardless of whether email exists
+      navigation.navigate('VerifyResetCode', { email: trimmedEmail });
     }
   }
 
