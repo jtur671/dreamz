@@ -29,10 +29,8 @@ import { initializeNotifications } from './src/lib/notificationService';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Flag to suppress auto-login during password reset flow.
-// When true, onAuthStateChange won't switch to the authenticated navigator,
-// allowing the user to stay on the ResetPassword screen.
-// When true, onAuthStateChange navigates to ResetPassword instead of MainTabs
+// When true, the authenticated navigator starts on ResetPassword instead of MainTabs.
+// Set before verifyOtp in reset mode, cleared after password update + signOut.
 let pendingPasswordReset = false;
 export function setPendingPasswordReset(value: boolean) {
   pendingPasswordReset = value;
@@ -158,14 +156,9 @@ export default function App() {
       async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
           if (pendingPasswordReset) {
-            // verifyOtp created a recovery session — switch to authenticated
-            // navigator, then immediately navigate to ResetPassword screen
+            // verifyOtp created a recovery session — the authenticated navigator
+            // will render with initialRouteName='ResetPassword' because the flag is set
             setSession(session);
-            setTimeout(() => {
-              if (navigationRef.current?.isReady()) {
-                (navigationRef.current as any).navigate('ResetPassword');
-              }
-            }, 100);
             return;
           }
           // Check profile before setting session so the app goes directly to
@@ -212,6 +205,7 @@ export default function App() {
         <StatusBar style="light" />
         {session ? (
           <Stack.Navigator
+            initialRouteName={pendingPasswordReset ? 'ResetPassword' : (needsOnboarding ? 'Onboarding' : 'MainTabs')}
             screenOptions={{
               headerShown: false,
               contentStyle: { backgroundColor: '#1a1a2e' },
@@ -237,11 +231,7 @@ export default function App() {
               component={PaywallScreen}
               options={{ presentation: 'modal' }}
             />
-            <Stack.Screen
-              name="ResetPassword"
-              component={ResetPasswordScreen}
-              options={{ presentation: 'modal' }}
-            />
+            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
           </Stack.Navigator>
         ) : (
           <Stack.Navigator
@@ -252,7 +242,6 @@ export default function App() {
           >
             <Stack.Screen name="Auth" component={AuthScreen} />
             <Stack.Screen name="VerifyResetCode" component={VerifyResetCodeScreen} />
-            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
           </Stack.Navigator>
         )}
       </NavigationContainer>

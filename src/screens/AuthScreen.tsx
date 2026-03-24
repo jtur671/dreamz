@@ -105,11 +105,11 @@ export default function AuthScreen() {
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail);
     setLoading(false);
-    // Always show the same message to prevent email enumeration
-    if (error && !error.message?.toLowerCase().includes('invalid')) {
+    // Only show error for server errors (5xx). All client errors (4xx) including
+    // "email not found" should navigate to OTP screen to prevent email enumeration.
+    if (error && (error as any).status >= 500) {
       Alert.alert('Reset Error', 'Something went wrong. Please try again.');
     } else {
-      // Suppress auto-login when verifyOtp creates a recovery session
       setPendingPasswordReset(true);
       navigation.navigate('VerifyResetCode', { email: trimmedEmail, mode: 'reset' });
     }
@@ -124,8 +124,9 @@ export default function AuthScreen() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({ email: trimmedEmail });
     setLoading(false);
-    // Only show error for unexpected failures, not "invalid email" (prevents enumeration)
-    if (error && !error.message?.toLowerCase().includes('invalid')) {
+    // Only show error for server errors. Client errors navigate to OTP screen
+    // to prevent email enumeration.
+    if (error && (error as any).status >= 500) {
       Alert.alert('Error', 'Something went wrong. Please try again.');
     } else {
       navigation.navigate('VerifyResetCode', { email: trimmedEmail, mode: 'login' });
