@@ -28,6 +28,7 @@ Dreamz is a mystical dream journal that transforms dream entries into AI-powered
 | Symbol dictionary (5,700+) | Yes | Yes |
 | Grimoire (dream history) | Yes | Yes |
 | Advanced insights & patterns | - | Yes |
+| AI dream imagery | - | Yes |
 | Export features | - | Yes |
 | Priority support | - | Yes |
 

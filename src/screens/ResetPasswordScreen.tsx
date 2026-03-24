@@ -40,28 +40,33 @@ export default function ResetPasswordScreen({ navigation }: ResetPasswordScreenP
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
-    setLoading(false);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
 
-    if (error) {
-      Alert.alert('Reset Failed', error.message);
-    } else {
-      Alert.alert(
-        'Password Updated',
-        'Your password has been successfully updated.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              if (navigation.canGoBack()) {
-                navigation.goBack();
-              } else {
-                navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
-              }
+      if (error) {
+        Alert.alert('Reset Failed', error.message);
+      } else {
+        Alert.alert(
+          'Password Updated',
+          'Your password has been successfully updated.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                if (navigation.canGoBack()) {
+                  navigation.goBack();
+                } else {
+                  navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+                }
+              },
             },
-          },
-        ]
-      );
+          ]
+        );
+      }
+    } catch {
+      Alert.alert('Reset Failed', 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   }
 

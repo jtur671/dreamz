@@ -105,7 +105,7 @@ export default function AuthScreen() {
     });
     setLoading(false);
     // Always show the same message to prevent email enumeration
-    if (error && !error.message.toLowerCase().includes('invalid')) {
+    if (error && !error.message?.toLowerCase().includes('invalid')) {
       // Only surface unexpected errors (e.g. network issues), not "email not found"
       Alert.alert('Reset Error', 'Something went wrong. Please try again.');
     } else {
