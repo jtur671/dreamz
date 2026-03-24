@@ -14,31 +14,30 @@ import { supabase } from '../lib/supabase';
 
 interface VerifyResetCodeScreenProps {
   navigation: any;
-  route: { params: { email: string } };
+  route: { params: { email: string; mode: 'reset' | 'login' } };
 }
 
 export default function VerifyResetCodeScreen({ navigation, route }: VerifyResetCodeScreenProps) {
-  const { email } = route.params;
+  const { email, mode } = route.params;
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const inputRefs = useRef<(TextInput | null)[]>([]);
 
+  const isReset = mode === 'reset';
+
   function handleCodeChange(text: string, index: number) {
-    // Only allow digits
     const digit = text.replace(/[^0-9]/g, '').slice(-1);
     const newCode = [...code];
     newCode[index] = digit;
     setCode(newCode);
 
-    // Auto-advance to next input
     if (digit && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
   }
 
   function handleKeyPress(key: string, index: number) {
-    // Handle backspace — go to previous input
     if (key === 'Backspace' && !code[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
       const newCode = [...code];
@@ -59,16 +58,20 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
       const { error } = await supabase.auth.verifyOtp({
         email,
         token: fullCode,
-        type: 'recovery',
+        type: isReset ? 'recovery' : 'email',
       });
 
       if (error) {
         Alert.alert('Invalid Code', 'The code is incorrect or has expired. Please try again.');
         setCode(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
-      } else {
+      } else if (isReset) {
+        // In reset mode, navigate to password screen (pendingPasswordReset flag
+        // prevents onAuthStateChange from switching to authenticated navigator)
         navigation.replace('ResetPassword');
       }
+      // In login mode, verifyOtp sets the session and onAuthStateChange
+      // handles navigation to MainTabs automatically
     } catch {
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
@@ -78,7 +81,11 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
 
   async function handleResend() {
     setResending(true);
-    await supabase.auth.resetPasswordForEmail(email);
+    if (isReset) {
+      await supabase.auth.resetPasswordForEmail(email);
+    } else {
+      await supabase.auth.signInWithOtp({ email });
+    }
     setResending(false);
     Alert.alert('Code Sent', 'A new code has been sent to your email.');
   }
@@ -95,7 +102,10 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
         <View style={styles.content}>
           <Text style={styles.title}>Enter Code</Text>
           <Text style={styles.subtitle}>
-            We sent a 6-digit code to{'\n'}
+            {isReset
+              ? 'Enter the code to reset your password:'
+              : 'Enter the code to sign in:'}
+            {'\n'}
             <Text style={styles.emailText}>{email}</Text>
           </Text>
 

@@ -17,6 +17,7 @@ import * as AuthSession from 'expo-auth-session';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { updateProfile } from '../lib/profileService';
+import { setPendingPasswordReset } from '../../App';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -108,8 +109,25 @@ export default function AuthScreen() {
     if (error && !error.message?.toLowerCase().includes('invalid')) {
       Alert.alert('Reset Error', 'Something went wrong. Please try again.');
     } else {
-      // Navigate to OTP verification screen regardless of whether email exists
-      navigation.navigate('VerifyResetCode', { email: trimmedEmail });
+      // Suppress auto-login when verifyOtp creates a recovery session
+      setPendingPasswordReset(true);
+      navigation.navigate('VerifyResetCode', { email: trimmedEmail, mode: 'reset' });
+    }
+  }
+
+  async function handleSignInWithCode() {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      Alert.alert('Email Required', 'Please enter your email address first.');
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOtp({ email: trimmedEmail });
+    setLoading(false);
+    if (error) {
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } else {
+      navigation.navigate('VerifyResetCode', { email: trimmedEmail, mode: 'login' });
     }
   }
 
@@ -339,16 +357,26 @@ export default function AuthScreen() {
             </View>
 
             {!isSignUp && (
-              <TouchableOpacity
-                testID="auth-forgot-password"
-                style={styles.forgotPassword}
-                onPress={handleForgotPassword}
-                disabled={loading}
-                accessibilityRole="button"
-                accessibilityLabel="Forgot Password?"
-              >
-                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-              </TouchableOpacity>
+              <View style={styles.forgotRow}>
+                <TouchableOpacity
+                  testID="auth-forgot-password"
+                  onPress={handleForgotPassword}
+                  disabled={loading}
+                  accessibilityRole="button"
+                  accessibilityLabel="Forgot Password?"
+                >
+                  <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  testID="auth-sign-in-with-code"
+                  onPress={handleSignInWithCode}
+                  disabled={loading}
+                  accessibilityRole="button"
+                  accessibilityLabel="Sign in with a code"
+                >
+                  <Text style={styles.forgotPasswordText}>Use a Code</Text>
+                </TouchableOpacity>
+              </View>
             )}
 
             <TouchableOpacity
@@ -488,8 +516,9 @@ const styles = StyleSheet.create({
   eyeIcon: {
     fontSize: 20,
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
+  forgotRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: -8,
     marginBottom: 8,
   },
