@@ -1,24 +1,26 @@
 /**
- * Tests for password reset flow
+ * Tests for OTP-based password reset flow
  *
  * Covers:
- * - AuthScreen forgot password behavior (redirectTo, error handling, email enumeration prevention)
- * - ResetPasswordScreen validation and submission
- * - Deep link recovery token extraction and auth event routing
+ * - Forgot password: sends OTP email, prevents email enumeration
+ * - OTP verification: verifyOtp with correct/incorrect/expired codes
+ * - Password update: validation, updateUser, sign out after success
  *
  * @file src/lib/__tests__/resetPassword.test.ts
  */
 
 const mockResetPasswordForEmail = jest.fn();
 const mockUpdateUser = jest.fn();
-const mockSetSession = jest.fn();
+const mockVerifyOtp = jest.fn();
+const mockSignOut = jest.fn();
 
 jest.mock('../supabase', () => ({
   supabase: {
     auth: {
       resetPasswordForEmail: (...args: any[]) => mockResetPasswordForEmail(...args),
       updateUser: (...args: any[]) => mockUpdateUser(...args),
-      setSession: (...args: any[]) => mockSetSession(...args),
+      verifyOtp: (...args: any[]) => mockVerifyOtp(...args),
+      signOut: (...args: any[]) => mockSignOut(...args),
     },
   },
 }));
@@ -26,8 +28,6 @@ jest.mock('../supabase', () => ({
 beforeEach(() => {
   jest.clearAllMocks();
 });
-
-// --- Extracted logic from production code for testable validation ---
 
 /** Mirrors the error classification logic from AuthScreen.handleForgotPassword */
 function shouldShowCheckEmail(error: { message?: string } | null): boolean {
@@ -41,87 +41,48 @@ function validateResetPassword(password: string, confirmPassword: string): strin
   if (!password || !confirmPassword) return 'Missing Fields';
   if (password.length < 6) return 'Password Too Short';
   if (password !== confirmPassword) return "Passwords Don't Match";
-  return null; // valid
-}
-
-/** Mirrors the deep link token extraction from App.tsx handleDeepLinkRecovery */
-function extractRecoveryTokens(url: string): { accessToken: string; refreshToken: string } | null {
-  const hashIndex = url.indexOf('#');
-  if (hashIndex === -1) return null;
-
-  const params = new URLSearchParams(url.substring(hashIndex + 1));
-  const accessToken = params.get('access_token');
-  const refreshToken = params.get('refresh_token');
-  const type = params.get('type');
-
-  if (accessToken && refreshToken && type === 'recovery') {
-    return { accessToken, refreshToken };
-  }
   return null;
 }
 
-/** Mirrors the auth event routing from App.tsx onAuthStateChange */
-function handleAuthEvent(
-  event: string,
-  session: any,
-  navigate: (screen: string) => void
-): void {
-  if (event === 'PASSWORD_RECOVERY' && session) {
-    navigate('ResetPassword');
-  }
-}
-
-// --- Tests ---
-
-describe('Password Reset - Forgot Password Flow', () => {
-  it('should call resetPasswordForEmail with redirectTo dreamz://reset-password', async () => {
+describe('Password Reset - Send OTP Email', () => {
+  it('should call resetPasswordForEmail without redirectTo', async () => {
     mockResetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
 
     const { supabase } = require('../supabase');
-    await supabase.auth.resetPasswordForEmail('user@example.com', {
-      redirectTo: 'dreamz://reset-password',
-    });
+    await supabase.auth.resetPasswordForEmail('user@example.com');
 
-    expect(mockResetPasswordForEmail).toHaveBeenCalledWith('user@example.com', {
-      redirectTo: 'dreamz://reset-password',
-    });
+    expect(mockResetPasswordForEmail).toHaveBeenCalledWith('user@example.com');
   });
 
-  it('should show success message on successful reset request', async () => {
+  it('should show success on valid request', async () => {
     mockResetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
 
     const { supabase } = require('../supabase');
-    const { error } = await supabase.auth.resetPasswordForEmail('user@example.com', {
-      redirectTo: 'dreamz://reset-password',
-    });
+    const { error } = await supabase.auth.resetPasswordForEmail('user@example.com');
 
     expect(shouldShowCheckEmail(error)).toBe(true);
   });
 
-  it('should show success message even when email is not found (prevents enumeration)', async () => {
+  it('should show success even when email not found (prevents enumeration)', async () => {
     mockResetPasswordForEmail.mockResolvedValue({
       data: {},
       error: { message: 'Email address "unknown@test.com" is invalid', status: 422 },
     });
 
     const { supabase } = require('../supabase');
-    const { error } = await supabase.auth.resetPasswordForEmail('unknown@test.com', {
-      redirectTo: 'dreamz://reset-password',
-    });
+    const { error } = await supabase.auth.resetPasswordForEmail('unknown@test.com');
 
     expect(shouldShowCheckEmail(error)).toBe(true);
   });
 
-  it('should show generic error on unexpected failures (e.g., network error)', async () => {
+  it('should show error on unexpected failures', async () => {
     mockResetPasswordForEmail.mockResolvedValue({
       data: {},
       error: { message: 'Network error', status: 500 },
     });
 
     const { supabase } = require('../supabase');
-    const { error } = await supabase.auth.resetPasswordForEmail('user@example.com', {
-      redirectTo: 'dreamz://reset-password',
-    });
+    const { error } = await supabase.auth.resetPasswordForEmail('user@example.com');
 
     expect(shouldShowCheckEmail(error)).toBe(false);
   });
@@ -133,12 +94,65 @@ describe('Password Reset - Forgot Password Flow', () => {
     });
 
     const { supabase } = require('../supabase');
-    const { error } = await supabase.auth.resetPasswordForEmail('user@example.com', {
-      redirectTo: 'dreamz://reset-password',
+    const { error } = await supabase.auth.resetPasswordForEmail('user@example.com');
+
+    expect(shouldShowCheckEmail(error)).toBe(false);
+  });
+});
+
+describe('Password Reset - Verify OTP Code', () => {
+  it('should call verifyOtp with email, code, and recovery type', async () => {
+    mockVerifyOtp.mockResolvedValue({
+      data: { session: { access_token: 'abc' } },
+      error: null,
     });
 
-    // Should not throw when error.message is undefined
-    expect(shouldShowCheckEmail(error)).toBe(false);
+    const { supabase } = require('../supabase');
+    const { error } = await supabase.auth.verifyOtp({
+      email: 'user@example.com',
+      token: '123456',
+      type: 'recovery',
+    });
+
+    expect(mockVerifyOtp).toHaveBeenCalledWith({
+      email: 'user@example.com',
+      token: '123456',
+      type: 'recovery',
+    });
+    expect(error).toBeNull();
+  });
+
+  it('should return error for invalid code', async () => {
+    mockVerifyOtp.mockResolvedValue({
+      data: { session: null },
+      error: { message: 'Token has expired or is invalid', status: 403 },
+    });
+
+    const { supabase } = require('../supabase');
+    const { error } = await supabase.auth.verifyOtp({
+      email: 'user@example.com',
+      token: '000000',
+      type: 'recovery',
+    });
+
+    expect(error).not.toBeNull();
+    expect(error.message).toContain('expired');
+  });
+
+  it('should return error for expired code', async () => {
+    mockVerifyOtp.mockResolvedValue({
+      data: { session: null },
+      error: { message: 'Token has expired or is invalid', status: 403 },
+    });
+
+    const { supabase } = require('../supabase');
+    const { error } = await supabase.auth.verifyOtp({
+      email: 'user@example.com',
+      token: '999999',
+      type: 'recovery',
+    });
+
+    expect(error).not.toBeNull();
   });
 });
 
@@ -173,7 +187,7 @@ describe('Password Reset - Validation', () => {
 });
 
 describe('Password Reset - Update Password', () => {
-  it('should call updateUser with new password on valid submit', async () => {
+  it('should call updateUser with new password', async () => {
     mockUpdateUser.mockResolvedValue({
       data: { user: { id: '123' } },
       error: null,
@@ -186,7 +200,7 @@ describe('Password Reset - Update Password', () => {
     expect(error).toBeNull();
   });
 
-  it('should handle updateUser failure gracefully', async () => {
+  it('should handle updateUser failure', async () => {
     mockUpdateUser.mockResolvedValue({
       data: { user: null },
       error: { message: 'Session expired', status: 401 },
@@ -198,80 +212,37 @@ describe('Password Reset - Update Password', () => {
     expect(error).not.toBeNull();
     expect(error.message).toBe('Session expired');
   });
-});
 
-describe('Password Reset - Deep Link Token Extraction', () => {
-  it('should extract recovery tokens from a valid deep link URL', () => {
-    const url = 'dreamz://reset-password#access_token=abc123&refresh_token=def456&type=recovery';
-    const tokens = extractRecoveryTokens(url);
+  it('should sign out after successful password update', async () => {
+    mockUpdateUser.mockResolvedValue({
+      data: { user: { id: '123' } },
+      error: null,
+    });
+    mockSignOut.mockResolvedValue({ error: null });
 
-    expect(tokens).toEqual({ accessToken: 'abc123', refreshToken: 'def456' });
-  });
+    const { supabase } = require('../supabase');
+    const { error } = await supabase.auth.updateUser({ password: 'newPassword123' });
 
-  it('should return null for URLs without hash fragment', () => {
-    const url = 'dreamz://reset-password';
-    expect(extractRecoveryTokens(url)).toBeNull();
-  });
-
-  it('should return null when type is not recovery', () => {
-    const url = 'dreamz://reset-password#access_token=abc123&refresh_token=def456&type=signup';
-    expect(extractRecoveryTokens(url)).toBeNull();
-  });
-
-  it('should return null when tokens are missing', () => {
-    const url = 'dreamz://reset-password#type=recovery';
-    expect(extractRecoveryTokens(url)).toBeNull();
-  });
-
-  it('should return null when only access_token is present', () => {
-    const url = 'dreamz://reset-password#access_token=abc123&type=recovery';
-    expect(extractRecoveryTokens(url)).toBeNull();
-  });
-
-  it('should call setSession with extracted tokens', async () => {
-    mockSetSession.mockResolvedValue({ data: { session: {} }, error: null });
-
-    const tokens = extractRecoveryTokens(
-      'dreamz://reset-password#access_token=abc&refresh_token=def&type=recovery'
-    );
-
-    if (tokens) {
-      const { supabase } = require('../supabase');
-      await supabase.auth.setSession({
-        access_token: tokens.accessToken,
-        refresh_token: tokens.refreshToken,
-      });
+    if (!error) {
+      await supabase.auth.signOut();
     }
 
-    expect(mockSetSession).toHaveBeenCalledWith({
-      access_token: 'abc',
-      refresh_token: 'def',
+    expect(mockSignOut).toHaveBeenCalled();
+  });
+
+  it('should not sign out if password update fails', async () => {
+    mockUpdateUser.mockResolvedValue({
+      data: { user: null },
+      error: { message: 'Session expired', status: 401 },
     });
-  });
-});
 
-describe('Password Reset - Auth Event Routing', () => {
-  it('should navigate to ResetPassword on PASSWORD_RECOVERY event', () => {
-    const mockNavigate = jest.fn();
-    handleAuthEvent('PASSWORD_RECOVERY', { access_token: 'test' }, mockNavigate);
-    expect(mockNavigate).toHaveBeenCalledWith('ResetPassword');
-  });
+    const { supabase } = require('../supabase');
+    const { error } = await supabase.auth.updateUser({ password: 'newPassword123' });
 
-  it('should not navigate on SIGNED_IN events', () => {
-    const mockNavigate = jest.fn();
-    handleAuthEvent('SIGNED_IN', { access_token: 'test' }, mockNavigate);
-    expect(mockNavigate).not.toHaveBeenCalled();
-  });
+    if (!error) {
+      await supabase.auth.signOut();
+    }
 
-  it('should not navigate if session is null on PASSWORD_RECOVERY', () => {
-    const mockNavigate = jest.fn();
-    handleAuthEvent('PASSWORD_RECOVERY', null, mockNavigate);
-    expect(mockNavigate).not.toHaveBeenCalled();
-  });
-
-  it('should not navigate on TOKEN_REFRESHED events', () => {
-    const mockNavigate = jest.fn();
-    handleAuthEvent('TOKEN_REFRESHED', { access_token: 'test' }, mockNavigate);
-    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockSignOut).not.toHaveBeenCalled();
   });
 });
