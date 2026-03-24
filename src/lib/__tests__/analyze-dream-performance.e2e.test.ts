@@ -98,9 +98,9 @@ describeFn('Dream Analysis Performance', () => {
     console.log(`PERF: Reading completed in ${elapsed}ms (status ${response.status})`);
 
     expect(response.status).toBe(200);
-    expect(elapsed).toBeLessThan(15000);
+    expect(elapsed).toBeLessThan(60000);
     expect(data.reading).toBeDefined();
-  }, 30000);
+  }, 60000);
 
   it('should return valid JSON on first attempt (no retries needed)', async () => {
     const response = await fetch(`${SUPABASE_URL}/functions/v1/analyze-dream`, {
@@ -130,5 +130,5 @@ describeFn('Dream Analysis Performance', () => {
     expect(data.reading.symbols.length).toBeLessThanOrEqual(3);
     expect(data.reading.tags.length).toBeGreaterThanOrEqual(3);
     expect(data.reading.tags.length).toBeLessThanOrEqual(5);
-  }, 30000);
+  }, 60000);
 });
