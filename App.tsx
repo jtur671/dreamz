@@ -29,12 +29,7 @@ import { initializeNotifications } from './src/lib/notificationService';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// When true, the authenticated navigator starts on ResetPassword instead of MainTabs.
-// Set before verifyOtp in reset mode, cleared after password update + signOut.
-let pendingPasswordReset = false;
-export function setPendingPasswordReset(value: boolean) {
-  pendingPasswordReset = value;
-}
+import { getPendingPasswordReset, setPendingPasswordReset } from './src/lib/resetState';
 
 // Tab icon component
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
@@ -155,9 +150,7 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
-          if (pendingPasswordReset) {
-            // verifyOtp created a recovery session — the authenticated navigator
-            // will render with initialRouteName='ResetPassword' because the flag is set
+          if (getPendingPasswordReset()) {
             setSession(session);
             return;
           }
@@ -175,7 +168,7 @@ export default function App() {
         } else if (!session) {
           // Reset onboarding state on sign out
           setNeedsOnboarding(false);
-          pendingPasswordReset = false;
+          setPendingPasswordReset(false);
           setSession(session);
         } else {
           setSession(session);
@@ -205,7 +198,7 @@ export default function App() {
         <StatusBar style="light" />
         {session ? (
           <Stack.Navigator
-            initialRouteName={pendingPasswordReset ? 'ResetPassword' : (needsOnboarding ? 'Onboarding' : 'MainTabs')}
+            initialRouteName={getPendingPasswordReset() ? 'ResetPassword' : (needsOnboarding ? 'Onboarding' : 'MainTabs')}
             screenOptions={{
               headerShown: false,
               contentStyle: { backgroundColor: '#1a1a2e' },

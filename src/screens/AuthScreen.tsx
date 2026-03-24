@@ -17,7 +17,7 @@ import * as AuthSession from 'expo-auth-session';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { updateProfile } from '../lib/profileService';
-import { setPendingPasswordReset } from '../../App';
+import { setPendingPasswordReset } from '../lib/resetState';
 
 WebBrowser.maybeCompleteAuthSession();
 
