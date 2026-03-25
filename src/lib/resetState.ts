@@ -1,12 +1,12 @@
-// Shared state for password reset flow.
-// Extracted to its own module to avoid circular import issues between
-// App.tsx and screen components that import from '../../App'.
-let pendingPasswordReset = false;
+// Shared callback for password reset flow.
+// Set by App.tsx, called by VerifyResetCodeScreen when OTP succeeds in reset mode.
+// Uses a callback pattern to avoid circular imports between App.tsx and screens.
+let onPasswordResetLogin: (() => void) | null = null;
 
-export function setPendingPasswordReset(value: boolean) {
-  pendingPasswordReset = value;
+export function setOnPasswordResetLogin(callback: (() => void) | null) {
+  onPasswordResetLogin = callback;
 }
 
-export function getPendingPasswordReset(): boolean {
-  return pendingPasswordReset;
+export function triggerPasswordResetLogin() {
+  onPasswordResetLogin?.();
 }

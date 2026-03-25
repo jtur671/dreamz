@@ -29,6 +29,7 @@ import { initializeNotifications } from './src/lib/notificationService';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+import { setOnPasswordResetLogin } from './src/lib/resetState';
 
 // Tab icon component
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
@@ -105,6 +106,7 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [needsPasswordReset, setNeedsPasswordReset] = useState(false);
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
   useEffect(() => {
@@ -127,6 +129,11 @@ export default function App() {
     // Set up callback for new user signup
     setOnNewUserSignup(() => {
       setNeedsOnboarding(true);
+    });
+
+    // Set up callback for password reset login
+    setOnPasswordResetLogin(() => {
+      setNeedsPasswordReset(true);
     });
 
     // Get initial session
@@ -161,9 +168,9 @@ export default function App() {
           }
           setSession(session);
         } else if (!session) {
-          // Reset onboarding state on sign out
+          // Reset state on sign out
           setNeedsOnboarding(false);
-          setPendingPasswordReset(false);
+          setNeedsPasswordReset(false);
           setSession(session);
         } else {
           setSession(session);
@@ -175,6 +182,7 @@ export default function App() {
       subscription.unsubscribe();
       notificationResponseSub.remove();
       setOnNewUserSignup(null);
+      setOnPasswordResetLogin(null);
     };
   }, []);
 
@@ -193,7 +201,7 @@ export default function App() {
         <StatusBar style="light" />
         {session ? (
           <Stack.Navigator
-            initialRouteName={needsOnboarding ? 'Onboarding' : 'MainTabs'}
+            initialRouteName={needsPasswordReset ? 'ResetPassword' : (needsOnboarding ? 'Onboarding' : 'MainTabs')}
             screenOptions={{
               headerShown: false,
               contentStyle: { backgroundColor: '#1a1a2e' },
