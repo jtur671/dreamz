@@ -11,7 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
-import { triggerPasswordResetLogin } from '../lib/resetState';
+import { navigateToResetPasswordWhenReady } from '../lib/resetState';
 
 interface VerifyResetCodeScreenProps {
   navigation: any;
@@ -82,8 +82,8 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
         setCode(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
       } else if (isReset) {
-        // Tell App.tsx to start on ResetPassword when the authenticated navigator mounts
-        triggerPasswordResetLogin();
+        // Poll until authenticated navigator mounts, then navigate to ResetPassword
+        navigateToResetPasswordWhenReady();
       }
       // On success, verifyOtp sets the session → onAuthStateChange fires →
       // authenticated navigator mounts with initialRouteName based on needsPasswordReset

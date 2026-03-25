@@ -1,12 +1,29 @@
-// Shared callback for password reset flow.
-// Set by App.tsx, called by VerifyResetCodeScreen when OTP succeeds in reset mode.
-// Uses a callback pattern to avoid circular imports between App.tsx and screens.
-let onPasswordResetLogin: (() => void) | null = null;
+// Shared navigation ref for password reset flow.
+// Set by App.tsx, used by VerifyResetCodeScreen to navigate after OTP login.
+import type { NavigationContainerRef } from '@react-navigation/native';
 
-export function setOnPasswordResetLogin(callback: (() => void) | null) {
-  onPasswordResetLogin = callback;
+let navRef: NavigationContainerRef<any> | null = null;
+
+export function setNavRef(ref: NavigationContainerRef<any> | null) {
+  navRef = ref;
 }
 
-export function triggerPasswordResetLogin() {
-  onPasswordResetLogin?.();
+/**
+ * After OTP login in reset mode, poll until the authenticated navigator
+ * has mounted (session set → ResetPassword screen available), then navigate.
+ */
+export function navigateToResetPasswordWhenReady() {
+  let attempts = 0;
+  const interval = setInterval(() => {
+    attempts++;
+    if (navRef?.isReady()) {
+      try {
+        (navRef as any).navigate('ResetPassword');
+        clearInterval(interval);
+      } catch {
+        // Screen not registered yet, keep trying
+      }
+    }
+    if (attempts > 30) clearInterval(interval); // Give up after 15s
+  }, 500);
 }
