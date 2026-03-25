@@ -17,7 +17,6 @@ import * as AuthSession from 'expo-auth-session';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { updateProfile } from '../lib/profileService';
-import { setPendingPasswordReset } from '../lib/resetState';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -110,7 +109,10 @@ export default function AuthScreen() {
     if (error && (error as any).status >= 500) {
       Alert.alert('Reset Error', 'Something went wrong. Please try again.');
     } else {
-      setPendingPasswordReset(true);
+      Alert.alert(
+        'Check Your Email',
+        'If an account exists, we sent a code. Enter it below to sign in, then change your password in Settings.',
+      );
       navigation.navigate('VerifyResetCode', { email: trimmedEmail, mode: 'reset' });
     }
   }

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, View, StyleSheet, Text, Alert } from 'react-native';
+import { ActivityIndicator, View, StyleSheet, Text } from 'react-native';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Notifications from 'expo-notifications';
@@ -29,7 +29,6 @@ import { initializeNotifications } from './src/lib/notificationService';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-import { getPendingPasswordReset, setPendingPasswordReset } from './src/lib/resetState';
 
 // Tab icon component
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
@@ -149,12 +148,7 @@ export default function App() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        Alert.alert('DEBUG AUTH', `event=${event} hasSession=${!!session} pending=${getPendingPasswordReset()}`);
         if (event === 'SIGNED_IN' && session) {
-          if (getPendingPasswordReset()) {
-            setSession(session);
-            return;
-          }
           // Check profile before setting session so the app goes directly to
           // OnboardingScreen (if needed) without a flash of MainTabs.
           try {
@@ -199,7 +193,7 @@ export default function App() {
         <StatusBar style="light" />
         {session ? (
           <Stack.Navigator
-            initialRouteName={getPendingPasswordReset() ? 'ResetPassword' : (needsOnboarding ? 'Onboarding' : 'MainTabs')}
+            initialRouteName={needsOnboarding ? 'Onboarding' : 'MainTabs'}
             screenOptions={{
               headerShown: false,
               contentStyle: { backgroundColor: '#1a1a2e' },
