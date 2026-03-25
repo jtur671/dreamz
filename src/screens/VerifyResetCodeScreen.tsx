@@ -71,11 +71,13 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
+      const { data, error } = await supabase.auth.verifyOtp({
         email,
         token: fullCode,
         type: isReset ? 'recovery' : 'email',
       });
+
+      Alert.alert('DEBUG OTP', `error=${error?.message || 'none'} hasSession=${!!data?.session} mode=${mode}`);
 
       if (error) {
         Alert.alert('Invalid Code', 'The code is incorrect or has expired. Please try again.');
