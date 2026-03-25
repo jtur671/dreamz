@@ -22,7 +22,7 @@
    - **Name:** Dreamz Marketing Bot
    - **Type:** Select **"script"** (for personal use bots)
    - **Description:** Posts dream interpretation content
-   - **About URL:** https://jtur671.github.io/dreamz/
+   - **About URL:** https://dreamz-journal.com/
    - **Redirect URI:** http://localhost:8080 (required but unused for script apps)
 4. Click "create app"
 5. Note two values:

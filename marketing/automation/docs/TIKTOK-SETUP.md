@@ -39,9 +39,9 @@ This can take **1-4 weeks**. Start this process early.
    - **App name:** Dreamz Marketing
    - **Description:** Automated video posting for Dreamz dream journal app
    - **App icon:** Upload your app icon
-   - **Website URL:** https://jtur671.github.io/dreamz/
-   - **Terms of Service URL:** https://jtur671.github.io/dreamz/privacy.html
-   - **Privacy Policy URL:** https://jtur671.github.io/dreamz/privacy.html
+   - **Website URL:** https://dreamz-journal.com/
+   - **Terms of Service URL:** https://dreamz-journal.com/privacy.html
+   - **Privacy Policy URL:** https://dreamz-journal.com/privacy.html
 
 ## Step 4: Apply for Content Posting API
 

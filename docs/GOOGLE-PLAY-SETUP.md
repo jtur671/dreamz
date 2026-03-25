@@ -356,7 +356,7 @@ Apple Sign-In is not available on Android — the button is already conditionall
 - [ ] Build uploaded to internal testing track
 - [ ] Tested on real Android device (sign-up, dream entry, reading, paywall purchase)
 - [ ] Promoted to production
-- [ ] Privacy policy URL set: `https://jtur671.github.io/dreamz/privacy.html`
+- [ ] Privacy policy URL set: `https://dreamz-journal.com/privacy.html`
 
 ---
 

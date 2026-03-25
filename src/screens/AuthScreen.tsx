@@ -411,7 +411,7 @@ export default function AuthScreen() {
 
           <Text
             style={styles.privacyNote}
-            onPress={() => Linking.openURL('https://jtur671.github.io/dreamz/privacy.html')}
+            onPress={() => Linking.openURL('https://dreamz-journal.com/privacy.html')}
             accessibilityRole="link"
           >
             Your dreams are private. Always.

@@ -85,7 +85,7 @@ Dreamz is a mystical dream journal that transforms dream entries into AI-powered
 
 - 12 App Store screenshots (iPhone 6.7" + 6.5") in `store/generated/`
 - App icon (dark mystical theme)
-- Privacy policy: https://jtur671.github.io/dreamz/privacy.html
+- Privacy policy: https://dreamz-journal.com/privacy.html
 - Support page linked in App Store listing
 
 ## Marketing Channels to Explore
