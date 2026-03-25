@@ -149,10 +149,9 @@ export default function App() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        Alert.alert('DEBUG AUTH', `event=${event} hasSession=${!!session} pending=${getPendingPasswordReset()}`);
         if (event === 'SIGNED_IN' && session) {
-          const flagValue = getPendingPasswordReset();
-          Alert.alert('DEBUG', `event=${event} pendingReset=${flagValue}`);
-          if (flagValue) {
+          if (getPendingPasswordReset()) {
             setSession(session);
             return;
           }
