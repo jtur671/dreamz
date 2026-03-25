@@ -29,7 +29,7 @@ import { initializeNotifications } from './src/lib/notificationService';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-import { setOnPasswordResetLogin } from './src/lib/resetState';
+import { setNavRef } from './src/lib/resetState';
 
 // Tab icon component
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
@@ -106,7 +106,6 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
-  const [needsPasswordReset, setNeedsPasswordReset] = useState(false);
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
   useEffect(() => {
@@ -131,10 +130,6 @@ export default function App() {
       setNeedsOnboarding(true);
     });
 
-    // Set up callback for password reset login
-    setOnPasswordResetLogin(() => {
-      setNeedsPasswordReset(true);
-    });
 
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -182,7 +177,6 @@ export default function App() {
       subscription.unsubscribe();
       notificationResponseSub.remove();
       setOnNewUserSignup(null);
-      setOnPasswordResetLogin(null);
     };
   }, []);
 
@@ -197,11 +191,11 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer ref={navigationRef} onReady={() => setNavRef(navigationRef.current)}>
         <StatusBar style="light" />
         {session ? (
           <Stack.Navigator
-            initialRouteName={needsPasswordReset ? 'ResetPassword' : (needsOnboarding ? 'Onboarding' : 'MainTabs')}
+            initialRouteName={needsOnboarding ? 'Onboarding' : 'MainTabs'}
             screenOptions={{
               headerShown: false,
               contentStyle: { backgroundColor: '#1a1a2e' },
