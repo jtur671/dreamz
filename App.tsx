@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, View, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, View, StyleSheet, Text, Alert } from 'react-native';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Notifications from 'expo-notifications';
@@ -150,7 +150,9 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
-          if (getPendingPasswordReset()) {
+          const flagValue = getPendingPasswordReset();
+          Alert.alert('DEBUG', `event=${event} pendingReset=${flagValue}`);
+          if (flagValue) {
             setSession(session);
             return;
           }
