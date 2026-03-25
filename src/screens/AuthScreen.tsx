@@ -111,7 +111,7 @@ export default function AuthScreen() {
     } else {
       Alert.alert(
         'Check Your Email',
-        'If an account exists, we sent a code. Enter it below to sign in, then change your password in Settings.',
+        'If an email account exists, we sent a code. Enter it to sign in and reset your password. (Apple/Google accounts should sign in with their provider instead.)',
       );
       navigation.navigate('VerifyResetCode', { email: trimmedEmail, mode: 'reset' });
     }
