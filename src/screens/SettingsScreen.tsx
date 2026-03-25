@@ -49,6 +49,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [reminderMinute, setReminderMinute] = useState(0);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+  const [isEmailAccount, setIsEmailAccount] = useState(false);
   const [deleteCountdown, setDeleteCountdown] = useState(5);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -62,6 +63,9 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   async function fetchUserData() {
     const { data: { user } } = await supabase.auth.getUser();
     setUserEmail(user?.email || null);
+    // Check if account was created with email/password (vs OAuth)
+    const provider = user?.app_metadata?.provider;
+    setIsEmailAccount(provider === 'email');
 
     const profile = await getProfile();
     if (profile) {
@@ -680,15 +684,17 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          testID="settings-change-password"
-          style={styles.changePasswordButton}
-          onPress={() => (navigation as any).navigate('ResetPassword')}
-          accessibilityRole="button"
-          accessibilityLabel="Change Password"
-        >
-          <Text style={styles.changePasswordText}>Change Password</Text>
-        </TouchableOpacity>
+        {isEmailAccount && (
+          <TouchableOpacity
+            testID="settings-change-password"
+            style={styles.changePasswordButton}
+            onPress={() => (navigation as any).navigate('ResetPassword')}
+            accessibilityRole="button"
+            accessibilityLabel="Change Password"
+          >
+            <Text style={styles.changePasswordText}>Change Password</Text>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           testID="settings-signout-button"
