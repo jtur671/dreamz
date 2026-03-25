@@ -11,7 +11,6 @@ import {
   ScrollView,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
-import { setPendingPasswordReset } from '../lib/resetState';
 
 interface ResetPasswordScreenProps {
   navigation: any;
@@ -47,16 +46,10 @@ export default function ResetPasswordScreen({ navigation }: ResetPasswordScreenP
       if (error) {
         Alert.alert('Reset Failed', error.message);
       } else {
-        // Clear reset flag before signing out
-        setPendingPasswordReset(false);
-        try {
-          await supabase.auth.signOut();
-        } catch {
-          // Sign-out failed, but password was updated — still show success
-        }
         Alert.alert(
           'Password Updated',
-          'Your password has been updated. Please sign in with your new password.'
+          'Your password has been successfully changed.',
+          [{ text: 'OK', onPress: () => navigation.goBack() }]
         );
       }
     } catch {
@@ -138,10 +131,7 @@ export default function ResetPasswordScreen({ navigation }: ResetPasswordScreenP
 
             <TouchableOpacity
               style={styles.cancelButton}
-              onPress={async () => {
-                setPendingPasswordReset(false);
-                try { await supabase.auth.signOut(); } catch {}
-              }}
+              onPress={() => navigation.goBack()}
               accessibilityRole="button"
               accessibilityLabel="Cancel"
             >

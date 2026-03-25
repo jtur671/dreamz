@@ -681,6 +681,16 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         </View>
 
         <TouchableOpacity
+          testID="settings-change-password"
+          style={styles.changePasswordButton}
+          onPress={() => (navigation as any).navigate('ResetPassword')}
+          accessibilityRole="button"
+          accessibilityLabel="Change Password"
+        >
+          <Text style={styles.changePasswordText}>Change Password</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           testID="settings-signout-button"
           style={styles.signOutButtonProminent}
           onPress={handleSignOut}
@@ -829,6 +839,19 @@ const styles = StyleSheet.create({
     color: '#9b7fd4',
     fontWeight: '600',
     marginBottom: 4,
+  },
+  changePasswordButton: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#3a3a5e',
+    padding: 14,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  changePasswordText: {
+    color: '#a89cc8',
+    fontSize: 15,
+    fontWeight: '500',
   },
   signOutButtonProminent: {
     borderRadius: 16,

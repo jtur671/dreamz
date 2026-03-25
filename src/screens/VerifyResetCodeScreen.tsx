@@ -11,7 +11,6 @@ import {
   ScrollView,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
-import { setPendingPasswordReset } from '../lib/resetState';
 
 interface VerifyResetCodeScreenProps {
   navigation: any;
@@ -71,13 +70,11 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
+      const { error } = await supabase.auth.verifyOtp({
         email,
         token: fullCode,
         type: isReset ? 'recovery' : 'email',
       });
-
-      Alert.alert('DEBUG OTP', `error=${error?.message || 'none'} hasSession=${!!data?.session} mode=${mode}`);
 
       if (error) {
         Alert.alert('Invalid Code', 'The code is incorrect or has expired. Please try again.');
@@ -180,7 +177,7 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
 
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => { setPendingPasswordReset(false); navigation.goBack(); }}
+            onPress={() => navigation.goBack()}
             accessibilityRole="button"
             accessibilityLabel="Back to Sign In"
           >
