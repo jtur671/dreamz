@@ -45,7 +45,7 @@ PRODUCT CONTEXT:
 - 5,700+ symbol dictionary. Voice recording. Encrypted and private.
 - Target audience: 18-35, spirituality/wellness-adjacent, mostly female, active on TikTok/Pinterest/Instagram.
 - App Store: https://apps.apple.com/app/id6760150023
-- Landing page: https://jtur671.github.io/dreamz/
+- Landing page: https://dreamz-journal.com/
 
 RULES:
 - Never promise medical advice or literal dream predictions.

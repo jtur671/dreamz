@@ -20,7 +20,7 @@
 4. Fill in:
    - **App name:** Dreamz Marketing
    - **Description:** Automated pin creation for Dreamz dream journal app
-   - **Website URL:** https://jtur671.github.io/dreamz/
+   - **Website URL:** https://dreamz-journal.com/
 5. Accept the terms and create the app
 
 ## Step 3: Get Your Access Token

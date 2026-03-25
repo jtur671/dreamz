@@ -43,7 +43,7 @@ export const cfg = {
 
   links: {
     appStore: env('APP_STORE_URL', 'https://apps.apple.com/app/id6760150023'),
-    landing: env('LANDING_PAGE_URL', 'https://jtur671.github.io/dreamz/'),
+    landing: env('LANDING_PAGE_URL', 'https://dreamz-journal.com/'),
   },
 
   paths: {
