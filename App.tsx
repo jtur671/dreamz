@@ -163,7 +163,6 @@ export default function App() {
         } else if (!session) {
           // Reset state on sign out
           setNeedsOnboarding(false);
-          setNeedsPasswordReset(false);
           setSession(session);
         } else {
           setSession(session);

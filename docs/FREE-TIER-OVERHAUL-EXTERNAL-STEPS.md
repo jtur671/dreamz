@@ -102,7 +102,18 @@ npx supabase functions deploy generate-dream-image
 
 ---
 
-## 9. Smoke Test Checklist
+## 9. App Store Privacy Declarations
+
+During App Store submission, you must declare advertising-related data usage:
+
+1. In **App Store Connect → App Privacy**, declare use of the **IDFA** (Advertising Identifier)
+2. Select purpose: **Third-Party Advertising** (AdMob)
+3. Confirm the data is **not linked to the user's identity** (AdMob default)
+4. If prompted for ATT (App Tracking Transparency): the `react-native-google-mobile-ads` SDK handles the ATT prompt automatically — ensure it's not disabled in your config
+
+---
+
+## 10. Smoke Test Checklist
 
 After all the above:
 
@@ -124,5 +135,6 @@ Recommended sequence to minimize downtime:
 2. Update store prices (steps 5-7) — can take up to 24h to propagate
 3. Install SDK + configure AdMob (steps 1-4) — requires new build
 4. Submit new build to TestFlight / internal testing
-5. Smoke test (step 9)
-6. Submit to App Store / Play Store review
+5. Smoke test (step 10)
+6. Complete App Store privacy declarations (step 9)
+7. Submit to App Store / Play Store review

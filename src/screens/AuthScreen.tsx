@@ -130,7 +130,7 @@ export default function AuthScreen() {
     if (error && (error as any).status >= 500) {
       Alert.alert('Error', 'Something went wrong. Please try again.');
     } else {
-      navigation.navigate('VerifyResetCode', { email: trimmedEmail, mode: 'login' });
+      navigation.navigate('VerifyResetCode', { email: trimmedEmail });
     }
   }
 

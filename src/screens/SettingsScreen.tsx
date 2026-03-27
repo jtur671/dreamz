@@ -23,7 +23,9 @@ import { getProfile, updateZodiacSign, updateProfile } from '../lib/profileServi
 import { exportUserDreams, deleteUserAccount } from '../lib/accountService';
 import { fetchUserDreams, deleteDream } from '../lib/dreamService';
 import { checkPremiumAccess } from '../lib/purchaseService';
+import * as Notifications from 'expo-notifications';
 import { getReminderPreferences, setReminderEnabled, setReminderTime } from '../lib/notificationService';
+import { clearDraft } from '../lib/draftService';
 import { ZODIAC_SIGNS } from '../types';
 import type { Dream } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -49,7 +51,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [reminderMinute, setReminderMinute] = useState(0);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
-  const [isEmailAccount, setIsEmailAccount] = useState(false);
   const [deleteCountdown, setDeleteCountdown] = useState(5);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -63,9 +64,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   async function fetchUserData() {
     const { data: { user } } = await supabase.auth.getUser();
     setUserEmail(user?.email || null);
-    // Check if account was created with email/password (vs OAuth)
-    const provider = user?.app_metadata?.provider;
-    setIsEmailAccount(provider === 'email');
 
     const profile = await getProfile();
     if (profile) {
@@ -286,6 +284,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         {
           text: 'Sign Out',
           onPress: async () => {
+            await clearDraft();
+            await Notifications.cancelAllScheduledNotificationsAsync();
             await supabase.auth.signOut();
           },
         },
@@ -833,19 +833,6 @@ const styles = StyleSheet.create({
     color: '#9b7fd4',
     fontWeight: '600',
     marginBottom: 4,
-  },
-  changePasswordButton: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
-    padding: 14,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  changePasswordText: {
-    color: '#a89cc8',
-    fontSize: 15,
-    fontWeight: '500',
   },
   signOutButtonProminent: {
     borderRadius: 16,

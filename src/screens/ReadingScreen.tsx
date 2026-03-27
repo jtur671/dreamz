@@ -60,7 +60,8 @@ export default function ReadingScreen() {
           const dbNamesLower = new Set(data.map((d: { name: string }) => d.name.toLowerCase()));
           setDictionarySymbols(new Set(names.filter((n) => dbNamesLower.has(n.toLowerCase()))));
         }
-      });
+      })
+      .catch(() => {});
   }, [reading.symbols]);
 
   // Lazy-load dream image if not already present (premium only)
