@@ -22,7 +22,7 @@
 - **Apple Team:** JVCGFH8YU5
 
 ## Sandbox Testing
-- **Sandbox Tester:** dad.mediumrare@gmail.com
+- **Sandbox Tester:** support@dreamzjournal.com
 
 ## Build Commands
 ```bash
