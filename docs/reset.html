@@ -71,6 +71,7 @@
       <p style="color: #8b7fa8; margin-top: 12px;">Go back to the app and request a new password reset.</p>
     </div>
 
+    <p id="debug" style="color: #4a4068; font-size: 11px; margin-top: 24px; word-break: break-all;"></p>
     <p class="footer">Your dreams are private. Always.</p>
   </div>
 
@@ -97,12 +98,21 @@
       }
     });
 
+    function debug(msg) {
+      const el = document.getElementById('debug');
+      el.textContent += msg + ' | ';
+    }
+
     async function init() {
+      debug('URL hash: ' + (window.location.hash ? 'yes(' + window.location.hash.length + ' chars)' : 'none'));
+      debug('URL search: ' + (window.location.search || 'none'));
+
       // Give Supabase a moment to process URL tokens
       await new Promise(r => setTimeout(r, 1000));
 
       // Check if Supabase already established a session from the URL
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      debug('getSession: ' + (session ? 'has session' : 'no session') + (sessionError ? ' err:' + sessionError.message : ''));
 
       if (session) {
         show('form');
