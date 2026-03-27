@@ -1,5 +1,5 @@
 /**
- * Tests for password reset (web-based) and sign-in-with-code flows
+ * Tests for web-based password reset and sign-in-with-code flows
  *
  * @file src/lib/__tests__/resetPassword.test.ts
  */
@@ -37,21 +37,13 @@ describe('Password Reset - Web-Based Flow', () => {
   });
 
   it('should not surface 4xx errors (prevents email enumeration)', () => {
-    const error = { status: 422, message: 'Email not found' };
-    const isServerError = error.status >= 500;
-    expect(isServerError).toBe(false);
+    expect({ status: 422 }.status >= 500).toBe(false);
+    expect({ status: 400 }.status >= 500).toBe(false);
   });
 
   it('should surface 5xx errors', () => {
-    const error = { status: 500, message: 'Internal server error' };
-    const isServerError = error.status >= 500;
-    expect(isServerError).toBe(true);
-  });
-
-  it('should handle null error gracefully', () => {
-    const error = null;
-    const isServerError = error && (error as any).status >= 500;
-    expect(isServerError).toBeFalsy();
+    expect({ status: 500 }.status >= 500).toBe(true);
+    expect({ status: 503 }.status >= 500).toBe(true);
   });
 });
 
@@ -65,7 +57,7 @@ describe('Sign In With Code - OTP Flow', () => {
     expect(mockSignInWithOtp).toHaveBeenCalledWith({ email: 'user@example.com' });
   });
 
-  it('should call verifyOtp with type email for login', async () => {
+  it('should call verifyOtp with type email', async () => {
     mockVerifyOtp.mockResolvedValue({ data: { session: {} }, error: null });
 
     const { supabase } = require('../supabase');
@@ -99,7 +91,7 @@ describe('Sign In With Code - OTP Flow', () => {
     expect(error.message).toContain('expired');
   });
 
-  it('should handle signInWithOtp error', async () => {
+  it('should handle signInWithOtp rate limit error', async () => {
     mockSignInWithOtp.mockResolvedValue({
       data: {},
       error: { message: 'Rate limit exceeded', status: 429 },

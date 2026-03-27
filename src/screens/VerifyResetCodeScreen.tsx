@@ -14,17 +14,15 @@ import { supabase } from '../lib/supabase';
 
 interface VerifyResetCodeScreenProps {
   navigation: any;
-  route: { params: { email: string; mode: 'reset' | 'login' } };
+  route: { params: { email: string } };
 }
 
 export default function VerifyResetCodeScreen({ navigation, route }: VerifyResetCodeScreenProps) {
-  const { email, mode } = route.params;
+  const { email } = route.params;
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const inputRefs = useRef<(TextInput | null)[]>([]);
-
-  const isReset = mode === 'reset';
 
   function handleCodeChange(text: string, index: number) {
     const digits = text.replace(/[^0-9]/g, '');
@@ -73,7 +71,7 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
       const { error } = await supabase.auth.verifyOtp({
         email,
         token: fullCode,
-        type: isReset ? 'recovery' : 'email',
+        type: 'email',
       });
 
       if (error) {
@@ -92,9 +90,7 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
   async function handleResend() {
     setResending(true);
     try {
-      const { error } = isReset
-        ? await supabase.auth.resetPasswordForEmail(email)
-        : await supabase.auth.signInWithOtp({ email });
+      const { error } = await supabase.auth.signInWithOtp({ email });
 
       if (error) {
         Alert.alert('Error', 'Failed to resend code. Please try again.');
@@ -120,10 +116,7 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
         <View style={styles.content}>
           <Text style={styles.title}>Enter Code</Text>
           <Text style={styles.subtitle}>
-            {isReset
-              ? 'Enter the code to reset your password:'
-              : 'Enter the code to sign in:'}
-            {'\n'}
+            Enter the code to sign in:{'\n'}
             <Text style={styles.emailText}>{email}</Text>
           </Text>
 
