@@ -101,15 +101,6 @@ export default function AuthScreen() {
       Alert.alert('Email Required', 'Please enter your email address first.');
       return;
     }
-    // Apple Sign In uses private relay emails — these accounts don't have passwords
-    if (trimmedEmail.endsWith('@privaterelay.appleid.com') || trimmedEmail.endsWith('@icloud.com')) {
-      Alert.alert(
-        'Use Apple Sign In',
-        'This email is linked to an Apple account. Tap "Sign in with Apple" instead.',
-      );
-      return;
-    }
-
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
       redirectTo: 'https://dreamz-journal.com/reset.html',
@@ -120,7 +111,7 @@ export default function AuthScreen() {
     } else {
       Alert.alert(
         'Check Your Email',
-        'If an account exists, we sent a password reset link. Open it to set a new password.',
+        'If you signed up with email, we sent a reset link. If you signed up with Apple or Google, use that button above instead — no password needed.',
       );
     }
   }
