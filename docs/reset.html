@@ -79,6 +79,8 @@
     const SUPABASE_URL = 'https://vjqvxraqeptgmbxnipqo.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqcXZ4cmFxZXB0Z21ieG5pcHFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNTAzMDUsImV4cCI6MjA4NTYyNjMwNX0.i_5aQfDmfCoi1BtYbSCw5J1raSqGNyV-_Q9ruUQ--4s';
 
+    // detectSessionInUrl defaults to true in browser — Supabase JS will
+    // automatically pick up tokens from the URL hash fragment
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     function show(id) {
@@ -86,32 +88,59 @@
       document.getElementById(id).classList.remove('hidden');
     }
 
-    // On page load, extract tokens from URL hash and set session
+    // Listen for auth state changes — Supabase fires this when it detects
+    // recovery tokens in the URL and establishes a session
+    supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session) {
+        show('form');
+        document.getElementById('password').focus();
+      }
+    });
+
     async function init() {
+      // Give Supabase a moment to process URL tokens
+      await new Promise(r => setTimeout(r, 1000));
+
+      // Check if Supabase already established a session from the URL
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (session) {
+        show('form');
+        document.getElementById('password').focus();
+        return;
+      }
+
+      // Try 2: Manually extract from hash (fallback)
       const hash = window.location.hash.substring(1);
-      const params = new URLSearchParams(hash);
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-      const type = params.get('type');
+      if (hash) {
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
 
-      if (!accessToken || !refreshToken) {
-        show('error');
-        return;
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (!error) {
+            show('form');
+            document.getElementById('password').focus();
+            return;
+          }
+        }
       }
 
-      const { error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
+      // Try 3: Check for error in URL params (e.g., expired link)
+      const urlParams = new URLSearchParams(window.location.search);
+      const errorDesc = urlParams.get('error_description');
 
-      if (error) {
-        document.getElementById('error-message').textContent = 'This reset link has expired. Please request a new one.';
-        show('error');
-        return;
+      if (errorDesc) {
+        document.getElementById('error-message').textContent = errorDesc;
+      } else {
+        document.getElementById('error-message').textContent = 'This reset link has expired or is invalid. Please request a new one.';
       }
-
-      show('form');
-      document.getElementById('password').focus();
+      show('error');
     }
 
     async function handleSubmit() {
