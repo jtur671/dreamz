@@ -71,8 +71,10 @@
       <p style="color: #8b7fa8; margin-top: 12px;">Go back to the app and request a new password reset.</p>
     </div>
 
-    <p id="debug" style="color: #4a4068; font-size: 11px; margin-top: 24px; word-break: break-all;"></p>
-    <p class="footer">Your dreams are private. Always.</p>
+    <div class="footer">
+      <p>&copy; 2026 Dreamz Journal</p>
+      <p style="margin-top: 6px;"><a href="mailto:dad.mediumrare@gmail.com" style="color: #9b7fd4; text-decoration: none;">Support</a> &middot; <a href="privacy.html" style="color: #9b7fd4; text-decoration: none;">Privacy</a></p>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -82,45 +84,33 @@
 
     // detectSessionInUrl defaults to true in browser — Supabase JS will
     // automatically pick up tokens from the URL hash fragment
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     function show(id) {
       document.querySelectorAll('#loading, #form, #success, #error').forEach(el => el.classList.add('hidden'));
       document.getElementById(id).classList.remove('hidden');
     }
 
-    // Listen for auth state changes — Supabase fires this when it detects
-    // recovery tokens in the URL and establishes a session
-    supabase.auth.onAuthStateChange((event, session) => {
-      if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session) {
-        show('form');
-        document.getElementById('password').focus();
-      }
-    });
-
-    function debug(msg) {
-      const el = document.getElementById('debug');
-      el.textContent += msg + ' | ';
-    }
-
     async function init() {
-      debug('URL hash: ' + (window.location.hash ? 'yes(' + window.location.hash.length + ' chars)' : 'none'));
-      debug('URL search: ' + (window.location.search || 'none'));
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const errorDesc = urlParams.get('error_description');
 
-      // Give Supabase a moment to process URL tokens
-      await new Promise(r => setTimeout(r, 1000));
-
-      // Check if Supabase already established a session from the URL
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      debug('getSession: ' + (session ? 'has session' : 'no session') + (sessionError ? ' err:' + sessionError.message : ''));
-
-      if (session) {
-        show('form');
-        document.getElementById('password').focus();
+      // Supabase PKCE flow: /auth/v1/verify exchanges the token and redirects
+      // here with ?code=XXXXX. We exchange that code for a session.
+      if (code) {
+        const { error } = await sb.auth.exchangeCodeForSession(code);
+        if (!error) {
+          show('form');
+          document.getElementById('password').focus();
+          return;
+        }
+        document.getElementById('error-message').textContent = 'This reset link has expired. Please request a new one.';
+        show('error');
         return;
       }
 
-      // Try 2: Manually extract from hash (fallback)
+      // Fallback: check for hash fragment tokens (older Supabase flows)
       const hash = window.location.hash.substring(1);
       if (hash) {
         const params = new URLSearchParams(hash);
@@ -128,11 +118,10 @@
         const refreshToken = params.get('refresh_token');
 
         if (accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({
+          const { error } = await sb.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
-
           if (!error) {
             show('form');
             document.getElementById('password').focus();
@@ -141,10 +130,15 @@
         }
       }
 
-      // Try 3: Check for error in URL params (e.g., expired link)
-      const urlParams = new URLSearchParams(window.location.search);
-      const errorDesc = urlParams.get('error_description');
+      // Check if Supabase auto-detected a session
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        show('form');
+        document.getElementById('password').focus();
+        return;
+      }
 
+      // Show error
       if (errorDesc) {
         document.getElementById('error-message').textContent = errorDesc;
       } else {
@@ -182,7 +176,7 @@
       btn.disabled = true;
       btn.textContent = 'Updating...';
 
-      const { error } = await supabase.auth.updateUser({ password });
+      const { error } = await sb.auth.updateUser({ password });
 
       if (error) {
         btn.disabled = false;
