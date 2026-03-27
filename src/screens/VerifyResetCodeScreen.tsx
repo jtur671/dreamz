@@ -11,7 +11,6 @@ import {
   ScrollView,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
-import { navigateToResetPasswordWhenReady } from '../lib/resetState';
 
 interface VerifyResetCodeScreenProps {
   navigation: any;
@@ -81,12 +80,8 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
         Alert.alert('Invalid Code', 'The code is incorrect or has expired. Please try again.');
         setCode(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
-      } else if (isReset) {
-        // Poll until authenticated navigator mounts, then navigate to ResetPassword
-        navigateToResetPasswordWhenReady();
       }
-      // On success, verifyOtp sets the session → onAuthStateChange fires →
-      // authenticated navigator mounts with initialRouteName based on needsPasswordReset
+      // On success, verifyOtp sets the session → app switches to authenticated navigator
     } catch {
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
