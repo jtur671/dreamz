@@ -684,18 +684,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           </TouchableOpacity>
         </View>
 
-        {isEmailAccount && (
-          <TouchableOpacity
-            testID="settings-change-password"
-            style={styles.changePasswordButton}
-            onPress={() => (navigation as any).navigate('ResetPassword')}
-            accessibilityRole="button"
-            accessibilityLabel="Change Password"
-          >
-            <Text style={styles.changePasswordText}>Change Password</Text>
-          </TouchableOpacity>
-        )}
-
         <TouchableOpacity
           testID="settings-signout-button"
           style={styles.signOutButtonProminent}

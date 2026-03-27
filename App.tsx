@@ -20,7 +20,6 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import PaywallScreen from './src/screens/PaywallScreen';
 import VerifyResetCodeScreen from './src/screens/VerifyResetCodeScreen';
-import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import { DreamProvider } from './src/context/DreamContext';
 import { getProfile } from './src/lib/profileService';
 import { initPurchases } from './src/lib/purchaseService';
@@ -29,7 +28,6 @@ import { initializeNotifications } from './src/lib/notificationService';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-import { setNavRef } from './src/lib/resetState';
 
 // Tab icon component
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
@@ -191,7 +189,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer ref={navigationRef} onReady={() => setNavRef(navigationRef.current)}>
+      <NavigationContainer ref={navigationRef}>
         <StatusBar style="light" />
         {session ? (
           <Stack.Navigator
@@ -221,7 +219,6 @@ export default function App() {
               component={PaywallScreen}
               options={{ presentation: 'modal' }}
             />
-            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
           </Stack.Navigator>
         ) : (
           <Stack.Navigator

@@ -102,18 +102,17 @@ export default function AuthScreen() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail);
+    const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+      redirectTo: 'https://dreamz-journal.com/reset.html',
+    });
     setLoading(false);
-    // Only show error for server errors (5xx). All client errors (4xx) including
-    // "email not found" should navigate to OTP screen to prevent email enumeration.
     if (error && (error as any).status >= 500) {
       Alert.alert('Reset Error', 'Something went wrong. Please try again.');
     } else {
       Alert.alert(
         'Check Your Email',
-        'If an email account exists, we sent a code. Enter it to sign in and reset your password. (Apple/Google accounts should sign in with their provider instead.)',
+        'If an account exists, we sent a password reset link. Open it to set a new password.',
       );
-      navigation.navigate('VerifyResetCode', { email: trimmedEmail, mode: 'reset' });
     }
   }
 

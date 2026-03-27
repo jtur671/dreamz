@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dreamz - Reset Password</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1a1a2e; color: #e0d4f7; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .container { max-width: 420px; width: 100%; padding: 40px 24px; text-align: center; }
+    .moon { font-size: 48px; margin-bottom: 16px; }
+    h1 { font-size: 28px; margin-bottom: 4px; color: #e0d4f7; font-weight: bold; }
+    .subtitle { font-size: 16px; color: #a89cc8; margin-bottom: 32px; }
+    .form-group { margin-bottom: 16px; text-align: left; }
+    .form-group label { display: block; font-size: 13px; color: #8b7fa8; margin-bottom: 6px; }
+    .form-group input {
+      width: 100%; padding: 14px 16px; font-size: 16px; color: #e0d4f7;
+      background: #2a2a4e; border: 1px solid #3a3a5e; border-radius: 12px;
+      outline: none; transition: border-color 0.2s;
+    }
+    .form-group input:focus { border-color: #6b4e9e; }
+    .error-text { color: #e57373; font-size: 13px; margin-top: 4px; }
+    .btn {
+      width: 100%; padding: 14px; font-size: 16px; font-weight: 600;
+      color: #fff; background: #6b4e9e; border: none; border-radius: 12px;
+      cursor: pointer; margin-top: 8px; transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .message { margin-top: 24px; font-size: 15px; line-height: 1.6; }
+    .message.success { color: #81c784; }
+    .message.error { color: #e57373; }
+    .footer { margin-top: 40px; color: #4a4068; font-size: 12px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="moon">&#9789;</div>
+    <h1>Dreamz</h1>
+    <p class="subtitle">Reset your password</p>
+
+    <!-- Loading state -->
+    <div id="loading">
+      <p style="color: #8b7fa8;">Verifying your reset link...</p>
+    </div>
+
+    <!-- Password form -->
+    <div id="form" class="hidden">
+      <div class="form-group">
+        <label for="password">New Password</label>
+        <input type="password" id="password" placeholder="At least 8 characters" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label for="confirm">Confirm Password</label>
+        <input type="password" id="confirm" placeholder="Enter password again" autocomplete="new-password">
+      </div>
+      <div id="form-error" class="error-text hidden"></div>
+      <button id="submit" class="btn" onclick="handleSubmit()">Update Password</button>
+    </div>
+
+    <!-- Success state -->
+    <div id="success" class="hidden">
+      <p class="message success">Your password has been updated.</p>
+      <p style="color: #a89cc8; margin-top: 12px;">Go back to the Dreamz app and sign in with your new password.</p>
+    </div>
+
+    <!-- Error state -->
+    <div id="error" class="hidden">
+      <p class="message error" id="error-message">This reset link has expired or is invalid.</p>
+      <p style="color: #8b7fa8; margin-top: 12px;">Go back to the app and request a new password reset.</p>
+    </div>
+
+    <p class="footer">Your dreams are private. Always.</p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://vjqvxraqeptgmbxnipqo.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqcXZ4cmFxZXB0Z21ieG5pcHFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNTAzMDUsImV4cCI6MjA4NTYyNjMwNX0.i_5aQfDmfCoi1BtYbSCw5J1raSqGNyV-_Q9ruUQ--4s';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function show(id) {
+      document.querySelectorAll('#loading, #form, #success, #error').forEach(el => el.classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    // On page load, extract tokens from URL hash and set session
+    async function init() {
+      const hash = window.location.hash.substring(1);
+      const params = new URLSearchParams(hash);
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+      const type = params.get('type');
+
+      if (!accessToken || !refreshToken) {
+        show('error');
+        return;
+      }
+
+      const { error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+
+      if (error) {
+        document.getElementById('error-message').textContent = 'This reset link has expired. Please request a new one.';
+        show('error');
+        return;
+      }
+
+      show('form');
+      document.getElementById('password').focus();
+    }
+
+    async function handleSubmit() {
+      const password = document.getElementById('password').value;
+      const confirm = document.getElementById('confirm').value;
+      const errorEl = document.getElementById('form-error');
+      const btn = document.getElementById('submit');
+
+      errorEl.classList.add('hidden');
+
+      if (!password || !confirm) {
+        errorEl.textContent = 'Please fill in both fields.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      if (password.length < 8) {
+        errorEl.textContent = 'Password must be at least 8 characters.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      if (password !== confirm) {
+        errorEl.textContent = 'Passwords do not match.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Updating...';
+
+      const { error } = await supabase.auth.updateUser({ password });
+
+      if (error) {
+        btn.disabled = false;
+        btn.textContent = 'Update Password';
+        errorEl.textContent = error.message || 'Something went wrong. Please try again.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      show('success');
+    }
+
+    // Allow Enter key to submit
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !document.getElementById('form').classList.contains('hidden')) {
+        handleSubmit();
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>
