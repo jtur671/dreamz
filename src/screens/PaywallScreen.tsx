@@ -258,7 +258,7 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
                   <Text style={styles.saveBadgeText}>Save 50%</Text>
                 </View>
                 <Text style={[styles.planLabel, selectedPlan === 'annual' && styles.planLabelSelected]}>Annual</Text>
-                <Text style={[styles.planPrice, selectedPlan === 'annual' && styles.planPriceSelected]}>$35.99</Text>
+                <Text style={[styles.planPrice, selectedPlan === 'annual' && styles.planPriceSelected]}>$39.99</Text>
                 <Text style={[styles.planPeriod, selectedPlan === 'annual' && styles.planPeriodSelected]}>/year</Text>
               </TouchableOpacity>
             </View>
