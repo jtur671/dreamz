@@ -48,6 +48,7 @@
       font-size: 16px;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      scroll-behavior: smooth;
     }
 
     body {
@@ -58,31 +59,27 @@
       overflow-x: hidden;
     }
 
+    a {
+      color: var(--gold);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    a:hover {
+      color: var(--gold-light);
+    }
+
     /* ============================================
        Animations
        ============================================ */
     @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes gentleGlow {
-      0%, 100% {
-        text-shadow:
-          0 0 20px rgba(201, 168, 76, 0.0),
-          0 0 40px rgba(201, 168, 76, 0.0);
-      }
-      50% {
-        text-shadow:
-          0 0 20px rgba(201, 168, 76, 0.3),
-          0 0 40px rgba(201, 168, 76, 0.15);
-      }
+      0%, 100% { text-shadow: 0 0 20px rgba(201, 168, 76, 0.0), 0 0 40px rgba(201, 168, 76, 0.0); }
+      50% { text-shadow: 0 0 20px rgba(201, 168, 76, 0.3), 0 0 40px rgba(201, 168, 76, 0.15); }
     }
 
     @keyframes starTwinkle {
@@ -91,14 +88,62 @@
     }
 
     @keyframes driftUp {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes floatPhone {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    /* ============================================
+       Section Shared Styles
+       ============================================ */
+    .section {
+      padding: 5rem 1.25rem;
+      position: relative;
+    }
+
+    .section-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: var(--gold);
+      margin-bottom: 0.75rem;
+      text-align: center;
+    }
+
+    .section-title {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 2.25rem;
+      line-height: 1.2;
+      color: var(--text-primary);
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .section-title em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    .section-subtitle {
+      font-family: var(--font-body);
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 560px;
+      margin: 0 auto 3rem;
     }
 
     /* ============================================
@@ -114,7 +159,6 @@
       overflow: hidden;
     }
 
-    /* Background gradient layers */
     .hero::before {
       content: '';
       position: absolute;
@@ -127,7 +171,6 @@
       z-index: 0;
     }
 
-    /* Decorative stars */
     .hero::after {
       content: '';
       position: absolute;
@@ -157,9 +200,6 @@
       text-align: center;
     }
 
-    /* ============================================
-       Logo Mark
-       ============================================ */
     .logo-mark {
       display: inline-block;
       margin-bottom: 1.5rem;
@@ -172,31 +212,6 @@
       height: 48px;
     }
 
-    /* ============================================
-       Tagline
-       ============================================ */
-    .tagline {
-      font-family: var(--font-heading);
-      font-weight: 700;
-      font-size: 2.75rem;
-      line-height: 1.15;
-      color: var(--text-primary);
-      margin-bottom: 0.5rem;
-      letter-spacing: -0.01em;
-      opacity: 0;
-      animation:
-        fadeInUp 0.8s ease-out 0.4s forwards,
-        gentleGlow 4s ease-in-out 1.2s infinite;
-    }
-
-    .tagline em {
-      font-style: italic;
-      color: var(--gold);
-    }
-
-    /* ============================================
-       App Name
-       ============================================ */
     .app-name {
       font-family: var(--font-heading);
       font-weight: 600;
@@ -209,9 +224,23 @@
       animation: fadeInUp 0.8s ease-out 0.3s forwards;
     }
 
-    /* ============================================
-       Value Proposition
-       ============================================ */
+    .tagline {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 2.75rem;
+      line-height: 1.15;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
+      opacity: 0;
+      animation: fadeInUp 0.8s ease-out 0.4s forwards, gentleGlow 4s ease-in-out 1.2s infinite;
+    }
+
+    .tagline em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
     .value-prop {
       font-family: var(--font-body);
       font-size: 1.1rem;
@@ -225,9 +254,6 @@
       animation: fadeInUp 0.8s ease-out 0.6s forwards;
     }
 
-    /* ============================================
-       CTA Group
-       ============================================ */
     .cta-group {
       display: flex;
       flex-direction: column;
@@ -237,14 +263,362 @@
       animation: fadeInUp 0.8s ease-out 0.8s forwards;
     }
 
+    .hero-cta-btn {
+      display: inline-block;
+      padding: 1rem 2.5rem;
+      background: var(--gold);
+      color: var(--bg-deep);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+      text-decoration: none;
+    }
+
+    .hero-cta-btn:hover {
+      background: var(--gold-light);
+      color: var(--bg-deep);
+      transform: translateY(-2px);
+    }
+
+    .hero-sub-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
     /* ============================================
-       Email Capture Form
+       How It Works
        ============================================ */
+    .how-it-works {
+      background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-purple-dark) 50%, var(--bg-deep) 100%);
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 3rem;
+    }
+
+    .step {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .step-number {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 1.5px solid var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 1.25rem;
+      background: rgba(201, 168, 76, 0.08);
+    }
+
+    .step-title {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.3rem;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .step-desc {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-width: 280px;
+    }
+
+    /* ============================================
+       App Showcase (Feature Sections)
+       ============================================ */
+    .showcase {
+      background: var(--bg-deep);
+    }
+
+    .showcase-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2.5rem;
+      margin-bottom: 5rem;
+    }
+
+    .showcase-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .showcase-image {
+      flex-shrink: 0;
+      width: 260px;
+      animation: floatPhone 6s ease-in-out infinite;
+    }
+
+    .showcase-image img {
+      width: 100%;
+      height: auto;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(45, 27, 105, 0.3);
+    }
+
+    .showcase-text {
+      text-align: center;
+      max-width: 440px;
+    }
+
+    .showcase-text .feature-badge {
+      display: inline-block;
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      background: rgba(201, 168, 76, 0.1);
+      border: 1px solid rgba(201, 168, 76, 0.2);
+      padding: 0.35rem 0.85rem;
+      border-radius: 20px;
+      margin-bottom: 1rem;
+    }
+
+    .showcase-text h3 {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1.75rem;
+      line-height: 1.25;
+      color: var(--text-primary);
+      margin-bottom: 0.75rem;
+    }
+
+    .showcase-text h3 em {
+      color: var(--gold);
+      font-style: italic;
+    }
+
+    .showcase-text p {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    .showcase-text ul {
+      list-style: none;
+      margin-top: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .showcase-text ul li {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      padding-left: 1.5rem;
+      position: relative;
+    }
+
+    .showcase-text ul li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.55rem;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+    }
+
+    /* ============================================
+       Features Grid
+       ============================================ */
+    .features-section {
+      background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-purple-dark) 100%);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .feature-card {
+      background: rgba(26, 10, 46, 0.4);
+      border: 1px solid rgba(201, 168, 76, 0.1);
+      border-radius: 16px;
+      padding: 1.75rem;
+      transition: border-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(201, 168, 76, 0.3);
+      transform: translateY(-3px);
+    }
+
+    .feature-icon {
+      font-size: 1.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .feature-card h4 {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: var(--text-primary);
+      margin-bottom: 0.4rem;
+    }
+
+    .feature-card p {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    /* ============================================
+       Pricing
+       ============================================ */
+    .pricing-section {
+      background: linear-gradient(180deg, var(--bg-purple-dark) 0%, var(--bg-deep) 100%);
+    }
+
+    .pricing-cards {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .pricing-card {
+      background: rgba(26, 10, 46, 0.4);
+      border: 1px solid rgba(201, 168, 76, 0.12);
+      border-radius: 20px;
+      padding: 2rem 1.75rem;
+      text-align: center;
+      position: relative;
+      transition: border-color 0.3s ease;
+    }
+
+    .pricing-card:hover {
+      border-color: rgba(201, 168, 76, 0.3);
+    }
+
+    .pricing-card.featured {
+      border-color: var(--gold);
+      background: rgba(45, 27, 105, 0.3);
+    }
+
+    .pricing-card.featured::before {
+      content: 'Most Popular';
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gold);
+      color: var(--bg-deep);
+      font-family: var(--font-body);
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.3rem 1rem;
+      border-radius: 20px;
+    }
+
+    .pricing-tier {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: var(--gold);
+      margin-bottom: 0.5rem;
+    }
+
+    .pricing-price {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 2.5rem;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .pricing-price span {
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--text-secondary);
+    }
+
+    .pricing-note {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .pricing-features {
+      list-style: none;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .pricing-features li {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      padding-left: 1.5rem;
+      position: relative;
+      line-height: 1.5;
+    }
+
+    .pricing-features li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.5rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--gold);
+      opacity: 0.7;
+    }
+
+    /* ============================================
+       Bottom CTA / Email Capture
+       ============================================ */
+    .bottom-cta {
+      background: var(--bg-deep);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bottom-cta::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 60% at 50% 100%, var(--bg-purple-mid) 0%, transparent 70%);
+      z-index: 0;
+    }
+
+    .bottom-cta .section-inner {
+      position: relative;
+      z-index: 1;
+    }
+
     .email-form {
       width: 100%;
       max-width: 400px;
-      opacity: 0;
-      animation: driftUp 0.8s ease-out 1s forwards;
+      margin: 0 auto;
     }
 
     .email-form-label {
@@ -304,6 +678,11 @@
       background: var(--gold-light);
     }
 
+    .email-input-group button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     .email-hint {
       margin-top: 0.5rem;
       font-size: 0.75rem;
@@ -326,46 +705,100 @@
       color: #d4726a;
     }
 
-    .email-input-group button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    /* ============================================
+       Footer
+       ============================================ */
+    .footer {
+      padding: 2.5rem 1.25rem;
+      text-align: center;
+      border-top: 1px solid rgba(201, 168, 76, 0.1);
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .footer-links a:hover {
+      color: var(--gold);
+    }
+
+    .footer-copy {
+      font-size: 0.75rem;
+      color: var(--text-muted);
     }
 
     /* ============================================
-       Responsive — Tablet & Desktop
+       Responsive — Tablet
        ============================================ */
     @media (min-width: 640px) {
-      .tagline {
-        font-size: 3.5rem;
+      .tagline { font-size: 3.5rem; }
+      .value-prop { font-size: 1.2rem; }
+      .logo-mark svg { width: 56px; height: 56px; }
+
+      .steps-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
       }
 
-      .value-prop {
-        font-size: 1.2rem;
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr);
       }
 
-      .logo-mark svg {
-        width: 56px;
-        height: 56px;
+      .pricing-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .showcase-row {
+        flex-direction: row;
+        gap: 4rem;
+      }
+
+      .showcase-row:nth-child(even) {
+        flex-direction: row-reverse;
+      }
+
+      .showcase-text {
+        text-align: left;
+        flex: 1;
+      }
+
+      .section-title {
+        font-size: 2.5rem;
       }
     }
 
+    /* ============================================
+       Responsive — Desktop
+       ============================================ */
     @media (min-width: 1024px) {
-      .hero {
-        padding: 4rem 2rem;
+      .hero { padding: 4rem 2rem; }
+      .tagline { font-size: 4.25rem; }
+      .value-prop { font-size: 1.25rem; max-width: 520px; }
+      .logo-mark svg { width: 64px; height: 64px; }
+
+      .section {
+        padding: 6rem 2rem;
       }
 
-      .tagline {
-        font-size: 4.25rem;
+      .features-grid {
+        grid-template-columns: repeat(3, 1fr);
       }
 
-      .value-prop {
-        font-size: 1.25rem;
-        max-width: 520px;
+      .showcase-image {
+        width: 300px;
       }
 
-      .logo-mark svg {
-        width: 64px;
-        height: 64px;
+      .section-title {
+        font-size: 2.75rem;
       }
     }
 
@@ -373,28 +806,22 @@
        Accessibility — Reduced Motion
        ============================================ */
     @media (prefers-reduced-motion: reduce) {
-      .tagline,
-      .app-name,
-      .logo-mark,
-      .value-prop,
-      .cta-group,
-      .email-form {
+      .tagline, .app-name, .logo-mark, .value-prop, .cta-group, .email-form {
         animation: none;
         opacity: 1;
       }
-
-      .hero::after {
-        animation: none;
-      }
+      .hero::after { animation: none; }
+      .showcase-image { animation: none; }
     }
   </style>
 </head>
 <body>
 
+  <!-- ==========================================
+       HERO
+       ========================================== -->
   <section class="hero" role="banner">
     <div class="hero-content">
-
-      <!-- Moon / Logo Mark -->
       <div class="logo-mark" aria-hidden="true">
         <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="32" cy="32" r="28" stroke="#c9a84c" stroke-width="1.5" fill="none" opacity="0.6"/>
@@ -405,67 +832,301 @@
         </svg>
       </div>
 
-      <!-- App Name -->
       <p class="app-name">Dreamz</p>
-
-      <!-- Tagline -->
       <h1 class="tagline">Your dreams, <em>divined.</em></h1>
 
-      <!-- Value Proposition -->
       <p class="value-prop">
         A mystical dream journal that transforms your nightly visions into
         AI-powered readings — complete with symbols, omens, and personal rituals.
         Private, beautiful, and crafted for those who know their dreams carry meaning.
       </p>
 
-      <!-- Email Capture -->
       <div class="cta-group">
-        <form class="email-form" id="signup-form" action="https://formspree.io/f/xjgavpke" method="POST" aria-label="Sign up for launch notification">
-          <label for="email-input" class="email-form-label">
-            Receive a sign when we launch
-          </label>
-          <div class="email-input-group">
-            <input
-              type="email"
-              id="email-input"
-              name="email"
-              placeholder="whisper your email to the void..."
-              required
-              autocomplete="email"
-              aria-label="Email address"
-            >
-            <button type="submit" id="submit-btn">Notify Me</button>
-          </div>
-          <p class="email-hint" id="email-hint">No spam. Only omens of launch day and occasional dream wisdom.</p>
-        </form>
+        <a href="#notify" class="hero-cta-btn">Get Notified at Launch</a>
+        <p class="hero-sub-text">Free to use. Coming soon to iOS.</p>
       </div>
     </div>
   </section>
 
+  <!-- ==========================================
+       HOW IT WORKS
+       ========================================== -->
+  <section class="section how-it-works">
+    <div class="section-inner">
+      <p class="section-label">How It Works</p>
+      <h2 class="section-title">Three steps to <em>understanding</em></h2>
+      <p class="section-subtitle">
+        Dreamz turns the fragments of your sleeping mind into a mystical reading you can actually use.
+      </p>
+
+      <div class="steps-grid">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3 class="step-title">Record your dream</h3>
+          <p class="step-desc">Type or speak your dream as soon as you wake. The details are freshest before the veil closes.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3 class="step-title">Receive your reading</h3>
+          <p class="step-desc">AI interprets your dream into a full mystical reading with symbols, an omen, and a personal ritual.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3 class="step-title">Grow your grimoire</h3>
+          <p class="step-desc">Every reading is saved to your personal dream archive. Over time, patterns and recurring symbols emerge.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       SHOWCASE: Dream Entry
+       ========================================== -->
+  <section class="section showcase">
+    <div class="section-inner">
+      <div class="showcase-row">
+        <div class="showcase-image">
+          <img src="images/02-entry.png" alt="Dream entry screen showing voice recording" loading="lazy" width="520" height="1126">
+        </div>
+        <div class="showcase-text">
+          <span class="feature-badge">Dream Capture</span>
+          <h3>Speak or type your dream <em>before it fades</em></h3>
+          <p>
+            Capture every detail while it's still vivid. Use voice recording for those mornings when
+            your eyes aren't quite open yet, or type freely — there's no wrong way to remember.
+          </p>
+          <ul>
+            <li>Voice recording with automatic transcription</li>
+            <li>Save drafts offline — sync when you're ready</li>
+            <li>Tag moods and emotions to each entry</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- SHOWCASE: Mystical Reading -->
+      <div class="showcase-row">
+        <div class="showcase-image">
+          <img src="images/03-reading.png" alt="Dream reading showing symbols and interpretations" loading="lazy" width="520" height="1126">
+        </div>
+        <div class="showcase-text">
+          <span class="feature-badge">AI Readings</span>
+          <h3>A full mystical <em>reading</em>, not a dictionary lookup</h3>
+          <p>
+            Each dream gets a personalized interpretation with decoded symbols, a guiding omen,
+            a suggested ritual, and a journal prompt — like having a wise friend who reads tarot.
+          </p>
+          <ul>
+            <li>Symbols with meanings, shadows, and guidance</li>
+            <li>A personal omen drawn from your dream</li>
+            <li>Ritual and journal prompt for deeper reflection</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- SHOWCASE: Symbol Dictionary -->
+      <div class="showcase-row">
+        <div class="showcase-image">
+          <img src="images/05-symbols.png" alt="Symbol dictionary with over 5000 dream symbols" loading="lazy" width="520" height="1126">
+        </div>
+        <div class="showcase-text">
+          <span class="feature-badge">Symbol Dictionary</span>
+          <h3>5,700+ dream symbols, <em>decoded</em></h3>
+          <p>
+            Explore the largest curated dream symbol dictionary available on mobile.
+            Each symbol comes with cultural context, mystical meaning, and guidance for interpretation.
+          </p>
+          <ul>
+            <li>Browse or search by keyword</li>
+            <li>Rich entries with imagery and context</li>
+            <li>Symbols link to your own dream history</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- SHOWCASE: Grimoire -->
+      <div class="showcase-row">
+        <div class="showcase-image">
+          <img src="images/04-grimoire.png" alt="Grimoire showing saved dream history" loading="lazy" width="520" height="1126">
+        </div>
+        <div class="showcase-text">
+          <span class="feature-badge">Your Grimoire</span>
+          <h3>A personal archive of your <em>dream life</em></h3>
+          <p>
+            Every dream and reading is saved to your Grimoire — a beautiful,
+            searchable archive of your nightly journeys. The more you record, the more patterns reveal themselves.
+          </p>
+          <ul>
+            <li>All dreams and readings in one place</li>
+            <li>Spot recurring symbols and themes</li>
+            <li>Export your data anytime — it's yours</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       FEATURES GRID
+       ========================================== -->
+  <section class="section features-section">
+    <div class="section-inner">
+      <p class="section-label">Built for Dreamers</p>
+      <h2 class="section-title">Everything you need, <em>nothing you don't</em></h2>
+      <p class="section-subtitle">
+        Dreamz is designed to be the simplest, most beautiful way to understand your dreams.
+      </p>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">&#x1F512;</div>
+          <h4>Private by Default</h4>
+          <p>Your dreams stay yours. Encrypted storage, no data selling, no social features you didn't ask for.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">&#x1F3A4;</div>
+          <h4>Voice Recording</h4>
+          <p>Speak your dream the moment you wake. Automatic transcription captures every detail before it fades.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">&#x2728;</div>
+          <h4>AI Dream Imagery</h4>
+          <p>Premium members get an AI-generated image for each dream — see your visions brought to life.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">&#x1F4F4;</div>
+          <h4>Works Offline</h4>
+          <p>Write dreams without a connection. Drafts save locally and sync when you're back online.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">&#x1F4E6;</div>
+          <h4>Export Your Data</h4>
+          <p>Download everything — dreams, readings, symbols — in one tap. Your data, your rules.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">&#x1F319;</div>
+          <h4>Dark &amp; Atmospheric</h4>
+          <p>A gorgeous dark interface that feels like it belongs in your midnight rituals, not a spreadsheet.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       PRICING
+       ========================================== -->
+  <section class="section pricing-section" id="pricing">
+    <div class="section-inner">
+      <p class="section-label">Pricing</p>
+      <h2 class="section-title">Start free. <em>Go deeper</em> when you're ready.</h2>
+      <p class="section-subtitle">
+        Unlimited AI dream readings are free. Premium unlocks the full mystical experience.
+      </p>
+
+      <div class="pricing-cards">
+        <div class="pricing-card">
+          <p class="pricing-tier">Free</p>
+          <p class="pricing-price">$0</p>
+          <p class="pricing-note">Forever free</p>
+          <ul class="pricing-features">
+            <li>Unlimited AI dream readings</li>
+            <li>Full dream journal</li>
+            <li>5,700+ symbol dictionary</li>
+            <li>Grimoire (dream archive)</li>
+            <li>Voice recording</li>
+            <li>Offline drafts</li>
+          </ul>
+        </div>
+        <div class="pricing-card featured">
+          <p class="pricing-tier">Premium</p>
+          <p class="pricing-price">$5.99 <span>/month</span></p>
+          <p class="pricing-note">or $35.99/year (save 50%)</p>
+          <ul class="pricing-features">
+            <li>Everything in Free, plus:</li>
+            <li>Ad-free experience</li>
+            <li>Deeper AI interpretations</li>
+            <li>AI dream imagery</li>
+            <li>Advanced insights &amp; patterns</li>
+            <li>Data export</li>
+            <li>Priority support</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       BOTTOM CTA / EMAIL CAPTURE
+       ========================================== -->
+  <section class="section bottom-cta" id="notify">
+    <div class="section-inner">
+      <p class="section-label">Coming Soon</p>
+      <h2 class="section-title">The veil is <em>about to lift</em></h2>
+      <p class="section-subtitle">
+        Dreamz is launching soon on iOS. Drop your email and we'll send word the moment it arrives.
+      </p>
+
+      <form class="email-form" id="signup-form" action="https://formspree.io/f/xjgavpke" method="POST" aria-label="Sign up for launch notification">
+        <label for="email-input" class="email-form-label">
+          Receive a sign when we launch
+        </label>
+        <div class="email-input-group">
+          <input
+            type="email"
+            id="email-input"
+            name="email"
+            placeholder="whisper your email to the void..."
+            required
+            autocomplete="email"
+            aria-label="Email address"
+          >
+          <button type="submit" id="submit-btn">Notify Me</button>
+        </div>
+        <p class="email-hint" id="email-hint">No spam. Only omens of launch day and occasional dream wisdom.</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       FOOTER
+       ========================================== -->
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="support.html">Support</a>
+      <a href="#pricing">Pricing</a>
+    </div>
+    <p class="footer-copy">&copy; 2026 Dreamz. Your dreams, divined.</p>
+  </footer>
+
   <script>
     document.getElementById('signup-form').addEventListener('submit', async function(e) {
       e.preventDefault();
+      var form = this;
       var btn = document.getElementById('submit-btn');
       var hint = document.getElementById('email-hint');
-      var email = document.getElementById('email-input');
       btn.disabled = true;
       btn.textContent = '...';
 
       try {
-        var res = await fetch(this.action, {
+        var res = await fetch(form.action, {
           method: 'POST',
           headers: { 'Accept': 'application/json' },
-          body: new FormData(this)
+          body: new FormData(form)
         });
         if (res.ok) {
-          this.innerHTML = '<p class="email-success">The stars have your name. We will send word when the veil lifts.</p>';
+          // Clear form and show success using safe DOM methods
+          while (form.firstChild) { form.removeChild(form.firstChild); }
+          var msg = document.createElement('p');
+          msg.className = 'email-success';
+          msg.textContent = 'The stars have your name. We will send word when the veil lifts.';
+          form.appendChild(msg);
         } else {
           hint.textContent = 'Something stirred the mist. Try again?';
           hint.className = 'email-error';
           btn.disabled = false;
           btn.textContent = 'Notify Me';
         }
-      } catch {
+      } catch (err) {
         hint.textContent = 'The connection slipped away. Try again?';
         hint.className = 'email-error';
         btn.disabled = false;
