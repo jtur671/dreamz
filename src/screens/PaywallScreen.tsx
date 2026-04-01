@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Platform,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -63,6 +64,8 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
     setLoading(false);
   }
 
+  const source = route?.params?.source;
+
   async function handlePurchase(pkg: PurchasesPackage) {
     setPurchasing(true);
     try {
@@ -70,11 +73,17 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
       if (result.success) {
         // Update profile tier in database
         await updateProfile({ subscription_tier: 'premium' });
-        Alert.alert(
-          'Welcome to Premium',
-          'The oracle speaks without limits. Your deeper journey begins now.',
-          [{ text: 'Continue', onPress: () => navigation.goBack() }],
-        );
+
+        if (source === 'onboarding') {
+          // Go back immediately — OnboardingScreen will detect premium and advance
+          navigation.goBack();
+        } else {
+          Alert.alert(
+            'Welcome to Premium',
+            'The oracle speaks without limits. Your deeper journey begins now.',
+            [{ text: 'Continue', onPress: () => navigation.goBack() }],
+          );
+        }
       }
     } catch (error: any) {
       Alert.alert('Purchase Error', error.message || 'Something went wrong. Please try again.');
@@ -315,6 +324,24 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
           Subscription automatically renews unless cancelled at least 24 hours before
           the end of the current period. Manage subscriptions in {Platform.OS === 'ios' ? 'your device Settings' : 'Google Play Store settings'}.
         </Text>
+
+        <View testID="paywall-legal-links" style={styles.legalLinksRow}>
+          <TouchableOpacity
+            onPress={() => Linking.openURL('https://dreamz-journal.com/privacy.html')}
+            accessibilityRole="link"
+            accessibilityLabel="Privacy Policy"
+          >
+            <Text style={styles.legalLink}>Privacy Policy</Text>
+          </TouchableOpacity>
+          <Text style={styles.legalSeparator}>|</Text>
+          <TouchableOpacity
+            onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
+            accessibilityRole="link"
+            accessibilityLabel="Terms of Use"
+          >
+            <Text style={styles.legalLink}>Terms of Use (EULA)</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -525,5 +552,22 @@ const styles = StyleSheet.create({
     color: '#5a5a7a',
     textAlign: 'center',
     lineHeight: 16,
+  },
+  legalLinksRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  legalLink: {
+    fontSize: 12,
+    color: '#8b7fa8',
+    textDecorationLine: 'underline',
+  },
+  legalSeparator: {
+    fontSize: 12,
+    color: '#5a5a7a',
+    marginHorizontal: 8,
   },
 });

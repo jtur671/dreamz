@@ -718,6 +718,14 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           >
             <Text style={styles.legalLink}>Privacy Policy</Text>
           </TouchableOpacity>
+          <Text style={styles.legalSeparator}>|</Text>
+          <TouchableOpacity
+            onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
+            accessibilityRole="link"
+            accessibilityLabel="Terms of Use"
+          >
+            <Text style={styles.legalLink}>Terms of Use</Text>
+          </TouchableOpacity>
         </View>
         <Text style={styles.version}>Dreamz v1.0.0</Text>
         <Text style={styles.footer}>Your dreams are private. Always.</Text>
@@ -870,6 +878,11 @@ const styles = StyleSheet.create({
     color: '#8b7fa8',
     fontSize: 12,
     textDecorationLine: 'underline',
+  },
+  legalSeparator: {
+    color: '#5a5a7a',
+    fontSize: 12,
+    marginHorizontal: 8,
   },
   version: {
     textAlign: 'center',

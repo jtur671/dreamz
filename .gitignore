@@ -3,6 +3,9 @@
 # dependencies
 node_modules/
 
+# Google Play service account key (secret)
+play-store-key.json
+
 # Expo
 .expo/
 dist/

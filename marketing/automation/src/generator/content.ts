@@ -41,7 +41,7 @@ BRAND VOICE:
 PRODUCT CONTEXT:
 - Dreamz transforms dream entries into AI-powered mystical "readings" with symbols, omens, rituals, and journal prompts.
 - Core loop: Write/Record Dream → Get AI Reading → Save to Grimoire → Notice Patterns
-- Free tier: Unlimited readings (with occasional ads). Premium: $5.99/mo or $35.99/yr for ad-free + deeper AI.
+- Free tier: Unlimited readings (with occasional ads). Premium: $5.99/mo or $39.99/yr for ad-free + deeper AI.
 - 5,700+ symbol dictionary. Voice recording. Encrypted and private.
 - Target audience: 18-35, spirituality/wellness-adjacent, mostly female, active on TikTok/Pinterest/Instagram.
 - App Store: https://apps.apple.com/app/id6760150023
