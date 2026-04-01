@@ -17,7 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.dreamzjournal.app",
       "usesAppleSignIn": true,
-      "buildNumber": "36",
+      "buildNumber": "37",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Dreamz uses your microphone to record dreams by voice.",
         "ITSAppUsesNonExemptEncryption": false
@@ -44,7 +44,8 @@
         "android.permission.SCHEDULE_EXACT_ALARM"
       ],
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "versionCode": 4
     },
     "web": {
       "favicon": "./assets/favicon.png"

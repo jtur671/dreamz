@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { updateProfile, completeOnboarding } from '../lib/profileService';
 import { checkPremiumAccess } from '../lib/purchaseService';
 import { ZODIAC_SIGNS, GENDER_OPTIONS, AGE_RANGES, Gender, AgeRange } from '../types';
@@ -24,6 +24,20 @@ export default function OnboardingScreen() {
   const [selectedAge, setSelectedAge] = useState<AgeRange | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // When returning from Paywall after a successful purchase, auto-advance
+  useFocusEffect(
+    useCallback(() => {
+      if (step === 'tier') {
+        checkPremiumAccess().then((hasPremium) => {
+          if (hasPremium) {
+            setSelectedTier('premium');
+            setStep('about');
+          }
+        });
+      }
+    }, [step])
+  );
 
   const handleTierContinue = async () => {
     if (selectedTier === 'premium') {
@@ -139,7 +153,7 @@ export default function OnboardingScreen() {
         onPress={() => setSelectedTier('premium')}
         activeOpacity={0.8}
         accessibilityRole="button"
-        accessibilityLabel="Premium plan — deeper readings, dream imagery, no ads, $5.99 per month or $35.99 per year"
+        accessibilityLabel="Premium plan — deeper readings, dream imagery, no ads, $5.99 per month or $39.99 per year"
         accessibilityState={{ selected: selectedTier === 'premium' }}
       >
         {selectedTier === 'premium' ? (
@@ -153,7 +167,7 @@ export default function OnboardingScreen() {
         )}
         <Text style={styles.tierName}>Premium</Text>
         <Text style={styles.tierDescription}>Unlock deeper mysteries</Text>
-        <Text style={styles.tierPricing}>$5.99/mo or $35.99/yr</Text>
+        <Text style={styles.tierPricing}>$5.99/mo or $39.99/yr</Text>
         <View style={styles.tierFeatures}>
           <Text style={[styles.tierFeature, styles.premiumFeature]}>Deeper AI readings</Text>
           <Text style={[styles.tierFeature, styles.premiumFeature]}>Dream imagery</Text>
