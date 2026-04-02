@@ -11,12 +11,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { updateProfile, completeOnboarding } from '../lib/profileService';
 import { checkPremiumAccess } from '../lib/purchaseService';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { ZODIAC_SIGNS, GENDER_OPTIONS, AGE_RANGES, Gender, AgeRange } from '../types';
 
 type OnboardingStep = 'tier' | 'about' | 'welcome';
 
 export default function OnboardingScreen() {
   const navigation = useNavigation();
+  const { contentStyle } = useResponsiveLayout();
   const [step, setStep] = useState<OnboardingStep>('tier');
   const [selectedTier, setSelectedTier] = useState<'free' | 'premium'>('free');
   const [selectedZodiac, setSelectedZodiac] = useState<string | null>(null);
@@ -109,7 +111,7 @@ export default function OnboardingScreen() {
   };
 
   const renderTierStep = () => (
-    <ScrollView contentContainerStyle={styles.stepContent}>
+    <ScrollView contentContainerStyle={[styles.stepContent, contentStyle]}>
       <Text style={styles.stepTitle}>Choose Your Path</Text>
       <Text style={styles.stepSubtitle}>
         Select the experience that resonates with your journey
@@ -189,7 +191,7 @@ export default function OnboardingScreen() {
   );
 
   const renderAboutStep = () => (
-    <ScrollView testID="onboarding-about-scroll" contentContainerStyle={styles.stepContent}>
+    <ScrollView testID="onboarding-about-scroll" contentContainerStyle={[styles.stepContent, contentStyle]}>
       <Text style={styles.stepTitle}>Tell Us About You</Text>
       <Text style={styles.stepSubtitle}>
         Personalize your readings (all optional)
@@ -326,7 +328,7 @@ export default function OnboardingScreen() {
   );
 
   const renderWelcomeStep = () => (
-    <View style={styles.welcomeContent}>
+    <View style={[styles.welcomeContent, contentStyle]}>
       <Text style={styles.welcomeEmoji}>{'  '}</Text>
       <Text style={styles.welcomeTitle}>Your Grimoire Awaits</Text>
       <Text style={styles.welcomeSubtitle}>

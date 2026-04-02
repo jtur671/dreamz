@@ -29,12 +29,14 @@ import { clearDraft } from '../lib/draftService';
 import { ZODIAC_SIGNS } from '../types';
 import type { Dream } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 type SettingsScreenProps = {
   navigation: NativeStackNavigationProp<any>;
 };
 
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
+  const { contentStyle } = useResponsiveLayout();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>('');
   const [editingName, setEditingName] = useState(false);
@@ -518,7 +520,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         </View>
       </Modal>
 
-      <ScrollView testID="settings-scroll-view" style={styles.container} contentContainerStyle={styles.scrollContent}>
+      <ScrollView testID="settings-scroll-view" style={styles.container} contentContainerStyle={[styles.scrollContent, contentStyle]}>
         <Text testID="settings-title" style={styles.title}>Settings</Text>
 
         <View style={styles.section}>

@@ -21,6 +21,7 @@ import { preloadInterstitialAd, showInterstitialAd } from '../lib/adService';
 import VoiceRecorder from '../components/VoiceRecorder';
 import DreamLoadingAnimation from '../components/DreamLoadingAnimation';
 import { useDreams } from '../hooks/useDreams';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { getIndividualMoodFrequency } from '../lib/insightsService';
 import type { Profile } from '../types';
 
@@ -41,6 +42,7 @@ const NIGHTMARE_MOODS = [
 const INITIAL_VISIBLE = 5;
 
 export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
+  const { contentStyle } = useResponsiveLayout();
   const [dreamText, setDreamText] = useState('');
   const [dreamType, setDreamType] = useState<'dream' | 'nightmare'>('dream');
   const [moods, setMoods] = useState<string[]>([]);
@@ -326,7 +328,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
         {isLoading ? (
           <DreamLoadingAnimation phase={loadingState === 'saving' ? 'saving' : 'interpreting'} />
         ) : (
-          <ScrollView testID="new-dream-scroll-view" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets style={styles.scroll} contentContainerStyle={styles.content}>
+          <ScrollView testID="new-dream-scroll-view" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets style={styles.scroll} contentContainerStyle={[styles.content, contentStyle]}>
             <Text style={styles.title}>Record Your Dream</Text>
             <Text style={styles.subtitle}>
               Describe what you remember from your dream...

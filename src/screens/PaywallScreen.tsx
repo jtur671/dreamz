@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import {
   getOfferings,
   purchasePremium,
@@ -52,6 +53,7 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const { contentStyle } = useResponsiveLayout();
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('annual');
 
   useEffect(() => {
@@ -126,7 +128,7 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
 
   return (
     <SafeAreaView style={styles.container} testID="paywall-screen">
-      <ScrollView contentContainerStyle={styles.scrollContent} testID="paywall-scroll-view">
+      <ScrollView contentContainerStyle={[styles.scrollContent, contentStyle]} testID="paywall-scroll-view">
         <TouchableOpacity
           testID="paywall-close-button"
           style={styles.closeButton}

@@ -17,6 +17,7 @@ import * as AuthSession from 'expo-auth-session';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { updateProfile } from '../lib/profileService';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -31,6 +32,7 @@ const RETRY_HINT_DELAY_MS = 10000;
 
 export default function AuthScreen() {
   const navigation = useNavigation<any>();
+  const { contentStyle } = useResponsiveLayout();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -284,7 +286,7 @@ export default function AuthScreen() {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.content}>
+        <View style={[styles.content, contentStyle]}>
           <Text style={styles.title}>Dreamz</Text>
           <Text style={styles.subtitle}>Your dreams, divined</Text>
 
