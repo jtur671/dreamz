@@ -77,11 +77,12 @@ interface VoiceRecorderProps {
   onTranscription: (text: string) => void;
   disabled?: boolean;
   compact?: boolean;
+  large?: boolean;
 }
 
 type RecordingState = 'idle' | 'recording' | 'transcribing';
 
-export default function VoiceRecorder({ onTranscription, disabled, compact }: VoiceRecorderProps) {
+export default function VoiceRecorder({ onTranscription, disabled, compact, large }: VoiceRecorderProps) {
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [recordingDuration, setRecordingDuration] = useState(0);
   // Track actual duration from recorder status (more reliable than manual timer)
@@ -328,6 +329,7 @@ export default function VoiceRecorder({ onTranscription, disabled, compact }: Vo
         <TouchableOpacity
           style={[
             styles.compactButton,
+            large && styles.compactButtonLarge,
             recordingState === 'recording' && styles.compactButtonRecording,
             isDisabled && styles.buttonDisabled,
           ]}
@@ -345,7 +347,7 @@ export default function VoiceRecorder({ onTranscription, disabled, compact }: Vo
           {recordingState === 'transcribing' ? (
             <ActivityIndicator size="small" color="#e0d4f7" />
           ) : (
-            <Text style={styles.compactButtonIcon}>
+            <Text style={[styles.compactButtonIcon, large && styles.compactButtonIconLarge]}>
               {recordingState === 'recording' ? '⏹' : '🎙'}
             </Text>
           )}
@@ -471,12 +473,21 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#4a4a6e',
   },
+  compactButtonLarge: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 2,
+  },
   compactButtonRecording: {
     backgroundColor: '#5e3a3a',
     borderColor: '#8a4a4a',
   },
   compactButtonIcon: {
     fontSize: 18,
+  },
+  compactButtonIconLarge: {
+    fontSize: 34,
   },
   container: {
     alignItems: 'center',
