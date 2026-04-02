@@ -4,11 +4,8 @@ import {
   Text,
   Animated,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
-
-const { width: screenWidth } = Dimensions.get('window');
-const CONTAINER_HEIGHT = screenWidth * 0.75;
 
 const MESSAGES = [
   'Painting your dream...',
@@ -19,6 +16,8 @@ const MESSAGES = [
 ];
 
 export default function PaintBrushAnimation() {
+  const { width: screenWidth } = useWindowDimensions();
+  const containerHeight = screenWidth * 0.75;
   const sweepAnim = useRef(new Animated.Value(0)).current;
   const sparkleAnims = useRef(
     Array.from({ length: 6 }, () => ({
@@ -115,7 +114,7 @@ export default function PaintBrushAnimation() {
   ];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { width: screenWidth, height: containerHeight }]}>
       {/* Dark base */}
       <View style={styles.baseLayer} />
 
@@ -169,8 +168,6 @@ export default function PaintBrushAnimation() {
 
 const styles = StyleSheet.create({
   container: {
-    width: screenWidth,
-    height: CONTAINER_HEIGHT,
     position: 'relative',
     overflow: 'hidden',
   },

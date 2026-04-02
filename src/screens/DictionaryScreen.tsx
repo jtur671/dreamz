@@ -19,6 +19,7 @@ import {
   type Symbol,
   type SortPhase,
 } from '../lib/symbolService';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 // Display labels → DB values are lowercase
 const CATEGORIES = [
@@ -37,6 +38,7 @@ const CATEGORIES = [
 const PAGE_SIZE = 50;
 
 export default function DictionaryScreen() {
+  const { contentStyle } = useResponsiveLayout();
   const route = useRoute();
   const routeSearch = (route.params as { search?: string } | undefined)?.search;
   const [symbols, setSymbols] = useState<Symbol[]>([]);
@@ -219,7 +221,7 @@ export default function DictionaryScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.gradient}>
-        <View style={styles.headerSection}>
+        <View style={[styles.headerSection, contentStyle]}>
           <Text style={styles.title}>Symbol Dictionary</Text>
 
           <View style={styles.searchContainer}>
@@ -286,7 +288,7 @@ export default function DictionaryScreen() {
             data={symbols}
             renderItem={renderSymbol}
             keyExtractor={(item) => item.name}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[styles.listContent, contentStyle]}
             showsVerticalScrollIndicator={false}
             removeClippedSubviews
             initialNumToRender={20}

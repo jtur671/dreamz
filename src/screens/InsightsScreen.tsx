@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,6 +21,7 @@ import {
 } from '../lib/insightsService';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 type InsightsScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -30,10 +30,10 @@ type InsightsScreenProps = {
 const DONUT_COLORS = ['#9b7fd4', '#6b4e9e', '#c4a8f0', '#8b6cc1', '#5a3a8e', '#d4c4f7', '#7a5ab0'];
 const BAR_COLOR = '#9b7fd4';
 const MIN_DREAMS_FOR_INSIGHTS = 5;
-// 24px content padding on each side + 20px chartSection padding on each side + ~45px for y-axis
-const CHART_WIDTH = Dimensions.get('window').width - 48 - 40 - 45;
 
 export default function InsightsScreen({ navigation }: InsightsScreenProps) {
+  const { contentStyle, screenWidth } = useResponsiveLayout();
+  const chartWidth = Math.min(screenWidth, 600) - 48 - 40 - 45;
   const { dreams, loading } = useDreams();
 
   const stats = useMemo(() => getDreamStats(dreams), [dreams]);
@@ -112,7 +112,7 @@ export default function InsightsScreen({ navigation }: InsightsScreenProps) {
     <SafeAreaView style={styles.safeArea}>
       <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.gradient}>
         <ScrollView
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, contentStyle]}
           showsVerticalScrollIndicator={false}
         >
           <Text style={styles.title}>Dream Insights</Text>
@@ -140,8 +140,8 @@ export default function InsightsScreen({ navigation }: InsightsScreenProps) {
             <View style={styles.chartContainer}>
               <BarChart
                 data={weeklyBarData}
-                width={CHART_WIDTH}
-                barWidth={Math.floor(CHART_WIDTH / 8 - 10)}
+                width={chartWidth}
+                barWidth={Math.floor(chartWidth / 8 - 10)}
                 spacing={10}
                 xAxisColor="#3a3a5e"
                 yAxisColor="#3a3a5e"

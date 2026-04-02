@@ -11,6 +11,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../lib/supabase';
 import { getProfile } from '../lib/profileService';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 type HomeScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -44,6 +45,7 @@ function getDailyQuote() {
 }
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
+  const { contentStyle } = useResponsiveLayout();
   const [lastDreamTitle, setLastDreamTitle] = useState<string | null>(null);
   const [dreamCount, setDreamCount] = useState(0);
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -92,7 +94,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         colors={['#1a1a2e', '#16213e']}
         style={styles.gradient}
       >
-        <View style={styles.container}>
+        <View style={[styles.container, contentStyle]}>
           <View style={styles.header}>
             <View style={styles.moonGlow}>
               <Text style={styles.moonIcon}>{'\u{1F319}'}</Text>

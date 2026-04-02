@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Share,
   Image,
-  Dimensions,
   Modal,
   ActivityIndicator,
 } from 'react-native';
@@ -20,6 +19,7 @@ import type { DreamReading, DreamSymbol } from '../types';
 import { generateDreamImage } from '../lib/dreamService';
 import { supabase } from '../lib/supabase';
 import PaintBrushAnimation from '../components/PaintBrushAnimation';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 type ReadingScreenParams = {
   reading: DreamReading;
@@ -32,6 +32,7 @@ type ReadingScreenParams = {
 export default function ReadingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const route = useRoute();
+  const { contentStyle, screenWidth } = useResponsiveLayout();
   const params = route.params as ReadingScreenParams;
   const { reading, dreamText, fromGrimoire = false, subscriptionTier } = params;
   const isPremium = subscriptionTier === 'premium' || fromGrimoire;
@@ -223,7 +224,7 @@ Interpreted with Dreamz`;
       <ScrollView
         testID="reading-scroll-view"
         style={styles.container}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, contentStyle]}
         showsVerticalScrollIndicator={false}
       >
         {/* Dream Image (lazy-loaded, premium only) */}
@@ -231,7 +232,7 @@ Interpreted with Dreamz`;
           <View style={styles.imageContainer}>
             <Image
               source={{ uri: imageUrl }}
-              style={styles.dreamImage}
+              style={[styles.dreamImage, { width: screenWidth, height: screenWidth * 0.75 }]}
               resizeMode="cover"
               onError={() => setImageFailed(true)}
             />
@@ -446,8 +447,6 @@ function SymbolCard({ symbol, inDictionary }: { symbol: DreamSymbol; inDictionar
   );
 }
 
-const { width: screenWidth } = Dimensions.get('window');
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -463,8 +462,6 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   dreamImage: {
-    width: screenWidth,
-    height: screenWidth * 0.75,
     backgroundColor: '#252542',
   },
   imageOverlay: {

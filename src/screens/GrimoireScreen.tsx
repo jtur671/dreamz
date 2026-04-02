@@ -20,6 +20,7 @@ import { deleteDream as deleteDreamService } from '../lib/dreamService';
 import { getDreamStats } from '../lib/insightsService';
 import type { Dream } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 
 // Stop words for normalizing AI symbol names ("River full of blood" → "river")
@@ -68,6 +69,7 @@ function getDateBadge(dateString: string): { month: string; day: string } {
 }
 
 export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
+  const { contentStyle } = useResponsiveLayout();
   const { dreams, loading, error, refresh } = useDreams();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -371,6 +373,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
         colors={['#1a1a2e', '#16213e']}
         style={styles.gradient}
       >
+        <View style={[styles.innerContainer, contentStyle]}>
         <Text style={styles.title}>Your Grimoire</Text>
 
         <View style={styles.subtitleRow}>
@@ -499,6 +502,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
             }
           />
         )}
+        </View>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -513,6 +517,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 20,
+  },
+  innerContainer: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,

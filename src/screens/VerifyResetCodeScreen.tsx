@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 interface VerifyResetCodeScreenProps {
   navigation: any;
@@ -18,6 +19,7 @@ interface VerifyResetCodeScreenProps {
 }
 
 export default function VerifyResetCodeScreen({ navigation, route }: VerifyResetCodeScreenProps) {
+  const { contentStyle } = useResponsiveLayout();
   const { email } = route.params;
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -113,7 +115,7 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.content}>
+        <View style={[styles.content, contentStyle]}>
           <Text style={styles.title}>Enter Code</Text>
           <Text style={styles.subtitle}>
             Enter the code to sign in:{'\n'}
