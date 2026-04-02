@@ -42,7 +42,7 @@ const NIGHTMARE_MOODS = [
 const INITIAL_VISIBLE = 5;
 
 export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
-  const { contentStyle } = useResponsiveLayout();
+  const { contentStyle, isTablet } = useResponsiveLayout();
   const [dreamText, setDreamText] = useState('');
   const [dreamType, setDreamType] = useState<'dream' | 'nightmare'>('dream');
   const [moods, setMoods] = useState<string[]>([]);
@@ -328,7 +328,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
         {isLoading ? (
           <DreamLoadingAnimation phase={loadingState === 'saving' ? 'saving' : 'interpreting'} />
         ) : (
-          <ScrollView testID="new-dream-scroll-view" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets style={styles.scroll} contentContainerStyle={[styles.content, contentStyle]}>
+          <ScrollView testID="new-dream-scroll-view" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets style={styles.scroll} contentContainerStyle={[styles.content, contentStyle, isTablet && styles.contentTablet]}>
             <Text style={styles.title}>Record Your Dream</Text>
             <Text style={styles.subtitle}>
               Describe what you remember from your dream...
@@ -355,6 +355,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                 testID="new-dream-type-dream"
                 style={[
                   styles.dreamTypeButton,
+                  isTablet && styles.dreamTypeButtonTablet,
                   dreamType === 'dream' && styles.dreamTypeButtonSelected,
                 ]}
                 onPress={() => { setDreamType('dream'); setMoods([]); setMoodExpanded(false); }}
@@ -363,12 +364,13 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                 accessibilityLabel="Dream"
                 accessibilityState={{ selected: dreamType === 'dream' }}
               >
-                <Text style={styles.dreamTypeIcon}>
+                <Text style={[styles.dreamTypeIcon, isTablet && styles.dreamTypeIconTablet]}>
                   {dreamType === 'dream' ? '\u{1F319}' : '\u{1F311}'}
                 </Text>
                 <Text
                   style={[
                     styles.dreamTypeText,
+                    isTablet && styles.dreamTypeTextTablet,
                     dreamType === 'dream' && styles.dreamTypeTextSelected,
                   ]}
                 >
@@ -379,6 +381,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                 testID="new-dream-type-nightmare"
                 style={[
                   styles.dreamTypeButton,
+                  isTablet && styles.dreamTypeButtonTablet,
                   dreamType === 'nightmare' && styles.nightmareTypeButtonSelected,
                 ]}
                 onPress={() => { setDreamType('nightmare'); setMoods([]); setMoodExpanded(false); }}
@@ -387,12 +390,13 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                 accessibilityLabel="Nightmare"
                 accessibilityState={{ selected: dreamType === 'nightmare' }}
               >
-                <Text style={styles.dreamTypeIcon}>
+                <Text style={[styles.dreamTypeIcon, isTablet && styles.dreamTypeIconTablet]}>
                   {dreamType === 'nightmare' ? '\u{26A1}' : '\u{1F329}'}
                 </Text>
                 <Text
                   style={[
                     styles.dreamTypeText,
+                    isTablet && styles.dreamTypeTextTablet,
                     dreamType === 'nightmare' && styles.nightmareTypeTextSelected,
                   ]}
                 >
@@ -403,15 +407,15 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
             <TouchableOpacity
               testID="new-dream-forgot"
-              style={styles.forgotButton}
+              style={[styles.forgotButton, isTablet && styles.forgotButtonTablet]}
               onPress={handleForgotDream}
               disabled={isLoading}
               accessibilityRole="button"
               accessibilityLabel="I don't remember my dream"
               activeOpacity={0.7}
             >
-              <Text style={styles.forgotButtonIcon}>{'\u{1F319}'}</Text>
-              <Text style={styles.forgotButtonText}>{"I don't remember"}</Text>
+              <Text style={[styles.forgotButtonIcon, isTablet && styles.forgotButtonIconTablet]}>{'\u{1F319}'}</Text>
+              <Text style={[styles.forgotButtonText, isTablet && styles.forgotButtonTextTablet]}>{"I don't remember"}</Text>
             </TouchableOpacity>
 
             <View style={styles.moodContainer}>
@@ -420,7 +424,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
               <View style={styles.moodChips}>
                 {(() => {
                   const allMoods = dreamType === 'nightmare' ? orderedNightmareMoods : orderedDreamMoods;
-                  const visibleMoods = moodExpanded ? allMoods : allMoods.slice(0, INITIAL_VISIBLE);
+                  const visibleMoods = (isTablet || moodExpanded) ? allMoods : allMoods.slice(0, INITIAL_VISIBLE);
                   return (
                     <>
                       {visibleMoods.map((option) => {
@@ -459,17 +463,19 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                           </TouchableOpacity>
                         );
                       })}
-                      <TouchableOpacity
-                        testID="new-dream-mood-toggle"
-                        style={styles.moodMoreChip}
-                        onPress={() => setMoodExpanded((v) => !v)}
-                        accessibilityLabel={moodExpanded ? 'Show fewer moods' : 'Show more moods'}
-                        accessibilityRole="button"
-                      >
-                        <Text style={styles.moodMoreText}>
-                          {moodExpanded ? 'Less \u2212' : 'More +'}
-                        </Text>
-                      </TouchableOpacity>
+                      {!isTablet && (
+                        <TouchableOpacity
+                          testID="new-dream-mood-toggle"
+                          style={styles.moodMoreChip}
+                          onPress={() => setMoodExpanded((v) => !v)}
+                          accessibilityLabel={moodExpanded ? 'Show fewer moods' : 'Show more moods'}
+                          accessibilityRole="button"
+                        >
+                          <Text style={styles.moodMoreText}>
+                            {moodExpanded ? 'Less \u2212' : 'More +'}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
                     </>
                   );
                 })()}
@@ -478,7 +484,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
             <TextInput
               testID="new-dream-text-input"
-              style={styles.dreamInput}
+              style={[styles.dreamInput, isTablet && styles.dreamInputTablet]}
               placeholder="I was walking through a forest when..."
               placeholderTextColor="#6b5b8a"
               value={dreamText}
@@ -499,6 +505,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                 onTranscription={handleVoiceTranscription}
                 disabled={isLoading}
                 compact
+                large={isTablet}
               />
               <TouchableOpacity
                 testID="new-dream-submit"
@@ -511,9 +518,9 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                   colors={['#6b4e9e', '#8b6cc1']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={styles.ctaGradient}
+                  style={[styles.ctaGradient, isTablet && styles.ctaGradientTablet]}
                 >
-                  <Text style={styles.submitButtonText}>Interpret Dream</Text>
+                  <Text style={[styles.submitButtonText, isTablet && styles.submitButtonTextTablet]}>Interpret Dream</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -560,6 +567,9 @@ const styles = StyleSheet.create({
   content: {
     padding: 24,
     paddingTop: 8,
+  },
+  contentTablet: {
+    flexGrow: 1,
   },
   title: {
     fontSize: 28,
@@ -610,10 +620,21 @@ const styles = StyleSheet.create({
   forgotButtonIcon: {
     fontSize: 14,
   },
+  forgotButtonIconTablet: {
+    fontSize: 18,
+  },
+  forgotButtonTablet: {
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 16,
+  },
   forgotButtonText: {
     color: '#8b7fa8',
     fontSize: 14,
     fontWeight: '500',
+  },
+  forgotButtonTextTablet: {
+    fontSize: 18,
   },
   moodContainer: {
     marginBottom: 16,
@@ -707,6 +728,10 @@ const styles = StyleSheet.create({
     borderColor: '#3a3a5e',
     marginRight: 12,
   },
+  dreamTypeButtonTablet: {
+    paddingVertical: 18,
+    borderRadius: 16,
+  },
   dreamTypeButtonSelected: {
     backgroundColor: '#3a3a6e',
     borderColor: '#9b7fd4',
@@ -719,10 +744,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginRight: 8,
   },
+  dreamTypeIconTablet: {
+    fontSize: 24,
+  },
   dreamTypeText: {
     fontSize: 15,
     color: '#a89cc8',
     fontWeight: '500',
+  },
+  dreamTypeTextTablet: {
+    fontSize: 20,
   },
   dreamTypeTextSelected: {
     color: '#e0d4f7',
@@ -744,6 +775,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
+  },
+  dreamInputTablet: {
+    flex: 1,
+    minHeight: 300,
+    fontSize: 18,
   },
   errorContainer: {
     backgroundColor: '#3e2a2a',
@@ -782,9 +818,17 @@ const styles = StyleSheet.create({
     padding: 18,
     alignItems: 'center',
   },
+  ctaGradientTablet: {
+    padding: 32,
+    borderRadius: 20,
+  },
   submitButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
+  },
+  submitButtonTextTablet: {
+    fontSize: 24,
+    fontWeight: '700',
   },
 });
