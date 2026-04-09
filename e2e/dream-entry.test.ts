@@ -1,7 +1,7 @@
 import { device, element, by, expect, waitFor } from 'detox';
 import { launchApp, tapById, typeById, waitForVisible, waitForNotVisible, pollForVisible, pollForVisibleByText, navigateToTab } from './helpers/actions';
 import { TEST_DREAM_TEXT } from './helpers/dreamFactory';
-import { setTestAccountPremium } from './helpers/db';
+import { setTestAccountPremium, grantTestAccountAIConsent } from './helpers/db';
 
 /**
  * Navigate to NewDream from home and return to a clean, known state:
@@ -26,6 +26,7 @@ describe('Dream Entry', () => {
   beforeAll(async () => {
     // Upgrade test account to premium so reading limits never block the submit test
     await setTestAccountPremium();
+    await grantTestAccountAIConsent();
     // Full launch + sign-in once for the whole suite
     await launchApp(true);
     // DreamContext background image backfill fires DALL-E 3 network requests

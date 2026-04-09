@@ -88,6 +88,10 @@ describe('Onboarding Flow', () => {
     await pollForVisible('onboarding-about-continue', 3000);
     await tapById('onboarding-about-continue');
 
+    // AI Disclosure step
+    await pollForVisible('onboarding-ai-continue', 10000);
+    await tapById('onboarding-ai-continue');
+
     // Welcome step
     await pollForVisible('onboarding-welcome-begin', 10000);
     await tapById('onboarding-welcome-begin');
@@ -105,6 +109,10 @@ describe('Onboarding Flow', () => {
     await element(by.id('onboarding-about-scroll')).scrollTo('bottom');
     await pollForVisible('onboarding-about-skip', 5000);
     await tapById('onboarding-about-skip');
+
+    // AI Disclosure step
+    await pollForVisible('onboarding-ai-continue', 10000);
+    await tapById('onboarding-ai-continue');
 
     // Welcome step
     await pollForVisible('onboarding-welcome-begin', 10000);
@@ -127,6 +135,10 @@ describe('Onboarding Flow', () => {
     await element(by.id('onboarding-about-scroll')).scrollTo('bottom');
     await pollForVisible('onboarding-about-continue', 3000);
     await tapById('onboarding-about-continue');
+
+    // AI Disclosure step
+    await pollForVisible('onboarding-ai-continue', 10000);
+    await tapById('onboarding-ai-continue');
 
     // Welcome step
     await pollForVisible('onboarding-welcome-begin', 10000);
@@ -151,6 +163,10 @@ describe('Onboarding Flow', () => {
     await element(by.id('onboarding-about-scroll')).scrollTo('bottom');
     await pollForVisible('onboarding-about-continue', 3000);
     await tapById('onboarding-about-continue');
+
+    // AI Disclosure step
+    await pollForVisible('onboarding-ai-continue', 10000);
+    await tapById('onboarding-ai-continue');
 
     await pollForVisible('onboarding-welcome-begin', 10000);
     await tapById('onboarding-welcome-begin');

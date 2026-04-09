@@ -1,12 +1,13 @@
 import { device, element, by, expect, waitFor } from 'detox';
 import { launchApp, tapById, typeById, waitForVisible, pollForVisible, pollForVisibleByText, navigateToTab } from './helpers/actions';
 import { TEST_DREAM_TEXT } from './helpers/dreamFactory';
-import { setTestAccountPremium } from './helpers/db';
+import { setTestAccountPremium, grantTestAccountAIConsent } from './helpers/db';
 
 describe('Grimoire Screen', () => {
   beforeAll(async () => {
     // Upgrade test account to premium so reading limits never block dream creation
     await setTestAccountPremium();
+    await grantTestAccountAIConsent();
     await launchApp(true);
     // DreamContext background image backfill fires DALL-E 3 network requests
     // immediately on launch, keeping the app perpetually busy from Detox's
