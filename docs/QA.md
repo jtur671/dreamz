@@ -192,6 +192,50 @@ SELECT DISTINCT category FROM symbols;
 
 ---
 
+## 8) AI Data Consent (Apple 5.1.1/5.1.2 Compliance)
+
+### Onboarding Disclosure
+- [ ] AI disclosure step appears between "about" and "welcome"
+- [ ] Progress dots show 4 steps
+- [ ] Disclosure mentions: dream text, mood, profile context, OpenAI
+- [ ] Privacy policy link works
+- [ ] "Continue" advances to welcome step (no gate)
+- [ ] Skip on about step still shows AI disclosure
+
+### Just-In-Time Consent Modal
+- [ ] First dream analysis triggers consent modal
+- [ ] Modal lists all data types sent (dream text, mood, zodiac/gender/age)
+- [ ] Modal identifies OpenAI as recipient
+- [ ] "Allow Dream Readings" grants consent and proceeds to analysis
+- [ ] "Not Now" dismisses modal, no data sent, returns to dream entry
+- [ ] Subsequent dream submissions skip modal after consent granted
+
+### Consent Persistence
+- [ ] Consent persists across app restart (AsyncStorage + Supabase)
+- [ ] Consent persists across device change (Supabase sync)
+- [ ] Revoking in Settings sets toggle off and blocks future AI calls
+- [ ] Re-granting shows full consent modal (not just toggle)
+
+### Grimoire No-Consent State
+- [ ] No-consent user sees simplified journal cards (text, mood, date only)
+- [ ] "Enable Readings" banner appears at top of Grimoire
+- [ ] Tapping banner shows consent modal
+- [ ] Symbol filter pills hidden in no-consent state
+- [ ] Search only matches dream text and mood (no tags/omen)
+- [ ] Empty state says "Your journal awaits..." not "grimoire"
+- [ ] Pre-consent dreams remain plain after granting consent (no retroactive AI)
+- [ ] New dreams after consent get full readings
+- [ ] Mixed state renders correctly (old plain + new reading cards)
+
+### Edge Cases
+- [ ] "I don't remember" works without AI consent
+- [ ] Offline consent grant saves to AsyncStorage
+- [ ] Existing users (migration backfill) see no consent modal
+
+Notes:
+
+---
+
 ## Sign-off
 - QA verified by: (agent/name)
 - Date:
