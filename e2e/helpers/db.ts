@@ -139,3 +139,92 @@ export async function setTestAccountFree(): Promise<void> {
   await supabase.auth.signOut();
 }
 
+/**
+ * Grants AI consent for the test account.
+ * Call this in beforeAll for test suites that need AI analysis.
+ */
+export async function grantTestAccountAIConsent(): Promise<void> {
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('[grantTestAccountAIConsent] Supabase env vars not set — skipping');
+    return;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase: any = createClient(supabaseUrl, supabaseAnonKey);
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: TEST_EMAIL,
+    password: TEST_PASSWORD,
+  });
+
+  if (signInError) {
+    console.warn('[grantTestAccountAIConsent] Sign-in failed:', signInError.message);
+    return;
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    console.warn('[grantTestAccountAIConsent] No user after sign-in');
+    await supabase.auth.signOut();
+    return;
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ ai_consent_granted: true, ai_consent_date: new Date().toISOString() })
+    .eq('id', user.id);
+
+  if (error) {
+    console.warn('[grantTestAccountAIConsent] Failed:', error.message);
+  }
+
+  await supabase.auth.signOut();
+}
+
+/**
+ * Revokes AI consent for the test account.
+ * Call this in beforeAll for test suites that test the no-consent state.
+ */
+export async function revokeTestAccountAIConsent(): Promise<void> {
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('[revokeTestAccountAIConsent] Supabase env vars not set — skipping');
+    return;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase: any = createClient(supabaseUrl, supabaseAnonKey);
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: TEST_EMAIL,
+    password: TEST_PASSWORD,
+  });
+
+  if (signInError) {
+    console.warn('[revokeTestAccountAIConsent] Sign-in failed:', signInError.message);
+    return;
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    console.warn('[revokeTestAccountAIConsent] No user after sign-in');
+    await supabase.auth.signOut();
+    return;
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ ai_consent_granted: false, ai_consent_date: null })
+    .eq('id', user.id);
+
+  if (error) {
+    console.warn('[revokeTestAccountAIConsent] Failed:', error.message);
+  }
+
+  await supabase.auth.signOut();
+}
