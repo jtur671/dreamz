@@ -271,6 +271,9 @@ New section after notification preferences, before account management.
 - No-consent user does NOT see symbol filter pills
 - No-consent user search only searches dream text (no tags/omen)
 - Tapping a dream card in no-consent mode shows dream text detail (not Reading screen)
+- Pre-consent dreams remain as plain journal cards after granting consent (no retroactive analysis)
+- New dream submitted after granting consent receives a full AI reading
+- Grimoire correctly shows mixed state: old plain cards alongside new reading cards
 
 ### Updated E2E Tests
 
@@ -312,6 +315,9 @@ New section after notification preferences, before account management.
 - [ ] Re-granting consent restores full Grimoire and AI analysis
 - [ ] "I don't remember" (forgot) works without AI consent
 - [ ] Privacy policy link in consent modal is tappable and loads correctly
+- [ ] Pre-consent journal entries remain as plain text after granting consent (no retroactive AI)
+- [ ] New dreams submitted after consent get full AI readings
+- [ ] Grimoire displays mixed state correctly (old plain cards + new reading cards)
 
 ## Migration
 
@@ -340,6 +346,12 @@ The privacy policy at `https://dreamz-journal.com/privacy.html` must be updated 
 - User can revoke consent at any time in Settings
 
 This is an external change outside the codebase.
+
+## Post-Consent Behavior for Existing Dreams
+
+When a user grants AI consent after having already journaled dreams, **only new dream submissions get AI readings.** Existing journal entries remain as plain text — no retroactive analysis, no batch processing.
+
+In the Grimoire, pre-consent dreams continue to show as simplified journal cards (date, mood, dream text preview) even after consent is granted. They are visually distinct from post-consent dreams that have full readings with titles, tldrs, and symbols.
 
 ## Edge Cases
 
