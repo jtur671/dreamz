@@ -18,6 +18,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useDreams } from '../hooks/useDreams';
 import { deleteDream as deleteDreamService } from '../lib/dreamService';
 import { getDreamStats } from '../lib/insightsService';
+import { useAIConsent } from '../hooks/useAIConsent';
+import AIConsentModal from '../components/AIConsentModal';
 import type { Dream } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
@@ -74,6 +76,9 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activePill, setActivePill] = useState<string | null>(null);
+  const { hasConsent, grantConsent } = useAIConsent();
+  const [showConsentModal, setShowConsentModal] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   // Compute recurring symbol pills (threshold: 4+ dreams containing the symbol)
   // Normalizes compound names ("River full of blood" → "river") to group variants
@@ -179,24 +184,33 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
       // Text search filter
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
-        const title = dream.reading?.title?.toLowerCase() || '';
         const text = dream.dream_text.toLowerCase();
-        const tags = dream.reading?.tags?.join(' ').toLowerCase() || '';
-        const omen = dream.reading?.omen?.toLowerCase() || '';
+        const mood = dream.mood?.toLowerCase() || '';
 
-        if (
-          !title.includes(query) &&
-          !text.includes(query) &&
-          !tags.includes(query) &&
-          !omen.includes(query)
-        ) {
-          return false;
+        if (hasConsent === false) {
+          // No-consent mode: only search dream text and mood
+          if (!text.includes(query) && !mood.includes(query)) {
+            return false;
+          }
+        } else {
+          const title = dream.reading?.title?.toLowerCase() || '';
+          const tags = dream.reading?.tags?.join(' ').toLowerCase() || '';
+          const omen = dream.reading?.omen?.toLowerCase() || '';
+
+          if (
+            !title.includes(query) &&
+            !text.includes(query) &&
+            !tags.includes(query) &&
+            !omen.includes(query)
+          ) {
+            return false;
+          }
         }
       }
 
       return true;
     });
-  }, [dreams, activePill, searchQuery]);
+  }, [dreams, activePill, searchQuery, hasConsent]);
 
   // Group filtered dreams by date for SectionList
   const sections = useMemo(() => {
@@ -212,6 +226,38 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
     }
     return Array.from(groups.entries()).map(([title, data]) => ({ title, data }));
   }, [filteredDreams]);
+
+  const renderConsentBanner = () => {
+    if (hasConsent !== false || bannerDismissed || dreams.length === 0) return null;
+
+    return (
+      <View testID="grimoire-consent-banner" style={styles.consentBanner}>
+        <Text style={styles.consentBannerText}>
+          Your dreams are private reflections. Enable AI readings to unlock
+          mystical interpretations and symbol tracking.
+        </Text>
+        <View style={styles.consentBannerButtons}>
+          <TouchableOpacity
+            testID="grimoire-consent-enable"
+            style={styles.consentEnableButton}
+            onPress={() => setShowConsentModal(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Enable Readings"
+          >
+            <Text style={styles.consentEnableText}>Enable Readings</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="grimoire-consent-dismiss"
+            onPress={() => setBannerDismissed(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss"
+          >
+            <Text style={styles.consentDismissText}>Dismiss</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
 
   const renderDream = useCallback(({ item }: { item: Dream }) => {
     const hasReading = !!item.reading;
@@ -243,6 +289,62 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
       );
     }
 
+    // No-reading cards: simplified journal entry
+    if (!hasReading) {
+      return (
+        <TouchableOpacity
+          testID="grimoire-dream-item"
+          accessibilityRole="button"
+          accessibilityLabel={`Dream from ${dateLabel}${item.mood ? ', ' + item.mood : ''}`}
+          accessibilityHint="View dream entry"
+          style={styles.journalCard}
+          onPress={() => {
+            Alert.alert(
+              dateLabel,
+              item.dream_text,
+              [{ text: 'Close' }]
+            );
+          }}
+          onLongPress={() => handleDeletePress(item)}
+        >
+          <LinearGradient
+            colors={isNightmare
+              ? ['#3a1a30', '#2a1528', '#1e1a2a']
+              : ['#2d2860', '#252050', '#1a1a3e']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[styles.journalCardFallback]}
+          >
+            <View style={styles.starsOverlay} pointerEvents="none">
+              <View style={[styles.star, styles.star1]} />
+              <View style={[styles.star, styles.star2]} />
+              <View style={[styles.star, styles.starLg, styles.star3]} />
+            </View>
+            <View style={styles.dateBadge}>
+              <Text style={styles.dateBadgeMonth}>{dateBadge.month}</Text>
+              <Text style={styles.dateBadgeDay}>{dateBadge.day}</Text>
+            </View>
+            <View style={styles.journalCardBottom}>
+              <Text style={styles.typeIcon}>
+                {isNightmare ? '\u{26A1}' : '\u{1F319}'}
+              </Text>
+              {item.mood && (
+                <Text style={[styles.dreamPreview, isNightmare && styles.nightmareText]}>
+                  {item.mood}
+                </Text>
+              )}
+              <Text
+                style={[styles.dreamPreview, isNightmare && styles.nightmareText]}
+                numberOfLines={2}
+              >
+                {item.dream_text}
+              </Text>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+      );
+    }
+
     const previewText = item.reading?.tldr || item.dream_text;
 
     const cardInner = (
@@ -269,9 +371,6 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
           >
             {previewText}
           </Text>
-          {!hasReading && (
-            <Text style={styles.noReadingIndicator}>No reading yet</Text>
-          )}
         </View>
       </>
     );
@@ -374,6 +473,15 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
         style={styles.gradient}
       >
         <View style={[styles.innerContainer, contentStyle]}>
+        <AIConsentModal
+          visible={showConsentModal}
+          onAllow={async () => {
+            setShowConsentModal(false);
+            await grantConsent();
+          }}
+          onDecline={() => setShowConsentModal(false)}
+        />
+
         <Text style={styles.title}>Your Grimoire</Text>
 
         <View style={styles.subtitleRow}>
@@ -387,7 +495,9 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
           )}
         </View>
 
-        {dreams.length > 0 && symbolPills.length > 0 && (
+        {renderConsentBanner()}
+
+        {hasConsent !== false && dreams.length > 0 && symbolPills.length > 0 && (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -452,9 +562,13 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
 
         {dreams.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>📖</Text>
+            <Text style={styles.emptyIcon}>
+              {hasConsent === false ? '\u{1F4D3}' : '\u{1F4D6}'}
+            </Text>
             <Text style={styles.emptyText}>
-              Your grimoire awaits its first entry...
+              {hasConsent === false
+                ? 'Your journal awaits its first entry...'
+                : 'Your grimoire awaits its first entry...'}
             </Text>
             <Text style={styles.emptySubtext}>
               Record a dream to begin your journey
@@ -801,5 +915,39 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  consentBanner: {
+    backgroundColor: '#2a2a5e',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(107, 78, 158, 0.4)',
+  },
+  consentBannerText: {
+    fontSize: 14,
+    color: '#c0b8d8',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  consentBannerButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  consentEnableButton: {
+    backgroundColor: '#6b4e9e',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  consentEnableText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  consentDismissText: {
+    color: '#8b7fa8',
+    fontSize: 14,
   },
 });
