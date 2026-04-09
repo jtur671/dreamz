@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   TextInput,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -14,7 +15,7 @@ import { checkPremiumAccess } from '../lib/purchaseService';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { ZODIAC_SIGNS, GENDER_OPTIONS, AGE_RANGES, Gender, AgeRange } from '../types';
 
-type OnboardingStep = 'tier' | 'about' | 'welcome';
+type OnboardingStep = 'tier' | 'about' | 'ai-disclosure' | 'welcome';
 
 export default function OnboardingScreen() {
   const navigation = useNavigation();
@@ -68,7 +69,7 @@ export default function OnboardingScreen() {
 
     await updateProfile(updates);
     setSaving(false);
-    setStep('welcome');
+    setStep('ai-disclosure');
   };
 
   const handleSkip = async () => {
@@ -77,7 +78,7 @@ export default function OnboardingScreen() {
     const tier = selectedTier === 'premium' && await checkPremiumAccess() ? 'premium' : 'free';
     await updateProfile({ subscription_tier: tier });
     setSaving(false);
-    setStep('welcome');
+    setStep('ai-disclosure');
   };
 
   const handleBeginJourney = async () => {
@@ -92,7 +93,7 @@ export default function OnboardingScreen() {
   };
 
   const renderProgressDots = () => {
-    const steps: OnboardingStep[] = ['tier', 'about', 'welcome'];
+    const steps: OnboardingStep[] = ['tier', 'about', 'ai-disclosure', 'welcome'];
     const currentIndex = steps.indexOf(step);
 
     return (
@@ -327,6 +328,49 @@ export default function OnboardingScreen() {
     </ScrollView>
   );
 
+  const renderAIDisclosureStep = () => (
+    <ScrollView contentContainerStyle={[styles.stepContent, contentStyle]}>
+      <Text style={styles.stepTitle}>How Your Dreams Are Read</Text>
+      <Text style={styles.stepSubtitle}>
+        A little transparency before we begin
+      </Text>
+
+      <View style={styles.disclosureCard}>
+        <Text style={styles.disclosureText}>
+          When you request a reading, your dream text and selected mood are sent
+          to an AI service (OpenAI) for interpretation.
+        </Text>
+        <Text style={styles.disclosureText}>
+          If you've shared your zodiac sign, gender, or age range, these are
+          included to personalize your reading.
+        </Text>
+        <Text style={[styles.disclosureText, styles.disclosureEmphasis]}>
+          Your dreams are never used to train AI models.{'\n'}
+          Your data is never sold.
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        testID="onboarding-ai-privacy-link"
+        onPress={() => Linking.openURL('https://dreamz-journal.com/privacy.html')}
+        accessibilityRole="link"
+        accessibilityLabel="Read our Privacy Policy"
+      >
+        <Text style={styles.privacyLinkText}>Read our Privacy Policy</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        testID="onboarding-ai-continue"
+        style={styles.continueButton}
+        onPress={() => setStep('welcome')}
+        accessibilityRole="button"
+        accessibilityLabel="Continue"
+      >
+        <Text style={styles.continueButtonText}>Continue</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+
   const renderWelcomeStep = () => (
     <View style={[styles.welcomeContent, contentStyle]}>
       <Text style={styles.welcomeEmoji}>{'  '}</Text>
@@ -370,6 +414,7 @@ export default function OnboardingScreen() {
       {renderProgressDots()}
       {step === 'tier' && renderTierStep()}
       {step === 'about' && renderAboutStep()}
+      {step === 'ai-disclosure' && renderAIDisclosureStep()}
       {step === 'welcome' && renderWelcomeStep()}
     </SafeAreaView>
   );
@@ -641,5 +686,31 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
+  },
+  disclosureCard: {
+    backgroundColor: '#2a2a5e',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(107, 78, 158, 0.4)',
+  },
+  disclosureText: {
+    fontSize: 15,
+    color: '#c0b8d8',
+    lineHeight: 22,
+    marginBottom: 12,
+  },
+  disclosureEmphasis: {
+    fontWeight: '600',
+    color: '#e0d4f7',
+    marginBottom: 0,
+  },
+  privacyLinkText: {
+    color: '#9b7fd4',
+    fontSize: 14,
+    textAlign: 'center',
+    textDecorationLine: 'underline',
+    marginBottom: 24,
   },
 });
