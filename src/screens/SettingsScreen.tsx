@@ -30,6 +30,8 @@ import { ZODIAC_SIGNS } from '../types';
 import type { Dream } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
+import { useAIConsent } from '../hooks/useAIConsent';
+import AIConsentModal from '../components/AIConsentModal';
 
 type SettingsScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -37,6 +39,8 @@ type SettingsScreenProps = {
 
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const { contentStyle } = useResponsiveLayout();
+  const { hasConsent, grantConsent, revokeConsent } = useAIConsent();
+  const [showAIConsentModal, setShowAIConsentModal] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>('');
   const [editingName, setEditingName] = useState(false);
@@ -297,6 +301,14 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <AIConsentModal
+        visible={showAIConsentModal}
+        onAllow={async () => {
+          setShowAIConsentModal(false);
+          await grantConsent();
+        }}
+        onDecline={() => setShowAIConsentModal(false)}
+      />
       <Modal
         visible={showZodiacPicker}
         transparent
@@ -656,6 +668,52 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
               <Text style={styles.editText}>Change</Text>
             </TouchableOpacity>
           )}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>AI Data Sharing</Text>
+
+          <View style={[styles.card, styles.cardButton]}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.menuItemText}>Allow AI Dream Readings</Text>
+              <Text style={styles.menuItemSubtext}>
+                Dream readings are powered by OpenAI
+              </Text>
+            </View>
+            <Switch
+              testID="settings-ai-consent-toggle"
+              value={hasConsent === true}
+              onValueChange={(value) => {
+                if (value) {
+                  setShowAIConsentModal(true);
+                } else {
+                  Alert.alert(
+                    'Disable AI Readings?',
+                    'You will no longer receive dream interpretations. You can re-enable this at any time.',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Disable',
+                        style: 'destructive',
+                        onPress: revokeConsent,
+                      },
+                    ]
+                  );
+                }
+              }}
+              trackColor={{ false: '#3a3a5e', true: '#6b4e9e' }}
+              thumbColor={hasConsent ? '#e0d4f7' : '#8b7fa8'}
+            />
+          </View>
+
+          <TouchableOpacity
+            testID="settings-ai-consent-learn-more"
+            onPress={() => Linking.openURL('https://dreamz-journal.com/privacy.html')}
+            accessibilityRole="link"
+            accessibilityLabel="Learn more about AI data sharing"
+          >
+            <Text style={styles.aiLearnMore}>Learn more about how your data is used</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
@@ -1097,5 +1155,12 @@ const styles = StyleSheet.create({
     color: '#9b7fd4',
     fontSize: 16,
     fontWeight: '600',
+  },
+  aiLearnMore: {
+    color: '#9b7fd4',
+    fontSize: 13,
+    textDecorationLine: 'underline',
+    textAlign: 'center',
+    marginTop: 4,
   },
 });
