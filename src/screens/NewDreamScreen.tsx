@@ -18,6 +18,8 @@ import { getProfile } from '../lib/profileService';
 import { saveDraft, loadDraft, clearDraft } from '../lib/draftService';
 import { checkPremiumAccess } from '../lib/purchaseService';
 import { preloadInterstitialAd, showInterstitialAd } from '../lib/adService';
+import { useAIConsent } from '../hooks/useAIConsent';
+import AIConsentModal from '../components/AIConsentModal';
 import VoiceRecorder from '../components/VoiceRecorder';
 import DreamLoadingAnimation from '../components/DreamLoadingAnimation';
 import { useDreams } from '../hooks/useDreams';
@@ -53,6 +55,8 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   const [savedDreamId, setSavedDreamId] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [moodExpanded, setMoodExpanded] = useState(false);
+  const { hasConsent, grantConsent } = useAIConsent();
+  const [showConsentModal, setShowConsentModal] = useState(false);
   const draftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { dreams } = useDreams();
 
@@ -144,6 +148,20 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
     if (moods.length === 0) {
       Alert.alert('Error', 'Please select how your dream felt');
+      return;
+    }
+
+    // Check AI consent before proceeding with analysis
+    if (hasConsent === null) {
+      // Still loading consent state — wait for it
+      const { getAIConsent } = await import('../lib/aiConsentService');
+      const consentState = await getAIConsent();
+      if (!consentState.granted) {
+        setShowConsentModal(true);
+        return;
+      }
+    } else if (!hasConsent) {
+      setShowConsentModal(true);
       return;
     }
 
@@ -291,6 +309,17 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     );
   }
 
+  async function handleConsentAllow() {
+    setShowConsentModal(false);
+    await grantConsent();
+    // Proceed with the dream submission flow
+    handleSubmit();
+  }
+
+  function handleConsentDecline() {
+    setShowConsentModal(false);
+  }
+
   function handleVoiceTranscription(text: string) {
     // Append transcribed text to existing dream text
     if (dreamText.trim()) {
@@ -302,6 +331,11 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      <AIConsentModal
+        visible={showConsentModal}
+        onAllow={handleConsentAllow}
+        onDecline={handleConsentDecline}
+      />
       <LinearGradient
         colors={['#1a1a2e', '#1e1a3a']}
         style={styles.gradient}
