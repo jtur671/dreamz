@@ -41,6 +41,8 @@ export interface Profile {
   gender?: Gender;
   age_range?: AgeRange;
   onboarding_completed?: boolean;
+  ai_consent_granted?: boolean;
+  ai_consent_date?: string;
   created_at: string;
 }
 
