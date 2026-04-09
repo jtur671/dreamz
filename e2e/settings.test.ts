@@ -1,6 +1,6 @@
 import { device, element, by, expect, waitFor } from 'detox';
 import { launchApp, tapById, typeById, waitForVisible, pollForVisible, pollForVisibleByText, pollForNotVisibleByText, navigateToTab } from './helpers/actions';
-import { setTestAccountPremium, setTestAccountFree } from './helpers/db';
+import { setTestAccountPremium, setTestAccountFree, grantTestAccountAIConsent, revokeTestAccountAIConsent } from './helpers/db';
 
 describe('Settings Screen', () => {
   beforeAll(async () => {
@@ -195,6 +195,32 @@ describe('Settings Screen', () => {
 
     // Toggle back off
     await tapById('settings-reminder-toggle');
+  });
+
+  it('should show AI consent toggle', async () => {
+    await element(by.id('settings-scroll-view')).scroll(200, 'down', 0.5, 0.5);
+    await pollForVisible('settings-ai-consent-toggle', 5000);
+  });
+
+  it('should show consent modal when enabling AI from settings', async () => {
+    // First revoke consent so toggle is off
+    await revokeTestAccountAIConsent();
+    await launchApp(false);
+    await pollForVisible('home-record-button', 30000);
+    await device.disableSynchronization();
+    await navigateToTab('Settings');
+    await waitForVisible('settings-zodiac-edit', 10000);
+
+    await element(by.id('settings-scroll-view')).scroll(200, 'down', 0.5, 0.5);
+    await pollForVisible('settings-ai-consent-toggle', 5000);
+    await tapById('settings-ai-consent-toggle');
+
+    // Consent modal should appear
+    await pollForVisible('ai-consent-modal', 5000);
+    await tapById('ai-consent-allow');
+
+    // Re-grant for remaining tests
+    await grantTestAccountAIConsent();
   });
 
   it('should sign out and return to auth screen', async () => {
