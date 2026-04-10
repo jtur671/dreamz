@@ -198,7 +198,7 @@ Go to **Policy > App content > Target audience**:
 - Name: `Dreamz Premium Yearly`
 - Add a base plan:
   - Billing period: 1 year
-  - Price: $35.99
+  - Price: $49.99
 
 ### 9b. Connect RevenueCat to Google Play
 
@@ -347,7 +347,7 @@ Apple Sign-In is not available on Android — the button is already conditionall
 - [ ] App access credentials provided for review
 - [ ] Ads declaration: yes, contains ads
 - [ ] Target audience: 18+
-- [ ] Subscription products created: `dreamz_premium_monthly` ($5.99) and `dreamz_premium_yearly` ($35.99)
+- [ ] Subscription products created: `dreamz_premium_monthly` ($5.99) and `dreamz_premium_yearly` ($49.99)
 - [ ] Google Play service account created and JSON key downloaded
 - [ ] RevenueCat: Google Play app added with service account JSON
 - [ ] RevenueCat: Google Play products added and linked to `premium` entitlement

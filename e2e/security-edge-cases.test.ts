@@ -1,7 +1,7 @@
 import { device, element, by, expect, waitFor } from 'detox';
 import { launchApp, tapById, typeById, dismissKeyboard, waitForVisible, pollForVisible, pollForVisibleByText, waitForAnyVisible, navigateToTab } from './helpers/actions';
 import { XSS_DREAM_TEXT, EMOJI_DREAM_TEXT, LONG_DREAM_TEXT } from './helpers/dreamFactory';
-import { setTestAccountPremium } from './helpers/db';
+import { setTestAccountPremium, grantTestAccountAIConsent } from './helpers/db';
 
 /** Submit a dream and wait for any outcome (reading, error, unavailable, or paywall). */
 async function submitDreamAndWait(text: string, mood: string) {
@@ -53,6 +53,7 @@ describe('Security & Edge Cases', () => {
   beforeAll(async () => {
     // Upgrade test account to premium so reading limits never block dream submissions
     await setTestAccountPremium();
+    await grantTestAccountAIConsent();
 
     await launchApp(true);
     await pollForVisible('home-record-button', 30000);

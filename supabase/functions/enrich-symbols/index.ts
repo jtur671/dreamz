@@ -5,7 +5,7 @@
  * shadow_meaning, guidance, category, and related_symbols for each.
  *
  * Endpoint: POST /functions/v1/enrich-symbols
- * Auth: Required (Supabase JWT)
+ * Auth: Required (service_role key)
  */
 
 import {
@@ -137,9 +137,26 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    // Restrict to admin (service_role key) only
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!serviceRoleKey) {
+      console.error("SUPABASE_SERVICE_ROLE_KEY not configured");
+      return errorResponse("CONFIG_ERROR", "Service configuration error", 500);
+    }
+
+    const authHeader = req.headers.get("Authorization")?.replace("Bearer ", "");
+    const encoder = new TextEncoder();
+    const a = encoder.encode(authHeader || '');
+    const b = encoder.encode(serviceRoleKey);
+    const isValid = a.byteLength === b.byteLength && crypto.subtle.timingSafeEqual(a, b);
+    if (!isValid) {
+      return errorResponse("FORBIDDEN", "Admin access required", 403);
+    }
+
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiApiKey) {
-      return errorResponse("CONFIG_ERROR", "OPENAI_API_KEY not configured", 500);
+      console.error("OPENAI_API_KEY not configured");
+      return errorResponse("CONFIG_ERROR", "Service configuration error", 500);
     }
 
     let body: unknown;
@@ -172,6 +189,6 @@ Deno.serve(async (req: Request) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error(`Enrich error: ${message}`);
-    return errorResponse("INTERNAL_ERROR", message, 500, true);
+    return errorResponse("INTERNAL_ERROR", "An unexpected error occurred", 500, true);
   }
 });

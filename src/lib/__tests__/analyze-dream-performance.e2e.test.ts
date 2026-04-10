@@ -9,8 +9,11 @@
  * @file src/lib/__tests__/analyze-dream-performance.e2e.test.ts
  */
 
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://vjqvxraqeptgmbxnipqo.supabase.co';
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_sfu54OCSyuVmdfM0YROStg_wtpG-RdQ';
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error('EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY must be set');
+}
 
 // Only run when explicitly enabled (e2e tests need real fetch, not the jest.setup.js mock)
 const SHOULD_RUN = process.env.RUN_E2E_TESTS === 'true';
@@ -65,16 +68,65 @@ function isValidReading(reading: any): boolean {
 
 const describeFn = SHOULD_RUN ? describe : describe.skip;
 
+/**
+ * Free-tier accounts are limited to 1 analyze-dream reading per day
+ * (see supabase/functions/analyze-dream/index.ts:432). This test file
+ * makes 2 analyze calls, so each test needs its own throwaway account.
+ */
+async function provisionTestAccount(): Promise<string> {
+  const account = await createTestAccount();
+  if (!account) {
+    throw new Error('Failed to create test account — cannot run performance tests');
+  }
+
+  // Newly-signed-up accounts default to ai_consent_granted=false per
+  // migration 019. analyze-dream enforces consent server-side and
+  // returns 403 CONSENT_REQUIRED without it. Grant consent so we
+  // measure the real analysis path, not an early-return from the gate.
+  const userResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${account.accessToken}`,
+    },
+  });
+  const userJson = await userResponse.json();
+  if (!userJson?.id) {
+    throw new Error('Failed to fetch user id for consent grant');
+  }
+  const consentResponse = await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userJson.id}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${account.accessToken}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({
+        ai_consent_granted: true,
+        ai_consent_date: new Date().toISOString(),
+      }),
+    }
+  );
+  if (!consentResponse.ok) {
+    throw new Error(`Failed to grant AI consent for throwaway account: ${consentResponse.status}`);
+  }
+
+  return account.accessToken;
+}
+
 describeFn('Dream Analysis Performance', () => {
   let accessToken: string;
+  let validationAccessToken: string;
 
   beforeAll(async () => {
-    const account = await createTestAccount();
-    if (!account) {
-      throw new Error('Failed to create test account — cannot run performance tests');
-    }
-    accessToken = account.accessToken;
-  });
+    // Provision two throwaway accounts sequentially (Supabase anon signup
+    // rate-limits concurrent requests). Each test below uses its own so
+    // neither hits the 1-reading-per-day free tier cap.
+    accessToken = await provisionTestAccount();
+    validationAccessToken = await provisionTestAccount();
+  }, 60000);
 
   it('should complete a reading within 15 seconds', async () => {
     const start = Date.now();
@@ -106,7 +158,7 @@ describeFn('Dream Analysis Performance', () => {
     const response = await fetch(`${SUPABASE_URL}/functions/v1/analyze-dream`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${validationAccessToken}`,
         'apikey': SUPABASE_ANON_KEY,
         'Content-Type': 'application/json',
       },

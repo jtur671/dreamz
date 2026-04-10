@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { supabase } from './supabase';
 
 const STORAGE_KEY = 'dreamz_ai_consent';
@@ -10,12 +10,12 @@ interface ConsentState {
 
 /**
  * Get the current AI consent state.
- * Checks AsyncStorage cache first, falls back to Supabase profile.
+ * Checks SecureStore cache first, falls back to Supabase profile.
  */
 export async function getAIConsent(): Promise<ConsentState> {
   // Check local cache first
   try {
-    const cached = await AsyncStorage.getItem(STORAGE_KEY);
+    const cached = await SecureStore.getItemAsync(STORAGE_KEY);
     if (cached) {
       return JSON.parse(cached);
     }
@@ -46,7 +46,7 @@ export async function getAIConsent(): Promise<ConsentState> {
     };
 
     // Cache for next time
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(state));
     return state;
   } catch {
     return { granted: false, date: null };
@@ -54,15 +54,15 @@ export async function getAIConsent(): Promise<ConsentState> {
 }
 
 /**
- * Grant AI consent. Writes to both Supabase and AsyncStorage.
- * If Supabase fails, still writes to AsyncStorage (offline support).
+ * Grant AI consent. Writes to both Supabase and SecureStore.
+ * If Supabase fails, still writes to SecureStore (offline support).
  */
 export async function grantAIConsent(): Promise<void> {
   const now = new Date().toISOString();
   const state: ConsentState = { granted: true, date: now };
 
-  // Write to AsyncStorage first (fast, offline-safe)
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  // Write to SecureStore first (fast, offline-safe)
+  await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(state));
 
   // Write to Supabase (authoritative)
   try {
@@ -74,19 +74,18 @@ export async function grantAIConsent(): Promise<void> {
         .eq('id', user.id);
     }
   } catch {
-    // Supabase write failed — AsyncStorage still has the consent
+    // Supabase write failed — SecureStore still has the consent
   }
 }
 
 /**
- * Revoke AI consent. Clears both Supabase and AsyncStorage.
- * If Supabase fails, still clears AsyncStorage.
+ * Revoke AI consent. Clears SecureStore cache and writes revoked state to Supabase.
+ * If Supabase fails, the cache is still cleared so getAIConsent() will re-fetch.
  */
 export async function revokeAIConsent(): Promise<void> {
   const state: ConsentState = { granted: false, date: null };
 
-  // Write to AsyncStorage first
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(state));
 
   // Write to Supabase
   try {

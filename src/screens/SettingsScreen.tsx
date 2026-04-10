@@ -59,6 +59,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
   const [deleteCountdown, setDeleteCountdown] = useState(5);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [authProvider, setAuthProvider] = useState<string>('email');
+  const [deletePassword, setDeletePassword] = useState('');
 
   // Re-fetch profile every time screen gains focus (fixes stale tier after upgrade)
   useFocusEffect(
@@ -70,6 +72,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   async function fetchUserData() {
     const { data: { user } } = await supabase.auth.getUser();
     setUserEmail(user?.email || null);
+    setAuthProvider(user?.app_metadata?.provider || 'email');
 
     const profile = await getProfile();
     if (profile) {
@@ -194,6 +197,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     if (countdownRef.current) clearInterval(countdownRef.current);
     setShowDeleteWarning(false);
     setDeleteCountdown(5);
+    setDeletePassword('');
   }
 
   async function handleDeleteAccount() {
@@ -213,10 +217,17 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   }
 
   async function performAccountDeletion() {
+    const isOAuth = authProvider === 'apple' || authProvider === 'google';
+    // Email users must provide a password
+    if (!isOAuth && !deletePassword.trim()) {
+      Alert.alert('Password Required', 'Please enter your password to confirm account deletion.');
+      return;
+    }
+    const passwordToSend = isOAuth ? undefined : deletePassword.trim();
     cancelDelete();
     try {
       setLoading(true);
-      const result = await deleteUserAccount();
+      const result = await deleteUserAccount(passwordToSend);
 
       if (!result.success) {
         Alert.alert('Deletion Error', result.error);
@@ -494,14 +505,34 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
               </View>
             )}
 
+            {authProvider === 'email' && (
+              <View style={styles.deletePasswordSection}>
+                <Text style={styles.deletePasswordLabel}>
+                  Enter your password to confirm:
+                </Text>
+                <TextInput
+                  testID="settings-delete-password-input"
+                  style={styles.deletePasswordInput}
+                  placeholder="Your password"
+                  placeholderTextColor="#6b5e8a"
+                  secureTextEntry
+                  value={deletePassword}
+                  onChangeText={setDeletePassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  accessibilityLabel="Enter password to confirm deletion"
+                />
+              </View>
+            )}
+
             <TouchableOpacity
               testID="settings-delete-confirm-button"
               style={[
                 styles.deleteConfirmButton,
-                deleteCountdown > 0 && styles.deleteConfirmButtonDisabled,
+                (deleteCountdown > 0 || (authProvider === 'email' && !deletePassword.trim())) && styles.deleteConfirmButtonDisabled,
               ]}
               onPress={performAccountDeletion}
-              disabled={deleteCountdown > 0}
+              disabled={deleteCountdown > 0 || (authProvider === 'email' && !deletePassword.trim())}
               accessibilityRole="button"
               accessibilityLabel={
                 deleteCountdown > 0
@@ -511,7 +542,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             >
               <Text style={[
                 styles.deleteConfirmButtonText,
-                deleteCountdown > 0 && styles.deleteConfirmButtonTextDisabled,
+                (deleteCountdown > 0 || (authProvider === 'email' && !deletePassword.trim())) && styles.deleteConfirmButtonTextDisabled,
               ]}>
                 {deleteCountdown > 0
                   ? `Delete Everything (${deleteCountdown})`
@@ -1127,6 +1158,23 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 15,
     fontWeight: '600',
+  },
+  deletePasswordSection: {
+    marginBottom: 16,
+  },
+  deletePasswordLabel: {
+    fontSize: 14,
+    color: '#c0b4e0',
+    marginBottom: 8,
+  },
+  deletePasswordInput: {
+    backgroundColor: '#2a2040',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#5a3a3a',
+    padding: 14,
+    color: '#e0d4f7',
+    fontSize: 16,
   },
   deleteConfirmButton: {
     backgroundColor: '#8b2a2a',

@@ -146,6 +146,11 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
       return;
     }
 
+    if (dreamText.length > 10000) {
+      Alert.alert('Error', 'Dream text is too long. Please keep it under 10,000 characters.');
+      return;
+    }
+
     if (moods.length === 0) {
       Alert.alert('Error', 'Please select how your dream felt');
       return;

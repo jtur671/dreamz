@@ -51,18 +51,22 @@ export async function resetOnboardingState(): Promise<void> {
 /**
  * Sets the test account's subscription_tier to 'premium'.
  * Call this in beforeAll for any test suite that needs premium features.
+ *
+ * Uses the service_role key + update_subscription_tier RPC because the
+ * profiles_view_update trigger locks subscription_tier to its old value
+ * on normal view updates.
  */
 export async function setTestAccountPremium(): Promise<void> {
   const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('[setTestAccountPremium] Supabase env vars not set — skipping');
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    console.warn('[setTestAccountPremium] Supabase env vars not set (need SUPABASE_SERVICE_ROLE_KEY) — skipping');
     return;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase: any = createClient(supabaseUrl, supabaseAnonKey);
+  const supabase: any = createClient(supabaseUrl, supabaseServiceRoleKey);
 
   const { error: signInError } = await supabase.auth.signInWithPassword({
     email: TEST_EMAIL,
@@ -81,10 +85,10 @@ export async function setTestAccountPremium(): Promise<void> {
     return;
   }
 
-  const { error } = await supabase
-    .from('profiles')
-    .update({ subscription_tier: 'premium' })
-    .eq('id', user.id);
+  const { error } = await supabase.rpc('update_subscription_tier', {
+    p_user_id: user.id,
+    p_tier: 'premium',
+  });
 
   if (error) {
     console.warn('[setTestAccountPremium] Failed to set premium:', error.message);
@@ -97,18 +101,22 @@ export async function setTestAccountPremium(): Promise<void> {
  * Sets the test account's subscription_tier to 'free' so the upgrade button
  * is visible on the Settings screen (it only renders when tier is free).
  * Call this in beforeAll for paywall tests.
+ *
+ * Uses the service_role key + update_subscription_tier RPC because the
+ * profiles_view_update trigger locks subscription_tier to its old value
+ * on normal view updates.
  */
 export async function setTestAccountFree(): Promise<void> {
   const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('[setTestAccountFree] Supabase env vars not set — skipping');
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    console.warn('[setTestAccountFree] Supabase env vars not set (need SUPABASE_SERVICE_ROLE_KEY) — skipping');
     return;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase: any = createClient(supabaseUrl, supabaseAnonKey);
+  const supabase: any = createClient(supabaseUrl, supabaseServiceRoleKey);
 
   const { error: signInError } = await supabase.auth.signInWithPassword({
     email: TEST_EMAIL,
@@ -127,13 +135,59 @@ export async function setTestAccountFree(): Promise<void> {
     return;
   }
 
-  const { error } = await supabase
-    .from('profiles')
-    .update({ subscription_tier: 'free' })
-    .eq('id', user.id);
+  const { error } = await supabase.rpc('update_subscription_tier', {
+    p_user_id: user.id,
+    p_tier: 'free',
+  });
 
   if (error) {
     console.warn('[setTestAccountFree] Failed to set free:', error.message);
+  }
+
+  await supabase.auth.signOut();
+}
+
+/**
+ * Sets onboarding_completed = true for the test account.
+ * Call this in afterAll for onboarding tests to prevent state leaking
+ * into subsequent test suites.
+ */
+export async function completeTestAccountOnboarding(): Promise<void> {
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('[completeTestAccountOnboarding] Supabase env vars not set — skipping');
+    return;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase: any = createClient(supabaseUrl, supabaseAnonKey);
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: TEST_EMAIL,
+    password: TEST_PASSWORD,
+  });
+
+  if (signInError) {
+    console.warn('[completeTestAccountOnboarding] Sign-in failed:', signInError.message);
+    return;
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    console.warn('[completeTestAccountOnboarding] No user after sign-in');
+    await supabase.auth.signOut();
+    return;
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ onboarding_completed: true })
+    .eq('id', user.id);
+
+  if (error) {
+    console.warn('[completeTestAccountOnboarding] Failed:', error.message);
   }
 
   await supabase.auth.signOut();

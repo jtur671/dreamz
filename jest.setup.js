@@ -4,10 +4,17 @@
 process.env.EXPO_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
 process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
 
-// Mock AsyncStorage
+// Mock AsyncStorage (still used by other modules)
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
+
+// Mock expo-secure-store (used for session storage and draft encryption)
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: jest.fn().mockResolvedValue(null),
+  setItemAsync: jest.fn().mockResolvedValue(undefined),
+  deleteItemAsync: jest.fn().mockResolvedValue(undefined),
+}), { virtual: true });
 
 // Mock react-native-url-polyfill
 jest.mock('react-native-url-polyfill/auto', () => ({}));

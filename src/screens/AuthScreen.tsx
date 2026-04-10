@@ -49,6 +49,12 @@ export default function AuthScreen() {
       return;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
     setLoading(true);
 
     if (isSignUp) {
@@ -105,7 +111,7 @@ export default function AuthScreen() {
     }
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
-      redirectTo: 'https://dreamz-journal.com/reset.html',
+      redirectTo: process.env.EXPO_PUBLIC_PASSWORD_RESET_URL || 'https://dreamz-journal.com/reset.html',
     });
     setLoading(false);
     if (error && (error as any).status >= 500) {

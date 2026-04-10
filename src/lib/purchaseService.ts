@@ -22,7 +22,7 @@ export async function initPurchases(): Promise<void> {
   const apiKey = Platform.OS === 'ios' ? REVENUECAT_API_KEY_IOS : REVENUECAT_API_KEY_ANDROID;
 
   if (!apiKey) {
-    console.warn('[RevenueCat] API key not configured for', Platform.OS);
+    if (__DEV__) console.warn('[RevenueCat] API key not configured for', Platform.OS);
     purchasesConfigured = false;
     return;
   }
@@ -31,7 +31,7 @@ export async function initPurchases(): Promise<void> {
     Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.DEBUG : LOG_LEVEL.INFO);
     await Purchases.configure({ apiKey });
     purchasesConfigured = true;
-    console.log('[RevenueCat] Configured successfully');
+    if (__DEV__) console.log('[RevenueCat] Configured successfully');
   } catch (error) {
     console.error('[RevenueCat] Configure failed:', error);
     purchasesConfigured = false;

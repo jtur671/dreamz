@@ -1,11 +1,12 @@
 import { device, element, by, expect, waitFor } from 'detox';
 import { launchApp, tapById, waitForVisible, waitForNotVisible, navigateToTab, waitForAnyVisible } from './helpers/actions';
-import { setTestAccountFree, setTestAccountPremium } from './helpers/db';
+import { setTestAccountFree, setTestAccountPremium, grantTestAccountAIConsent } from './helpers/db';
 
 describe('Paywall Screen', () => {
   beforeAll(async () => {
     // Set account to free so the upgrade button is visible
     await setTestAccountFree();
+    await grantTestAccountAIConsent();
 
     await launchApp(true);
     // DreamContext background image backfill keeps dispatch queue busy permanently
@@ -43,7 +44,7 @@ describe('Paywall Screen', () => {
     await new Promise(resolve => setTimeout(resolve, 500));
     // Verify feature comparison content is rendered — check premium features
     // which are inside the styled column with better visibility
-    await expect(element(by.text('Unlimited readings'))).toBeVisible();
+    await expect(element(by.text('1 reading per day'))).toBeVisible();
     await expect(element(by.text('Pattern tracking'))).toBeVisible();
   });
 
@@ -65,7 +66,7 @@ describe('Paywall Screen', () => {
     if (match === 0) {
       // Fallback UI — both static prices should be visible
       await expect(element(by.text('$5.99'))).toBeVisible();
-      await expect(element(by.text('$35.99'))).toBeVisible();
+      await expect(element(by.text('$49.99'))).toBeVisible();
     } else {
       // Live pricing from RevenueCat (may have monthly only, no annual)
       await expect(element(by.id('paywall-plan-monthly'))).toBeVisible();

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import ViewShot from 'react-native-view-shot';
 import type { DreamReading, DreamSymbol } from '../types';
 import { generateDreamImage } from '../lib/dreamService';
 import { supabase } from '../lib/supabase';
+import { refreshDreamImageUrl, getDreamImagePath } from '../lib/imageService';
 import PaintBrushAnimation from '../components/PaintBrushAnimation';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
@@ -38,6 +39,7 @@ export default function ReadingScreen() {
   const isPremium = subscriptionTier === 'premium' || fromGrimoire;
   const [imageFailed, setImageFailed] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(reading.image_url || null);
+  const imageRefreshAttempted = useRef(false);
 
   const viewShotRef = useRef<ViewShot>(null);
   const [showShareCard, setShowShareCard] = useState(false);
@@ -64,6 +66,37 @@ export default function ReadingScreen() {
       })
       .catch(() => {});
   }, [reading.symbols]);
+
+  // When the image fails to load (e.g. expired signed URL), try refreshing
+  const handleImageError = useCallback(async () => {
+    if (imageRefreshAttempted.current) {
+      setImageFailed(true);
+      return;
+    }
+    imageRefreshAttempted.current = true;
+
+    // Try to get a fresh signed URL using the stored path or derived path
+    let storagePath = reading.image_path;
+
+    if (!storagePath && params.dreamId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        storagePath = getDreamImagePath(user.id, params.dreamId);
+      }
+    }
+
+    if (!storagePath) {
+      setImageFailed(true);
+      return;
+    }
+
+    const freshUrl = await refreshDreamImageUrl(storagePath);
+    if (freshUrl) {
+      setImageUrl(freshUrl);
+    } else {
+      setImageFailed(true);
+    }
+  }, [reading, params.dreamId]);
 
   // Lazy-load dream image if not already present (premium only)
   useEffect(() => {
@@ -234,7 +267,7 @@ Interpreted with Dreamz`;
               source={{ uri: imageUrl }}
               style={[styles.dreamImage, { width: screenWidth, height: screenWidth * 0.75 }]}
               resizeMode="cover"
-              onError={() => setImageFailed(true)}
+              onError={handleImageError}
             />
             <View style={styles.imageOverlay} />
           </View>

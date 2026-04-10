@@ -1,7 +1,7 @@
 import { device, element, by, expect, waitFor } from 'detox';
 import { launchApp, tapById, waitForVisible, waitForAnyVisible, pollForVisible, pollForVisibleByText, pollForNotVisibleByText, navigateToTab } from './helpers/actions';
 import { SHORT_DREAM_TEXT, TEST_DREAM_TEXT, SQL_WILDCARD_TEXT } from './helpers/dreamFactory';
-import { setTestAccountPremium } from './helpers/db';
+import { setTestAccountPremium, grantTestAccountAIConsent } from './helpers/db';
 
 /**
  * After a dream submission (which may succeed or fail), navigate back to
@@ -49,6 +49,7 @@ describe('Negative Tests', () => {
   beforeAll(async () => {
     // Upgrade test account to premium so reading limits never block dream submissions
     await setTestAccountPremium();
+    await grantTestAccountAIConsent();
     await launchApp(true);
     // DreamContext background image backfill fires DALL-E 3 network requests
     // on fresh launch. Disable sync so all subsequent actions are immediate.

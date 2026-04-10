@@ -17,6 +17,7 @@ export interface DreamReading {
   tags: string[];
   content_warnings?: string[];
   image_url?: string;
+  image_path?: string;
 }
 
 export interface Dream {

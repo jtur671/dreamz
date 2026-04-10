@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,8 @@ import { deleteDream as deleteDreamService } from '../lib/dreamService';
 import { getDreamStats } from '../lib/insightsService';
 import { useAIConsent } from '../hooks/useAIConsent';
 import AIConsentModal from '../components/AIConsentModal';
+import { refreshDreamImageUrl, getDreamImagePath } from '../lib/imageService';
+import { supabase } from '../lib/supabase';
 import type { Dream } from '../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
@@ -68,6 +70,93 @@ function getDateBadge(dateString: string): { month: string; day: string } {
     month: date.toLocaleDateString('en-US', { month: 'short' }),
     day: date.getDate().toString(),
   };
+}
+
+/**
+ * Dream card with image background that auto-refreshes expired signed URLs.
+ */
+function DreamImageCard({
+  dream,
+  imageUrl: initialUrl,
+  style,
+  imageStyle,
+  onPress,
+  onLongPress,
+  accessibilityLabel,
+  accessibilityHint,
+  children,
+}: {
+  dream: Dream;
+  imageUrl: string;
+  style: any;
+  imageStyle: any;
+  onPress: () => void;
+  onLongPress: () => void;
+  accessibilityLabel: string;
+  accessibilityHint: string;
+  children: React.ReactNode;
+}) {
+  const [url, setUrl] = useState(initialUrl);
+  const [fallen, setFallen] = useState(false);
+  const refreshAttempted = useRef(false);
+
+  const handleError = useCallback(async () => {
+    if (refreshAttempted.current) {
+      setFallen(true);
+      return;
+    }
+    refreshAttempted.current = true;
+
+    let storagePath = dream.reading?.image_path;
+    if (!storagePath) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        storagePath = getDreamImagePath(user.id, dream.id);
+      }
+    }
+    if (!storagePath) {
+      setFallen(true);
+      return;
+    }
+
+    const freshUrl = await refreshDreamImageUrl(storagePath);
+    if (freshUrl) {
+      setUrl(freshUrl);
+    } else {
+      setFallen(true);
+    }
+  }, [dream]);
+
+  if (fallen) {
+    // Fall back to non-image card rendering (caller handles this)
+    return null;
+  }
+
+  return (
+    <TouchableOpacity
+      testID="grimoire-dream-item"
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      style={style}
+      onPress={onPress}
+      onLongPress={onLongPress}
+    >
+      <ImageBackground
+        source={{ uri: url }}
+        style={styles.journalCardImage}
+        imageStyle={imageStyle}
+        onError={handleError}
+      >
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.7)']}
+          style={styles.journalCardOverlay}
+        >
+          {children}
+        </LinearGradient>
+      </ImageBackground>
+    </TouchableOpacity>
+  );
 }
 
 export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
@@ -377,29 +466,18 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
 
     if (imageUrl) {
       return (
-        <TouchableOpacity
-          testID="grimoire-dream-item"
-          accessibilityRole="button"
-          accessibilityLabel={cardLabel}
-          accessibilityHint={hasReading ? 'Double tap to view reading' : 'No reading available'}
+        <DreamImageCard
+          dream={item}
+          imageUrl={imageUrl}
           style={styles.journalCard}
+          imageStyle={styles.journalCardImageStyle}
           onPress={() => handleDreamPress(item)}
           onLongPress={() => handleDeletePress(item)}
-          disabled={!hasReading}
+          accessibilityLabel={cardLabel}
+          accessibilityHint={hasReading ? 'Double tap to view reading' : 'No reading available'}
         >
-          <ImageBackground
-            source={{ uri: imageUrl }}
-            style={styles.journalCardImage}
-            imageStyle={styles.journalCardImageStyle}
-          >
-            <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.7)']}
-              style={styles.journalCardOverlay}
-            >
-              {cardInner}
-            </LinearGradient>
-          </ImageBackground>
-        </TouchableOpacity>
+          {cardInner}
+        </DreamImageCard>
       );
     }
 

@@ -67,7 +67,8 @@
           "androidAppId": "ca-app-pub-8597027816949059~7210132219",
           "iosAppId": "ca-app-pub-8597027816949059~7899830102"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {

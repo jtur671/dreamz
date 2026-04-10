@@ -100,7 +100,7 @@ export async function exportUserDreams(): Promise<ExportResult> {
  * Permanently deletes all user data via edge function
  * (dreams, profile, and auth user)
  */
-export async function deleteUserAccount(): Promise<DeleteAccountResult> {
+export async function deleteUserAccount(password?: string): Promise<DeleteAccountResult> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -108,7 +108,7 @@ export async function deleteUserAccount(): Promise<DeleteAccountResult> {
     }
 
     const { data, error } = await supabase.functions.invoke('delete-account', {
-      body: {},
+      body: password ? { password } : {},
     });
 
     if (error) {

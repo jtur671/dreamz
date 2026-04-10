@@ -75,6 +75,47 @@ Deno.serve(async (req: Request) => {
       return errorResponse("UNAUTHORIZED", "Invalid or expired token", 401);
     }
 
+    // Determine auth provider from user metadata
+    const provider = user.app_metadata?.provider || "email";
+    const isOAuthUser = provider === "apple" || provider === "google";
+
+    // Parse request body
+    let body: { password?: string };
+    try {
+      body = await req.json();
+    } catch {
+      body = {};
+    }
+
+    // Require re-authentication with password for email/password users only.
+    // OAuth users are already verified by their provider; the valid JWT is sufficient.
+    if (!isOAuthUser) {
+      if (!body.password || typeof body.password !== "string") {
+        return errorResponse(
+          "VALIDATION_ERROR",
+          "Password is required to confirm account deletion",
+          400
+        );
+      }
+
+      // Verify password by attempting sign-in
+      const { error: reAuthError } = await userClient.auth.signInWithPassword({
+        email: user.email!,
+        password: body.password,
+      });
+
+      if (reAuthError) {
+        console.error(`[${correlationId}] Re-auth failed: ${reAuthError.message}`);
+        return errorResponse(
+          "UNAUTHORIZED",
+          "Incorrect password. Please verify and try again.",
+          401
+        );
+      }
+    } else {
+      console.log(`[${correlationId}] OAuth user (${provider}) — skipping password re-auth`);
+    }
+
     const userId = user.id;
     console.log(`[${correlationId}] Processing account deletion for user: ${userId}`);
 
@@ -105,11 +146,8 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Step 2: Delete all user's dreams
-    const { error: dreamsError } = await adminClient
-      .from("dreams")
-      .delete()
-      .eq("user_id", userId);
+    // Step 2: Delete all user's dreams (including soft-deleted, bypasses the view and RLS)
+    const { error: dreamsError } = await adminClient.rpc("delete_all_user_dreams", { p_user_id: userId });
 
     if (dreamsError) {
       console.error(`[${correlationId}] Failed to delete dreams: ${dreamsError.message}`);
@@ -121,6 +159,8 @@ Deno.serve(async (req: Request) => {
       );
     }
     console.log(`[${correlationId}] Dreams deleted`);
+
+    // reading_log is cleaned up by ON DELETE CASCADE when auth user is deleted
 
     // Step 3: Delete user profile
     const { error: profileError } = await adminClient

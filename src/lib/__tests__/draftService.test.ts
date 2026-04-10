@@ -3,17 +3,17 @@
  * @file src/lib/__tests__/draftService.test.ts
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// Mock expo-secure-store - must be before imports due to jest.mock hoisting
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: jest.fn(),
+  setItemAsync: jest.fn(),
+  deleteItemAsync: jest.fn(),
+}), { virtual: true });
+
+import * as SecureStore from 'expo-secure-store';
 import { saveDraft, loadDraft, clearDraft, hasDraft, DreamDraft } from '../draftService';
 
-// Mock AsyncStorage
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  setItem: jest.fn(),
-  getItem: jest.fn(),
-  removeItem: jest.fn(),
-}));
-
-const mockedAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
+const mockSecureStore = SecureStore as jest.Mocked<typeof SecureStore>;
 
 describe('Draft Service', () => {
   beforeEach(() => {
@@ -27,8 +27,9 @@ describe('Draft Service', () => {
   });
 
   describe('saveDraft', () => {
-    it('should save draft with timestamp to AsyncStorage', async () => {
-      mockedAsyncStorage.setItem.mockResolvedValueOnce(undefined);
+    it('should save draft with timestamp to SecureStore', async () => {
+      mockSecureStore.setItemAsync.mockResolvedValue(undefined);
+      mockSecureStore.getItemAsync.mockResolvedValue(null);
 
       await saveDraft({
         dreamText: 'I was flying over mountains',
@@ -36,7 +37,7 @@ describe('Draft Service', () => {
         dreamType: 'dream',
       });
 
-      expect(mockedAsyncStorage.setItem).toHaveBeenCalledWith(
+      expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
         'dreamz_draft',
         JSON.stringify({
           dreamText: 'I was flying over mountains',
@@ -48,7 +49,8 @@ describe('Draft Service', () => {
     });
 
     it('should save nightmare draft', async () => {
-      mockedAsyncStorage.setItem.mockResolvedValueOnce(undefined);
+      mockSecureStore.setItemAsync.mockResolvedValue(undefined);
+      mockSecureStore.getItemAsync.mockResolvedValue(null);
 
       await saveDraft({
         dreamText: 'Being chased through dark halls',
@@ -56,14 +58,14 @@ describe('Draft Service', () => {
         dreamType: 'nightmare',
       });
 
-      expect(mockedAsyncStorage.setItem).toHaveBeenCalledWith(
+      expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
         'dreamz_draft',
         expect.stringContaining('"dreamType":"nightmare"')
       );
     });
 
     it('should silently fail on storage error', async () => {
-      mockedAsyncStorage.setItem.mockRejectedValueOnce(new Error('Storage full'));
+      mockSecureStore.setItemAsync.mockRejectedValueOnce(new Error('Storage full'));
 
       // Should not throw
       await expect(
@@ -78,7 +80,7 @@ describe('Draft Service', () => {
 
   describe('loadDraft', () => {
     it('should return null when no draft exists', async () => {
-      mockedAsyncStorage.getItem.mockResolvedValueOnce(null);
+      mockSecureStore.getItemAsync.mockResolvedValue(null);
 
       const result = await loadDraft();
 
@@ -92,7 +94,7 @@ describe('Draft Service', () => {
         dreamType: 'dream',
         savedAt: '2025-01-15T09:00:00.000Z',
       };
-      mockedAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(savedDraft));
+      mockSecureStore.getItemAsync.mockResolvedValueOnce(JSON.stringify(savedDraft));
 
       const result = await loadDraft();
 
@@ -106,13 +108,16 @@ describe('Draft Service', () => {
         dreamType: 'dream',
         savedAt: '2025-01-01T10:00:00.000Z', // 14 days ago
       };
-      mockedAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(oldDraft));
-      mockedAsyncStorage.removeItem.mockResolvedValueOnce(undefined);
+      mockSecureStore.getItemAsync.mockImplementation(async (key: string) => {
+        if (key === 'dreamz_draft') return JSON.stringify(oldDraft);
+        return null;
+      });
+      mockSecureStore.deleteItemAsync.mockResolvedValue(undefined);
 
       const result = await loadDraft();
 
       expect(result).toBeNull();
-      expect(mockedAsyncStorage.removeItem).toHaveBeenCalledWith('dreamz_draft');
+      expect(mockSecureStore.deleteItemAsync).toHaveBeenCalledWith('dreamz_draft');
     });
 
     it('should keep drafts exactly 7 days old', async () => {
@@ -122,16 +127,16 @@ describe('Draft Service', () => {
         dreamType: 'dream',
         savedAt: '2025-01-08T10:00:00.000Z', // exactly 7 days ago
       };
-      mockedAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(sevenDayOldDraft));
+      mockSecureStore.getItemAsync.mockResolvedValueOnce(JSON.stringify(sevenDayOldDraft));
 
       const result = await loadDraft();
 
       expect(result).toEqual(sevenDayOldDraft);
-      expect(mockedAsyncStorage.removeItem).not.toHaveBeenCalled();
+      expect(mockSecureStore.deleteItemAsync).not.toHaveBeenCalled();
     });
 
     it('should return null on JSON parse error', async () => {
-      mockedAsyncStorage.getItem.mockResolvedValueOnce('invalid json {{{');
+      mockSecureStore.getItemAsync.mockResolvedValueOnce('invalid json {{{');
 
       const result = await loadDraft();
 
@@ -139,7 +144,7 @@ describe('Draft Service', () => {
     });
 
     it('should return null on storage read error', async () => {
-      mockedAsyncStorage.getItem.mockRejectedValueOnce(new Error('Read failed'));
+      mockSecureStore.getItemAsync.mockRejectedValueOnce(new Error('Read failed'));
 
       const result = await loadDraft();
 
@@ -148,16 +153,17 @@ describe('Draft Service', () => {
   });
 
   describe('clearDraft', () => {
-    it('should remove draft from AsyncStorage', async () => {
-      mockedAsyncStorage.removeItem.mockResolvedValueOnce(undefined);
+    it('should remove draft from SecureStore', async () => {
+      mockSecureStore.deleteItemAsync.mockResolvedValue(undefined);
+      mockSecureStore.getItemAsync.mockResolvedValue(null);
 
       await clearDraft();
 
-      expect(mockedAsyncStorage.removeItem).toHaveBeenCalledWith('dreamz_draft');
+      expect(mockSecureStore.deleteItemAsync).toHaveBeenCalledWith('dreamz_draft');
     });
 
     it('should silently fail on storage error', async () => {
-      mockedAsyncStorage.removeItem.mockRejectedValueOnce(new Error('Remove failed'));
+      mockSecureStore.deleteItemAsync.mockRejectedValueOnce(new Error('Remove failed'));
 
       // Should not throw
       await expect(clearDraft()).resolves.toBeUndefined();
@@ -172,7 +178,7 @@ describe('Draft Service', () => {
         dreamType: 'dream',
         savedAt: '2025-01-15T09:00:00.000Z',
       };
-      mockedAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(draft));
+      mockSecureStore.getItemAsync.mockResolvedValueOnce(JSON.stringify(draft));
 
       const result = await hasDraft();
 
@@ -180,7 +186,7 @@ describe('Draft Service', () => {
     });
 
     it('should return false when no draft exists', async () => {
-      mockedAsyncStorage.getItem.mockResolvedValueOnce(null);
+      mockSecureStore.getItemAsync.mockResolvedValue(null);
 
       const result = await hasDraft();
 
@@ -194,7 +200,7 @@ describe('Draft Service', () => {
         dreamType: 'dream',
         savedAt: '2025-01-15T09:00:00.000Z',
       };
-      mockedAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(emptyDraft));
+      mockSecureStore.getItemAsync.mockResolvedValueOnce(JSON.stringify(emptyDraft));
 
       const result = await hasDraft();
 
@@ -208,7 +214,7 @@ describe('Draft Service', () => {
         dreamType: 'dream',
         savedAt: '2025-01-15T09:00:00.000Z',
       };
-      mockedAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(whitespaceDraft));
+      mockSecureStore.getItemAsync.mockResolvedValueOnce(JSON.stringify(whitespaceDraft));
 
       const result = await hasDraft();
 
@@ -222,8 +228,11 @@ describe('Draft Service', () => {
         dreamType: 'dream',
         savedAt: '2025-01-01T10:00:00.000Z', // expired
       };
-      mockedAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(expiredDraft));
-      mockedAsyncStorage.removeItem.mockResolvedValueOnce(undefined);
+      mockSecureStore.getItemAsync.mockImplementation(async (key: string) => {
+        if (key === 'dreamz_draft') return JSON.stringify(expiredDraft);
+        return null;
+      });
+      mockSecureStore.deleteItemAsync.mockResolvedValue(undefined);
 
       const result = await hasDraft();
 

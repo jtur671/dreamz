@@ -92,10 +92,7 @@ describe('Auth Screen', () => {
     await dismissKeyboard('auth-password-input');
     await tapById('auth-submit-button');
 
-    await waitForAnyVisible(
-      [{ text: 'Sign In Error' }, { text: 'Sign Up Error' }],
-      10000,
-    );
+    await pollForVisibleByText('Please enter a valid email address', 10000);
   });
 
   it('should show error for wrong password and offer to create account', async () => {
@@ -189,12 +186,14 @@ describe('Auth Screen', () => {
 
     // Switch to sign-up mode
     await tapById('auth-mode-switch');
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Forgot password should not be visible
     await expect(element(by.id('auth-forgot-password'))).not.toBeVisible();
 
     // Switch back to sign-in
     await tapById('auth-mode-switch');
+    await new Promise(resolve => setTimeout(resolve, 500));
     await expect(element(by.id('auth-forgot-password'))).toBeVisible();
   });
 
