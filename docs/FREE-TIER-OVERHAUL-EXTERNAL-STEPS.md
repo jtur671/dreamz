@@ -68,7 +68,7 @@ In dev builds, test ad IDs are used automatically (`__DEV__` check in `adService
 1. Go to https://appstoreconnect.apple.com
 2. Navigate to your app > Subscriptions
 3. Update **Monthly** price: $4.99 -> **$5.99**
-4. Update **Annual** price: $29.99 -> **$35.99**
+4. Update **Annual** price: $29.99 -> **$49.99**
 5. Save and submit for review if needed
 
 ---
@@ -78,7 +78,7 @@ In dev builds, test ad IDs are used automatically (`__DEV__` check in `adService
 1. Go to https://play.google.com/console
 2. Navigate to your app > Monetize > Subscriptions
 3. Update **Monthly** price: $4.99 -> **$5.99**
-4. Update **Annual** price: $29.99 -> **$35.99**
+4. Update **Annual** price: $29.99 -> **$49.99**
 5. Save
 
 ---
@@ -119,8 +119,8 @@ After all the above:
 
 - [ ] **Free user submits dream** — should get reading (no limit), uses gpt-5-nano (check Supabase logs), no image generated, interstitial ad shows
 - [ ] **Premium user submits dream** — uses gpt-5-mini, image generates, no ad
-- [ ] **Paywall shows $5.99/mo and $35.99/yr** (fallback and live pricing)
-- [ ] **Onboarding shows updated features** ("Unlimited readings" for free, "Deeper AI readings / Dream imagery / Ad-free" for premium)
+- [ ] **Paywall shows $5.99/mo and $49.99/yr** (fallback and live pricing)
+- [ ] **Onboarding shows updated features** ("1 reading per day" for free, "30 readings per month / Dream imagery / Ad-free" for premium)
 - [ ] **Settings upgrade text** reads "Deeper readings, dream imagery & no ads"
 - [ ] **Ad failure doesn't block dream flow** — kill network during ad load, dream still completes
 - [ ] **E2E tests pass** — `npm run detox:test:ios`

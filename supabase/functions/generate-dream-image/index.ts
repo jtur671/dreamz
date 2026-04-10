@@ -17,7 +17,7 @@ import {
 } from "../_shared/cors.ts";
 
 const OPENAI_IMAGE_URL = "https://api.openai.com/v1/images/generations";
-const OPENAI_IMAGE_MODEL = "gpt-image-1.5";
+const OPENAI_IMAGE_MODEL = "gpt-image-1-mini";
 const IMAGE_TIMEOUT_MS = 60000;
 
 Deno.serve(async (req: Request) => {
@@ -55,10 +55,10 @@ Deno.serve(async (req: Request) => {
       return errorResponse("UNAUTHORIZED", "Invalid or expired token", 401);
     }
 
-    // Only premium users can generate dream images
+    // Only premium users with AI consent can generate dream images
     const { data: profile } = await supabase
       .from("profiles")
-      .select("subscription_tier")
+      .select("subscription_tier, ai_consent_granted")
       .eq("id", user.id)
       .single();
 
@@ -66,6 +66,14 @@ Deno.serve(async (req: Request) => {
       return errorResponse(
         "PREMIUM_REQUIRED",
         "Dream imagery is a premium feature",
+        403
+      );
+    }
+
+    if (!profile?.ai_consent_granted) {
+      return errorResponse(
+        "CONSENT_REQUIRED",
+        "AI consent must be granted before generating dream images. Enable it in Settings.",
         403
       );
     }
@@ -81,12 +89,23 @@ Deno.serve(async (req: Request) => {
       return errorResponse("VALIDATION_ERROR", "dream_id and dream_text are required", 400);
     }
 
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_RE.test(body.dream_id)) {
+      return errorResponse("VALIDATION_ERROR", "Invalid dream_id format", 400);
+    }
+
     // Generate image
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), IMAGE_TIMEOUT_MS);
 
-    const dreamSnippet = body.dream_text.slice(0, 200);
-    const symbolName = body.symbol_name || "mysterious vision";
+    // Sanitize user inputs before injecting into the image prompt
+    const dreamSnippet = body.dream_text
+      .slice(0, 200)
+      .replace(/---+/g, "— — —")
+      .replace(/[^\w\s.,!?'"()-]/g, " ");
+    const symbolName = (body.symbol_name || "mysterious vision")
+      .slice(0, 50)
+      .replace(/[^\w\s'-]/g, "");
     const imagePrompt = `Surreal dreamscape painting: ${dreamSnippet}. Central focus on ${symbolName}. Style: ethereal digital art, soft glowing light, dreamy atmosphere, muted purples and blues, magical realism. Painterly, atmospheric, evocative. No text, no words, no letters.`;
 
     const response = await fetch(OPENAI_IMAGE_URL, {
@@ -121,11 +140,18 @@ Deno.serve(async (req: Request) => {
     }
 
     // Decode base64 and upload to Supabase Storage
-    let permanentUrl: string | null = null;
+    let signedUrl: string | null = null;
     const imgBuffer = Uint8Array.from(atob(b64Image), (c) => c.charCodeAt(0));
     const storagePath = `${user.id}/${body.dream_id}.png`;
 
-    const { error: uploadError } = await supabase.storage
+    // Use a service-role client for storage operations on the private bucket
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseServiceKey) {
+      return errorResponse("CONFIG_ERROR", "Service configuration error", 500, true);
+    }
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { error: uploadError } = await serviceClient.storage
       .from("dream-images")
       .upload(storagePath, imgBuffer, {
         contentType: "image/png",
@@ -133,10 +159,15 @@ Deno.serve(async (req: Request) => {
       });
 
     if (!uploadError) {
-      const { data: publicUrlData } = supabase.storage
+      // Bucket is private — generate a signed URL (7-day expiry)
+      const { data: signedUrlData, error: signError } = await serviceClient.storage
         .from("dream-images")
-        .getPublicUrl(storagePath);
-      permanentUrl = publicUrlData.publicUrl;
+        .createSignedUrl(storagePath, 604800);
+      if (signError || !signedUrlData?.signedUrl) {
+        console.error("Signed URL generation failed:", signError?.message);
+        return errorResponse("IMAGE_ERROR", "Failed to generate image URL", 500, true);
+      }
+      signedUrl = signedUrlData.signedUrl;
     } else {
       console.error("Storage upload failed:", uploadError.message);
       return errorResponse("IMAGE_ERROR", "Failed to store image", 500, true);
@@ -154,14 +185,14 @@ Deno.serve(async (req: Request) => {
       await supabase
         .from("dreams")
         .update({
-          reading: { ...dream.reading, image_url: permanentUrl },
+          reading: { ...dream.reading, image_url: signedUrl, image_path: storagePath },
           updated_at: new Date().toISOString(),
         })
         .eq("id", body.dream_id)
         .eq("user_id", user.id);
     }
 
-    return jsonResponse({ success: true, image_url: permanentUrl });
+    return jsonResponse({ success: true, image_url: signedUrl });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error(`Image generation error: ${message}`);

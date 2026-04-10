@@ -347,6 +347,7 @@ Deno.serve(async (req: Request) => {
     // Get Supabase credentials
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !supabaseAnonKey) {
       console.error(`[${correlationId}] Supabase credentials not configured`);
@@ -356,6 +357,11 @@ Deno.serve(async (req: Request) => {
         500,
         true
       );
+    }
+
+    if (!supabaseServiceKey) {
+      console.error(`[${correlationId}] SUPABASE_SERVICE_ROLE_KEY not configured`);
+      return errorResponse("CONFIG_ERROR", "Service configuration error", 500, true);
     }
 
     // Verify authentication
@@ -410,13 +416,63 @@ Deno.serve(async (req: Request) => {
     // Determine subscription tier for model selection
     const { data: profile } = await supabase
       .from("profiles")
-      .select("subscription_tier")
+      .select("subscription_tier, ai_consent_granted")
       .eq("id", user.id)
       .single();
+
+    if (!profile?.ai_consent_granted) {
+      return errorResponse("CONSENT_REQUIRED", "AI consent must be granted before dream analysis. Enable it in Settings.", 403);
+    }
 
     const tier: SubscriptionTier = profile?.subscription_tier === "premium" ? "premium" : "free";
     const modelConfig = MODEL_CONFIG[tier];
     console.log(`[${correlationId}] Using model ${modelConfig.model} for ${tier} tier`);
+
+    // Rate limiting via reading_log (tamper-proof — not affected by dream deletion)
+    // Free: 1 reading per day | Premium: 30 readings per calendar month
+    const adminClient = createClient(
+      supabaseUrl,
+      supabaseServiceKey,
+    );
+
+    if (tier === "free") {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      const { count: todayCount, error: countError } = await adminClient
+        .from("reading_log")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", todayStart.toISOString());
+
+      if (!countError && (todayCount ?? 0) >= 1) {
+        console.log(`[${correlationId}] Free tier daily limit reached`);
+        return errorResponse(
+          "RATE_LIMIT_EXCEEDED",
+          "You've used your free reading for today. Upgrade to premium for up to 30 readings per month.",
+          429
+        );
+      }
+    } else {
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+
+      const { count: monthCount, error: countError } = await adminClient
+        .from("reading_log")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", monthStart.toISOString());
+
+      if (!countError && (monthCount ?? 0) >= 30) {
+        console.log(`[${correlationId}] Premium monthly limit reached`);
+        return errorResponse(
+          "RATE_LIMIT_EXCEEDED",
+          "You've reached your 30 readings for this month. Your limit resets on the 1st.",
+          429
+        );
+      }
+    }
 
     // Build dreamer context for personalized interpretation
     const dreamerContext: DreamerContext = {
@@ -480,13 +536,16 @@ Deno.serve(async (req: Request) => {
       await updateDreamWithReading(supabase, dream_id, user.id, reading);
     }
 
+    // Log the reading for rate limiting (uses service_role to bypass RLS)
+    await adminClient.rpc("log_reading", { p_user_id: user.id });
+
     // Return reading immediately (image generated separately via generate-dream-image)
     return jsonResponse({
       success: true,
       reading: {
         ...reading,
         timestamp: new Date().toISOString(),
-        ...(usedFallback && { fallback: true, debug_error: lastError }),
+        ...(usedFallback && { fallback: true }),
       },
     });
   } catch (error) {

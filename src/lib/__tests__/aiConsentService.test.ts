@@ -3,16 +3,16 @@
  * @file src/lib/__tests__/aiConsentService.test.ts
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { supabase } from '../supabase';
 import { getAIConsent, grantAIConsent, revokeAIConsent } from '../aiConsentService';
 
 const mockedSupabase = supabase as jest.Mocked<typeof supabase>;
 
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  setItem: jest.fn(),
-  getItem: jest.fn(),
-  removeItem: jest.fn(),
+jest.mock('expo-secure-store', () => ({
+  setItemAsync: jest.fn(),
+  getItemAsync: jest.fn(),
+  deleteItemAsync: jest.fn(),
 }));
 
 const STORAGE_KEY = 'dreamz_ai_consent';
@@ -23,19 +23,19 @@ describe('AI Consent Service', () => {
   });
 
   describe('getAIConsent', () => {
-    it('should return cached AsyncStorage value when available', async () => {
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+    it('should return cached SecureStore value when available', async () => {
+      (SecureStore.getItemAsync as jest.Mock).mockResolvedValueOnce(
         JSON.stringify({ granted: true, date: '2026-04-09T00:00:00Z' })
       );
 
       const result = await getAIConsent();
 
       expect(result).toEqual({ granted: true, date: '2026-04-09T00:00:00Z' });
-      expect(AsyncStorage.getItem).toHaveBeenCalledWith(STORAGE_KEY);
+      expect(SecureStore.getItemAsync).toHaveBeenCalledWith(STORAGE_KEY);
     });
 
-    it('should fall back to Supabase profile when AsyncStorage is empty', async () => {
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(null);
+    it('should fall back to Supabase profile when SecureStore is empty', async () => {
+      (SecureStore.getItemAsync as jest.Mock).mockResolvedValueOnce(null);
 
       const mockUser = { id: 'user-123' };
       (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
@@ -56,14 +56,14 @@ describe('AI Consent Service', () => {
       const result = await getAIConsent();
 
       expect(result).toEqual({ granted: true, date: '2026-04-09T00:00:00Z' });
-      expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
         STORAGE_KEY,
         JSON.stringify({ granted: true, date: '2026-04-09T00:00:00Z' })
       );
     });
 
     it('should return false for new users with no consent record', async () => {
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(null);
+      (SecureStore.getItemAsync as jest.Mock).mockResolvedValueOnce(null);
 
       const mockUser = { id: 'user-123' };
       (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
@@ -87,7 +87,7 @@ describe('AI Consent Service', () => {
     });
 
     it('should return false when not authenticated and no cache', async () => {
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(null);
+      (SecureStore.getItemAsync as jest.Mock).mockResolvedValueOnce(null);
       (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
         data: { user: null },
         error: null,
@@ -100,7 +100,7 @@ describe('AI Consent Service', () => {
   });
 
   describe('grantAIConsent', () => {
-    it('should write to both Supabase and AsyncStorage', async () => {
+    it('should write to both Supabase and SecureStore', async () => {
       const mockUser = { id: 'user-123' };
       (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
         data: { user: mockUser },
@@ -116,13 +116,13 @@ describe('AI Consent Service', () => {
       await grantAIConsent();
 
       expect(mockFrom).toHaveBeenCalledWith('profiles');
-      expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
         STORAGE_KEY,
         expect.stringContaining('"granted":true')
       );
     });
 
-    it('should still write AsyncStorage when Supabase fails', async () => {
+    it('should still write SecureStore when Supabase fails', async () => {
       const mockUser = { id: 'user-123' };
       (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
         data: { user: mockUser },
@@ -137,7 +137,7 @@ describe('AI Consent Service', () => {
 
       await grantAIConsent();
 
-      expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
         STORAGE_KEY,
         expect.stringContaining('"granted":true')
       );
@@ -145,7 +145,7 @@ describe('AI Consent Service', () => {
   });
 
   describe('revokeAIConsent', () => {
-    it('should clear both Supabase and AsyncStorage', async () => {
+    it('should write revoked state to both Supabase and SecureStore', async () => {
       const mockUser = { id: 'user-123' };
       (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
         data: { user: mockUser },
@@ -161,13 +161,13 @@ describe('AI Consent Service', () => {
       await revokeAIConsent();
 
       expect(mockFrom).toHaveBeenCalledWith('profiles');
-      expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
         STORAGE_KEY,
         JSON.stringify({ granted: false, date: null })
       );
     });
 
-    it('should still clear AsyncStorage when Supabase fails', async () => {
+    it('should still write SecureStore when Supabase fails', async () => {
       const mockUser = { id: 'user-123' };
       (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
         data: { user: mockUser },
@@ -182,7 +182,7 @@ describe('AI Consent Service', () => {
 
       await revokeAIConsent();
 
-      expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
         STORAGE_KEY,
         JSON.stringify({ granted: false, date: null })
       );

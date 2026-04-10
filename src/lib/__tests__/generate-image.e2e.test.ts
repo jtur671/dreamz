@@ -14,8 +14,11 @@
  * @file src/lib/__tests__/generate-image.e2e.test.ts
  */
 
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://vjqvxraqeptgmbxnipqo.supabase.co';
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error('EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY must be set');
+}
 const TEST_EMAIL = process.env.TEST_USER_EMAIL || '';
 const TEST_PASSWORD = process.env.TEST_USER_PASSWORD || '';
 
@@ -77,6 +80,40 @@ describeFn('Dream Image Generation', () => {
     }
     accessToken = token;
 
+    // Ensure AI consent is granted on the shared test account. Other e2e
+    // suites can leave it revoked (ai-consent.test.ts, settings revoke test),
+    // and generate-dream-image enforces consent server-side (returns 403
+    // CONSENT_REQUIRED otherwise).
+    const userResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+    const userJson = await userResponse.json();
+    if (!userJson?.id) {
+      throw new Error('Failed to fetch user id for consent grant');
+    }
+    const consentResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userJson.id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify({
+          ai_consent_granted: true,
+          ai_consent_date: new Date().toISOString(),
+        }),
+      }
+    );
+    if (!consentResponse.ok) {
+      throw new Error(`Failed to grant AI consent for test account: ${consentResponse.status}`);
+    }
+
     // Use an existing dream from the test account (premium, has dreams)
     const dream = await getFirstDream(accessToken);
     if (!dream) {
@@ -109,8 +146,8 @@ describeFn('Dream Image Generation', () => {
     expect(data.image_url).toBeDefined();
     expect(typeof data.image_url).toBe('string');
 
-    // Should be a Supabase Storage URL, not a temporary OpenAI URL
-    expect(data.image_url).toContain('supabase.co/storage/v1/object/public/dream-images/');
+    // Should be a Supabase Storage signed URL, not a temporary OpenAI URL
+    expect(data.image_url).toContain('supabase.co/storage/v1/object/sign/dream-images/');
 
     // Verify the image is actually loadable
     const imgResponse = await fetch(data.image_url, { method: 'HEAD' });

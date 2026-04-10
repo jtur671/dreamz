@@ -1,6 +1,6 @@
 import { device, element, by, expect, waitFor } from 'detox';
 import { launchApp, tapById, pollForVisible, pollForVisibleByText, navigateToTab } from './helpers/actions';
-import { setTestAccountPremium } from './helpers/db';
+import { setTestAccountPremium, grantTestAccountAIConsent } from './helpers/db';
 
 /**
  * Grimoire Filter Regression Tests
@@ -18,6 +18,7 @@ describe('Grimoire Filter Pills', () => {
   beforeAll(async () => {
     // Upgrade test account to premium so reading limits never block dream creation
     await setTestAccountPremium();
+    await grantTestAccountAIConsent();
     await launchApp(true);
     // DreamContext background image backfill fires DALL-E network requests
     // immediately on launch, keeping the app perpetually busy from Detox's

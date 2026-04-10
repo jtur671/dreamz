@@ -58,7 +58,6 @@ export async function updateProfile(updates: {
   zodiac_sign?: string;
   gender?: Gender;
   age_range?: AgeRange;
-  subscription_tier?: 'free' | 'premium';
   onboarding_completed?: boolean;
 }): Promise<boolean> {
   try {

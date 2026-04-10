@@ -162,6 +162,43 @@ export interface MatchedSymbolForPrompt {
   guidance: string | null;
 }
 
+// Allow-lists for prompt injection mitigation
+const VALID_MOODS = new Set([
+  "peaceful", "anxious", "confused", "scared", "happy", "sad", "angry",
+  "excited", "nostalgic", "curious", "neutral", "uneasy", "hopeful",
+  "relieved", "disturbed", "amused", "overwhelmed", "calm", "frustrated",
+  "inspired", "melancholy", "content", "terrified", "joyful", "indifferent",
+]);
+
+const VALID_ZODIAC_SIGNS = new Set([
+  "aries", "taurus", "gemini", "cancer", "leo", "virgo",
+  "libra", "scorpio", "sagittarius", "capricorn", "aquarius", "pisces",
+]);
+
+const VALID_GENDERS = new Set([
+  "male", "female", "non-binary", "prefer-not-to-say", "other",
+]);
+
+const VALID_AGE_RANGES = new Set([
+  "13-17", "18-24", "25-34", "35-44", "45-54", "55-64", "65+",
+]);
+
+/**
+ * Sanitizes dream text to mitigate prompt injection.
+ * Strips patterns commonly used to break out of prompt structure.
+ */
+function sanitizeDreamText(text: string): string {
+  return text
+    .replace(/---+/g, "— — —")           // Markdown separators
+    .replace(/```/g, "'''")               // Code fences
+    .replace(/\[SYSTEM\b/gi, "[SYS")      // System prompt override attempts
+    .replace(/\[INST\b/gi, "[INS")        // Instruction injection
+    .replace(/<\/?system>/gi, "")          // XML-style system tags
+    .replace(/<\/?instructions?>/gi, "")   // XML-style instruction tags
+    .replace(/IGNORE\s+(ALL\s+)?PREVIOUS/gi, "ignore previous")  // Classic injection
+    .replace(/YOU\s+ARE\s+NOW/gi, "you are now");                 // Role reassignment
+}
+
 /**
  * Builds the user message for the dream interpretation request
  *
@@ -177,20 +214,20 @@ export function buildUserPrompt(
 ): string {
   const contextParts: string[] = [];
 
-  if (context?.mood) {
+  if (context?.mood && VALID_MOODS.has(context.mood.toLowerCase())) {
     contextParts.push(`The dreamer woke feeling: ${context.mood}`);
   }
 
-  if (context?.zodiacSign) {
+  if (context?.zodiacSign && VALID_ZODIAC_SIGNS.has(context.zodiacSign.toLowerCase())) {
     contextParts.push(`Zodiac sign: ${context.zodiacSign}. Let this subtly inform your interpretation — weave in relevant archetypal themes naturally without explicitly naming the sign.`);
   }
 
-  if (context?.gender) {
+  if (context?.gender && VALID_GENDERS.has(context.gender.toLowerCase())) {
     const genderDisplay = context.gender.replace(/-/g, ' ');
     contextParts.push(`Gender identity: ${genderDisplay}. Let this subtly shape your interpretation without explicitly mentioning it in the reading.`);
   }
 
-  if (context?.ageRange) {
+  if (context?.ageRange && VALID_AGE_RANGES.has(context.ageRange)) {
     contextParts.push(`Life stage: ${context.ageRange} years. Let this subtly inform the themes you emphasize without explicitly stating the dreamer's age or life stage in the reading.`);
   }
 
@@ -202,10 +239,12 @@ export function buildUserPrompt(
     ? `\n\nRelevant symbols from the dream dictionary (prefer these when applicable):\n${matchedSymbols.map((s) => `- ${s.name}: meaning: "${s.meaning}"${s.shadow_meaning ? ` | shadow: "${s.shadow_meaning}"` : ""}${s.guidance ? ` | guidance: "${s.guidance}"` : ""}`).join("\n")}`
     : "";
 
+  const sanitizedDreamText = sanitizeDreamText(dreamText.trim());
+
   return `Please interpret the following dream and return a JSON reading:
 
 ---
-${dreamText.trim()}
+${sanitizedDreamText}
 ---${contextSection}${symbolSection}
 
 Remember: Return ONLY valid JSON matching the schema. No markdown, no extra text.`;

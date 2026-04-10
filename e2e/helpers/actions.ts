@@ -62,17 +62,24 @@ export async function signInForTesting() {
   const AUTH_TIMEOUT = 10000;
   const HOME_TIMEOUT = 30000;
 
-  // Poll for either home screen or auth screen to appear
+  // Poll for home screen, auth screen, or onboarding screen
   const landed = await waitForAnyVisible(
     [
       { id: 'home-record-button' },  // 0 — home (persisted session)
       { id: 'auth-email-input' },    // 1 — auth screen
+      { text: 'Choose Your Path' },  // 2 — onboarding (stale onboarding_completed=false)
     ],
     AUTH_TIMEOUT,
   );
 
   if (landed === 0) {
-    return; // Already signed in
+    return; // Already signed in and on home
+  }
+
+  if (landed === 2) {
+    // Landed on onboarding — skip through it to reach home
+    await skipOnboarding();
+    return;
   }
 
   await element(by.id('auth-email-input')).typeText(TEST_EMAIL);
@@ -84,8 +91,48 @@ export async function signInForTesting() {
   await new Promise(r => setTimeout(r, 800));
   await dismissSavePasswordDialog();
 
-  // Wait for home screen after sign-in (poll-based, not sync-dependent)
-  await pollForVisible('home-record-button', HOME_TIMEOUT);
+  // After sign-in, app may go to home OR onboarding
+  const postSignIn = await waitForAnyVisible(
+    [
+      { id: 'home-record-button' },  // 0 — home
+      { text: 'Choose Your Path' },  // 1 — onboarding
+    ],
+    HOME_TIMEOUT,
+  );
+
+  if (postSignIn === 1) {
+    await skipOnboarding();
+  }
+}
+
+/**
+ * Skip through onboarding screens to reach home.
+ * Used when the test account's onboarding_completed is stale (false).
+ */
+async function skipOnboarding() {
+  // Tier step — select Free and continue
+  await pollForVisible('onboarding-tier-free', 5000);
+  await element(by.id('onboarding-tier-free')).tap();
+  await new Promise(r => setTimeout(r, 300));
+  await element(by.id('onboarding-tier-continue')).tap();
+
+  // About step — skip
+  await pollForVisible('onboarding-about-scroll', 5000);
+  await new Promise(r => setTimeout(r, 800));
+  await element(by.id('onboarding-about-scroll')).scrollTo('bottom');
+  await pollForVisible('onboarding-about-skip', 3000);
+  await element(by.id('onboarding-about-skip')).tap();
+
+  // AI Disclosure step — continue
+  await pollForVisible('onboarding-ai-continue', 10000);
+  await element(by.id('onboarding-ai-continue')).tap();
+
+  // Welcome step — begin
+  await pollForVisible('onboarding-welcome-begin', 10000);
+  await element(by.id('onboarding-welcome-begin')).tap();
+
+  // Wait for home
+  await pollForVisible('home-record-button', 15000);
 }
 
 /**

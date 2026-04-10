@@ -121,7 +121,7 @@ Deno.serve(async (req: Request) => {
     // Validate MIME type
     const blobType = audioBlob.type?.toLowerCase() || "";
     if (blobType && !ALLOWED_TYPES.includes(blobType)) {
-      return errorResponse("VALIDATION_ERROR", `Unsupported audio type: ${blobType}`, 400);
+      return errorResponse("VALIDATION_ERROR", "Unsupported audio format", 400);
     }
 
     // Prepare request to OpenAI Whisper API
@@ -149,7 +149,7 @@ Deno.serve(async (req: Request) => {
       console.error("Whisper API error:", whisperResponse.status, errorText);
       return errorResponse(
         "TRANSCRIPTION_ERROR",
-        `Transcription failed (${whisperResponse.status})`,
+        "Transcription failed. Please try again.",
         500,
         true
       );
@@ -167,10 +167,10 @@ Deno.serve(async (req: Request) => {
       text: whisperData.text,
     });
   } catch (error) {
-    console.error("Transcription error:", error);
+    console.error("Transcription error:", error instanceof Error ? error.message : error);
     return errorResponse(
       "INTERNAL_ERROR",
-      error instanceof Error ? error.message : "Transcription failed",
+      "An unexpected error occurred. Please try again.",
       500,
       true
     );

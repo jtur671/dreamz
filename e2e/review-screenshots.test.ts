@@ -5,7 +5,7 @@ import {
   pollForVisible,
   tapById,
 } from './helpers/actions';
-import { setTestAccountFree, setTestAccountPremium } from './helpers/db';
+import { setTestAccountFree, setTestAccountPremium, grantTestAccountAIConsent } from './helpers/db';
 
 /**
  * Takes screenshots to demonstrate Apple review fixes:
@@ -17,6 +17,7 @@ describe('Apple Review Screenshots', () => {
   beforeAll(async () => {
     // Set to free so the Upgrade button appears in Settings
     await setTestAccountFree();
+    await grantTestAccountAIConsent();
     await launchApp(true);
   });
 

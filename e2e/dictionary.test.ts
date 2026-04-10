@@ -1,8 +1,10 @@
 import { device, element, by, expect, waitFor } from 'detox';
 import { launchApp, tapById, waitForVisible, pollForVisible, pollForVisibleByText, navigateToTab } from './helpers/actions';
+import { grantTestAccountAIConsent } from './helpers/db';
 
 describe('Dictionary Screen', () => {
   beforeAll(async () => {
+    await grantTestAccountAIConsent();
     await launchApp(true);
     await pollForVisible('home-record-button', 30000);
     // DreamContext background image backfill fires DALL-E 3 network requests

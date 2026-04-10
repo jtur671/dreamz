@@ -1,7 +1,7 @@
 import { device, element, by, waitFor, expect } from 'detox';
 import { tapById, typeById, waitForVisible, waitForAnyVisible, pollForVisible, pollForVisibleByText } from './helpers/actions';
 import { TEST_EMAIL, TEST_PASSWORD } from './helpers/session';
-import { resetOnboardingState } from './helpers/db';
+import { resetOnboardingState, grantTestAccountAIConsent, completeTestAccountOnboarding } from './helpers/db';
 
 /**
  * Sign in with the persistent test account and wait for the OnboardingScreen.
@@ -23,10 +23,17 @@ async function signInAndExpectOnboarding() {
 }
 
 describe('Onboarding Flow', () => {
+  afterAll(async () => {
+    // Restore onboarding_completed = true so subsequent test suites
+    // don't land on the onboarding screen instead of home.
+    await completeTestAccountOnboarding();
+  });
+
   beforeEach(async () => {
     // Reset the test account's onboarding flag in the DB BEFORE launching the app,
     // so getSession() on startup or onAuthStateChange on sign-in will trigger onboarding.
     await resetOnboardingState();
+    await grantTestAccountAIConsent();
 
     await device.launchApp({
       newInstance: true,

@@ -9,8 +9,11 @@
  * @file src/lib/__tests__/e2e.account.test.ts
  */
 
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://vjqvxraqeptgmbxnipqo.supabase.co';
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_sfu54OCSyuVmdfM0YROStg_wtpG-RdQ';
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error('EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY must be set');
+}
 
 // Skip these tests in CI or when running unit tests
 const SHOULD_RUN_E2E = process.env.RUN_E2E_TESTS === 'true';
@@ -126,13 +129,14 @@ async function getDreams(user: TestUser): Promise<unknown[]> {
 /**
  * Calls the delete-account edge function
  */
-async function deleteAccount(user: TestUser): Promise<{ success: boolean; message?: string; error?: unknown }> {
+async function deleteAccount(user: TestUser, password = 'TestPassword123'): Promise<{ success: boolean; message?: string; error?: unknown }> {
   const response = await fetch(`${SUPABASE_URL}/functions/v1/delete-account`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${user.accessToken}`,
       'Content-Type': 'application/json',
     },
+    body: JSON.stringify({ password }),
   });
 
   return response.json();

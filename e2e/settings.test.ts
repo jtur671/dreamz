@@ -39,6 +39,7 @@ describe('Settings Screen', () => {
     // Scroll back to top of Settings so content above the fold is visible
     try {
       await element(by.id('settings-scroll-view')).scrollTo('top');
+      await new Promise(resolve => setTimeout(resolve, 300));
     } catch {
       // If scroll fails (modal still open), cancel cleanup continues below
     }
@@ -220,6 +221,41 @@ describe('Settings Screen', () => {
     await tapById('ai-consent-allow');
 
     // Re-grant for remaining tests
+    await grantTestAccountAIConsent();
+  });
+
+  it('should revoke consent via toggle and block new readings', async () => {
+    // Start with consent granted so the toggle is ON and tapping it revokes.
+    await grantTestAccountAIConsent();
+    await launchApp(false);
+    await pollForVisible('home-record-button', 30000);
+    await device.disableSynchronization();
+    await navigateToTab('Settings');
+    await waitForVisible('settings-zodiac-edit', 10000);
+
+    await element(by.id('settings-scroll-view')).scroll(200, 'down', 0.5, 0.5);
+    await pollForVisible('settings-ai-consent-toggle', 5000);
+
+    // Tap the toggle — triggers the "Disable AI Readings?" confirmation alert.
+    await tapById('settings-ai-consent-toggle');
+    await pollForVisibleByText('Disable AI Readings?', 5000);
+    // Confirm disable — this calls the real revokeAIConsent() from the app.
+    // Regression guard: previously threw ReferenceError because AsyncStorage
+    // was referenced without being imported.
+    await element(by.text('Disable')).tap();
+
+    // Navigate to New Dream and attempt an analysis — server should block
+    // with CONSENT_REQUIRED and the client should surface the consent modal.
+    await navigateToTab('NewDream');
+    await pollForVisible('new-dream-text-input', 10000);
+    await typeById('new-dream-text-input', 'A test dream after revoking consent via the settings toggle.');
+    await tapById('new-dream-submit-button');
+
+    // If revokeAIConsent crashed, the Supabase write would never fire and
+    // this assertion would fail (the app would proceed to analysis instead).
+    await pollForVisible('ai-consent-modal', 10000);
+
+    // Restore consent for remaining tests
     await grantTestAccountAIConsent();
   });
 

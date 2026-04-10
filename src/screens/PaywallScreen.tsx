@@ -34,14 +34,14 @@ type PaywallScreenProps = {
 type PlanType = 'monthly' | 'annual';
 
 const FREE_FEATURES = [
-  'Unlimited readings',
+  '1 reading per day',
   'Dream journal',
   'Standard AI model',
   'Grimoire access',
 ];
 
 const PREMIUM_FEATURES = [
-  'Deeper AI readings',
+  '30 readings per month',
   'Dream imagery',
   'Ad-free experience',
   'Pattern tracking',
@@ -195,11 +195,11 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
                   style={[styles.planCard, selectedPlan === 'annual' && styles.planCardSelected]}
                   onPress={() => setSelectedPlan('annual')}
                   accessibilityRole="button"
-                  accessibilityLabel="Annual plan, save 50 percent"
+                  accessibilityLabel="Annual plan, save 30 percent"
                   accessibilityState={{ selected: selectedPlan === 'annual' }}
                 >
                   <View style={styles.saveBadge}>
-                    <Text style={styles.saveBadgeText}>Save 50%</Text>
+                    <Text style={styles.saveBadgeText}>Save 30%</Text>
                   </View>
                   <Text style={[styles.planLabel, selectedPlan === 'annual' && styles.planLabelSelected]}>Annual</Text>
                   <Text style={[styles.planPrice, selectedPlan === 'annual' && styles.planPriceSelected]}>
@@ -262,14 +262,14 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
                 style={[styles.planCard, selectedPlan === 'annual' && styles.planCardSelected]}
                 onPress={() => setSelectedPlan('annual')}
                 accessibilityRole="button"
-                accessibilityLabel="Annual plan, save 50 percent"
+                accessibilityLabel="Annual plan, save 30 percent"
                 accessibilityState={{ selected: selectedPlan === 'annual' }}
               >
                 <View style={styles.saveBadge}>
-                  <Text style={styles.saveBadgeText}>Save 50%</Text>
+                  <Text style={styles.saveBadgeText}>Save 30%</Text>
                 </View>
                 <Text style={[styles.planLabel, selectedPlan === 'annual' && styles.planLabelSelected]}>Annual</Text>
-                <Text style={[styles.planPrice, selectedPlan === 'annual' && styles.planPriceSelected]}>$39.99</Text>
+                <Text style={[styles.planPrice, selectedPlan === 'annual' && styles.planPriceSelected]}>$49.99</Text>
                 <Text style={[styles.planPeriod, selectedPlan === 'annual' && styles.planPeriodSelected]}>/year</Text>
               </TouchableOpacity>
             </View>
