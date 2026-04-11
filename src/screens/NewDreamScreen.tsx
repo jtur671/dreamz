@@ -55,8 +55,12 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   const [savedDreamId, setSavedDreamId] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [moodExpanded, setMoodExpanded] = useState(false);
-  const { hasConsent, grantConsent } = useAIConsent();
+  const { hasConsent, grantConsent, refreshConsent } = useAIConsent();
   const [showConsentModal, setShowConsentModal] = useState(false);
+  // When the user grants consent via the modal, we want to auto-resume the
+  // submission. Using a ref + effect avoids a stale-closure bug where
+  // handleSubmit captured the pre-grant `hasConsent=false` value.
+  const resubmitOnGrantRef = useRef(false);
   const draftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { dreams } = useDreams();
 
@@ -140,6 +144,18 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     };
   }, [autoSaveDraft]);
 
+  // After the user grants consent via the modal, resume the submission in
+  // a fresh render so handleSubmit's closure sees `hasConsent === true`.
+  // After the user grants consent via the modal, resume the submission
+  // in a fresh render so handleSubmit's closure sees hasConsent === true.
+  useEffect(() => {
+    if (resubmitOnGrantRef.current && hasConsent === true) {
+      resubmitOnGrantRef.current = false;
+      handleSubmit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasConsent]);
+
   async function handleSubmit() {
     if (!dreamText.trim()) {
       Alert.alert('Error', 'Please describe your dream');
@@ -156,7 +172,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
       return;
     }
 
-    // Check AI consent before proceeding with analysis
+    // Check AI consent before proceeding with analysis.
     if (hasConsent === null) {
       // Still loading consent state — wait for it
       const { getAIConsent } = await import('../lib/aiConsentService');
@@ -212,6 +228,15 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     if (!analyzeResult.success) {
       setLoadingState('error');
       setErrorMessage(analyzeResult.error);
+      // Server says the user's consent is not granted (e.g. revoked on
+      // another device, or our local cache was stale). Resync from
+      // Supabase and re-prompt instead of showing a dead-end error.
+      if (analyzeResult.code === 'CONSENT_REQUIRED') {
+        await refreshConsent();
+        setLoadingState('idle');
+        setShowConsentModal(true);
+        return;
+      }
       // Dream was saved but analysis failed - offer to continue or retry
       Alert.alert(
         'Reading Unavailable',
@@ -266,6 +291,12 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
     if (!analyzeResult.success) {
       setLoadingState('error');
       setErrorMessage(analyzeResult.error);
+      if (analyzeResult.code === 'CONSENT_REQUIRED') {
+        await refreshConsent();
+        setLoadingState('idle');
+        setShowConsentModal(true);
+        return;
+      }
       Alert.alert(
         'Reading Unavailable',
         'The oracle remains silent. Your dream has been saved to your Grimoire.',
@@ -315,10 +346,17 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
   }
 
   async function handleConsentAllow() {
+    resubmitOnGrantRef.current = true;
     setShowConsentModal(false);
-    await grantConsent();
-    // Proceed with the dream submission flow
-    handleSubmit();
+    try {
+      await grantConsent();
+    } catch (err) {
+      resubmitOnGrantRef.current = false;
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to save consent.');
+    }
+    // The useEffect watching hasConsent picks up the flip to true and
+    // re-runs handleSubmit in a fresh render where the closure sees
+    // the updated consent state.
   }
 
   function handleConsentDecline() {
@@ -549,7 +587,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
               <TouchableOpacity
                 testID="new-dream-submit"
                 style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
-                onPress={handleSubmit}
+                onPress={() => handleSubmit()}
                 disabled={isLoading}
                 activeOpacity={0.8}
               >

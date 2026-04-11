@@ -17,13 +17,12 @@ interface AIConsentModalProps {
 export default function AIConsentModal({ visible, onAllow, onDecline }: AIConsentModalProps) {
   return (
     <Modal
-      testID="ai-consent-modal"
       visible={visible}
       transparent
       animationType="fade"
       accessibilityViewIsModal={true}
     >
-      <View style={styles.overlay}>
+      <View testID="ai-consent-modal" style={styles.overlay}>
         <View style={styles.container}>
           <Text style={styles.title}>Before We Read Your Dream</Text>
 

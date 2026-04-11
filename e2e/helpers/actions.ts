@@ -38,16 +38,27 @@ export async function dismissSavePasswordDialog(): Promise<void> {
  * Google Mobile Ads SDK keeps the main run loop perpetually busy, so we
  * disable Detox synchronization immediately after launch — before any waits.
  */
-export async function launchApp(withLogin = true) {
+/**
+ * Launch the app.
+ *
+ * `resetAuth: true` wipes app data (including the iOS Keychain-backed
+ * Supabase session) via `delete: true` so the app MUST re-authenticate
+ * with TEST_EMAIL. Use this in beforeAll of any suite whose assertions
+ * depend on the test user's profile state being readable by the helpers.
+ * Otherwise a stale persisted session from a prior run (possibly for a
+ * completely different user) will silently make the helpers no-ops.
+ */
+export async function launchApp(withLogin = true, resetAuth = false) {
   await device.launchApp({
     newInstance: true,
+    delete: resetAuth,
     permissions: { notifications: 'YES' },
   });
   // Must disable sync before any waits — AdMob keeps the main thread busy,
   // causing waitFor().withTimeout() to never poll.
   await device.disableSynchronization();
   if (withLogin) {
-    await signInForTesting();
+    await signInForTesting({ forceReauth: resetAuth });
   }
 }
 
@@ -58,8 +69,9 @@ export async function launchApp(withLogin = true) {
  * Uses poll-based waits (expect() instant checks) because Detox sync is
  * disabled due to Google Mobile Ads keeping the main run loop busy.
  */
-export async function signInForTesting() {
-  const AUTH_TIMEOUT = 10000;
+export async function signInForTesting(opts: { forceReauth?: boolean } = {}) {
+  // 30s to tolerate slow simulator cold-starts (profile fetch + session restore).
+  const AUTH_TIMEOUT = 30000;
   const HOME_TIMEOUT = 30000;
 
   // Poll for home screen, auth screen, or onboarding screen
@@ -73,10 +85,17 @@ export async function signInForTesting() {
   );
 
   if (landed === 0) {
-    return; // Already signed in and on home
-  }
-
-  if (landed === 2) {
+    // Already signed in. If caller asked for force-reauth (because the
+    // persisted session may belong to a different user than TEST_EMAIL),
+    // sign out via Settings so we land on the auth screen.
+    if (opts.forceReauth) {
+      await signOutViaSettings();
+      await pollForVisible('auth-email-input', HOME_TIMEOUT);
+      // fall through to sign-in path
+    } else {
+      return;
+    }
+  } else if (landed === 2) {
     // Landed on onboarding — skip through it to reach home
     await skipOnboarding();
     return;
@@ -103,6 +122,23 @@ export async function signInForTesting() {
   if (postSignIn === 1) {
     await skipOnboarding();
   }
+}
+
+/**
+ * Sign out via the Settings screen. Only call when you are on the home
+ * tab and signed in. Leaves the app on the auth screen.
+ */
+async function signOutViaSettings() {
+  await element(by.id('tab-settings')).tap();
+  // Scroll to bottom so the sign-out button is visible
+  await pollForVisible('settings-scroll-view', 10000);
+  await element(by.id('settings-scroll-view')).scrollTo('bottom');
+  await pollForVisible('settings-signout-button', 5000);
+  await element(by.id('settings-signout-button')).tap();
+  // Confirm the alert
+  await pollForVisibleByText('Sign Out', 5000);
+  // Two elements with text "Sign Out": the button and the alert. Tap the alert's.
+  await element(by.text('Sign Out')).atIndex(1).tap();
 }
 
 /**
