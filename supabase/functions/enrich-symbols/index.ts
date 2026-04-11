@@ -145,10 +145,13 @@ Deno.serve(async (req: Request) => {
     }
 
     const authHeader = req.headers.get("Authorization")?.replace("Bearer ", "");
+    // SHA-256 both sides so timingSafeEqual always compares fixed-length (32-byte)
+    // buffers. This eliminates the length side-channel from an early byteLength check
+    // and keeps the comparison constant-time regardless of input length.
     const encoder = new TextEncoder();
-    const a = encoder.encode(authHeader || '');
-    const b = encoder.encode(serviceRoleKey);
-    const isValid = a.byteLength === b.byteLength && crypto.subtle.timingSafeEqual(a, b);
+    const hashA = await crypto.subtle.digest("SHA-256", encoder.encode(authHeader || ""));
+    const hashB = await crypto.subtle.digest("SHA-256", encoder.encode(serviceRoleKey));
+    const isValid = crypto.subtle.timingSafeEqual(hashA, hashB);
     if (!isValid) {
       return errorResponse("FORBIDDEN", "Admin access required", 403);
     }

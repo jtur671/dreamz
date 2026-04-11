@@ -123,7 +123,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     const title = dream.reading?.title || 'this dream';
     Alert.alert(
       'Delete Dream',
-      `Are you sure you want to delete "${title}"?\n\nIt can be recovered within 30 days by contacting support.`,
+      `Are you sure you want to delete "${title}"?\n\nThis cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {

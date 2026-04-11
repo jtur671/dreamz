@@ -80,15 +80,11 @@ function validateReading(reading: unknown): { isValid: boolean; error?: string }
 
   const r = reading as Record<string, unknown>;
 
-  const requiredStrings = ["title", "tldr", "omen", "ritual", "journal_prompt"];
+  const requiredStrings = ["title", "tldr", "plain_english", "omen", "ritual", "journal_prompt"];
   for (const field of requiredStrings) {
     if (typeof r[field] !== "string" || !r[field]) {
       return { isValid: false, error: `Missing or invalid field: ${field}` };
     }
-  }
-
-  if (r.plain_english !== undefined && typeof r.plain_english !== "string") {
-    return { isValid: false, error: "plain_english must be a string" };
   }
 
   if ((r.tldr as string).length > 150) {
@@ -379,16 +375,25 @@ describe('validateReading', () => {
     expect(validateReading(VALID_READING).isValid).toBe(true);
   });
 
-  it('accepts valid reading without plain_english', () => {
+  it('rejects reading without plain_english (required by JSON contract)', () => {
     const { plain_english, ...noPE } = VALID_READING;
-    expect(validateReading(noPE).isValid).toBe(true);
+    const result = validateReading(noPE);
+    expect(result.isValid).toBe(false);
+    expect(result.error).toContain('plain_english');
+  });
+
+  it('rejects empty plain_english', () => {
+    const reading = { ...VALID_READING, plain_english: '' };
+    const result = validateReading(reading);
+    expect(result.isValid).toBe(false);
+    expect(result.error).toContain('plain_english');
   });
 
   it('rejects non-string plain_english', () => {
     const reading = { ...VALID_READING, plain_english: 123 as any };
     const result = validateReading(reading);
     expect(result.isValid).toBe(false);
-    expect(result.error).toContain('plain_english must be a string');
+    expect(result.error).toContain('plain_english');
   });
 
   it('accepts reading with exactly 1 symbol', () => {

@@ -186,8 +186,9 @@ const VALID_AGE_RANGES = new Set([
 /**
  * Sanitizes dream text to mitigate prompt injection.
  * Strips patterns commonly used to break out of prompt structure.
+ * Exported so other edge functions (e.g. generate-dream-image) reuse one source of truth.
  */
-function sanitizeDreamText(text: string): string {
+export function sanitizeDreamText(text: string): string {
   return text
     .replace(/---+/g, "— — —")           // Markdown separators
     .replace(/```/g, "'''")               // Code fences
@@ -301,6 +302,7 @@ export function validateReading(reading: unknown): {
   const requiredStrings = [
     "title",
     "tldr",
+    "plain_english",
     "omen",
     "ritual",
     "journal_prompt",
@@ -309,11 +311,6 @@ export function validateReading(reading: unknown): {
     if (typeof r[field] !== "string" || !r[field]) {
       return { isValid: false, error: `Missing or invalid field: ${field}` };
     }
-  }
-
-  // Check plain_english (optional but should be string if present)
-  if (r.plain_english !== undefined && typeof r.plain_english !== "string") {
-    return { isValid: false, error: "plain_english must be a string" };
   }
 
   // Check tldr length

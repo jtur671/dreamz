@@ -286,7 +286,7 @@ interface DreamEntry {
 **Acceptance Criteria:**
 - [x] Export generates shareable JSON with all dreams + readings
 - [x] Delete individual dream via picker modal
-- [x] Delete dream soft-deletes (recoverable for 30 days)
+- [x] Delete dream is immediate from the user's perspective (no in-app restore); backend purges soft-deleted rows within 30 days
 - [x] Delete account hard-deletes all data
 - [x] Double confirmation for account deletion
 - [x] Sign out with confirmation

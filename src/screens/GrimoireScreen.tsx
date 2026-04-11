@@ -236,7 +236,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
     const title = dream.reading?.title || 'this dream';
     Alert.alert(
       'Delete Dream',
-      `Are you sure you want to delete "${title}"? It can be recovered within 30 days by contacting support.`,
+      `Are you sure you want to delete "${title}"? This cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
