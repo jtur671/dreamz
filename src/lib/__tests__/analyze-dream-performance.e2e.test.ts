@@ -56,7 +56,7 @@ async function createTestAccount(): Promise<{ email: string; password: string; a
 
 function isValidReading(reading: any): boolean {
   if (!reading || typeof reading !== 'object') return false;
-  const requiredStrings = ['title', 'tldr', 'omen', 'ritual', 'journal_prompt'];
+  const requiredStrings = ['title', 'tldr', 'plain_english', 'omen', 'ritual', 'journal_prompt'];
   for (const field of requiredStrings) {
     if (typeof reading[field] !== 'string' || !reading[field]) return false;
   }

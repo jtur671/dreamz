@@ -486,6 +486,25 @@ Deno.serve(async (req: Request) => {
     const matchedSymbols = await lookupSymbols(supabase, dream_text);
     console.log(`[${correlationId}] Matched ${matchedSymbols.length} symbols from dictionary`);
 
+    // Re-verify consent immediately before calling OpenAI.
+    // Closes the TOCTOU window between the initial check (pre rate-limit + symbol lookup)
+    // and the actual third-party API call. If consent was revoked in the interim,
+    // no dream text leaves the tenant.
+    const { data: consentCheck } = await adminClient
+      .from("profiles")
+      .select("ai_consent_granted")
+      .eq("id", user.id)
+      .single();
+
+    if (!consentCheck?.ai_consent_granted) {
+      console.log(`[${correlationId}] Consent revoked between initial check and OpenAI call`);
+      return errorResponse(
+        "CONSENT_REQUIRED",
+        "AI consent must be granted before dream analysis. Enable it in Settings.",
+        403
+      );
+    }
+
     // Build messages for OpenAI
     const messages: OpenAIMessage[] = [
       { role: "system", content: SYSTEM_PROMPT },

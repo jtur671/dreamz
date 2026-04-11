@@ -5,7 +5,23 @@
  *
  * Endpoint: POST /functions/v1/transcribe-audio
  * Auth: Required (Supabase JWT in Authorization header)
- * Body: FormData with 'audio' file
+ * Body: FormData with 'audio' file, or JSON { audio: base64, mimeType, filename }
+ *
+ * ---
+ * PRIVACY NOTICE — Third-party data retention
+ *
+ * Audio is transmitted to OpenAI's Whisper API (api.openai.com/v1/audio/transcriptions).
+ * Per OpenAI's API data usage policy (as of 2026-04):
+ *   • Audio submitted to the Whisper API is NOT used to train models.
+ *   • Audio may be retained by OpenAI for up to 30 days for abuse monitoring,
+ *     then deleted.
+ *   • Zero Data Retention (ZDR) is available only via enterprise contract and
+ *     is NOT enabled on this project. Whisper has no per-request retention flag.
+ *
+ * This behavior MUST be disclosed in the app's privacy policy under "Third-party
+ * sub-processors" / "Voice input". Dreamz does not store raw audio on its own
+ * servers — only the returned transcript is persisted into the dream record.
+ * ---
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";

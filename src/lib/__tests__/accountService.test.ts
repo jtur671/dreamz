@@ -8,6 +8,38 @@ import { exportUserDreams, deleteUserAccount } from '../accountService';
 
 const mockedSupabase = supabase as jest.Mocked<typeof supabase>;
 
+interface TableMocks {
+  dreams?: { data: unknown; error: { message: string } | null };
+  profiles?: { data: unknown; error: { message: string } | null };
+}
+
+/**
+ * Builds a from() mock that routes by table name, so tests can set up
+ * independent responses for the parallel dreams + profiles queries used
+ * by the GDPR-complete export.
+ */
+function mockFromByTable(tables: TableMocks) {
+  (mockedSupabase.from as jest.Mock).mockImplementation((table: string) => {
+    if (table === 'profiles') {
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue(
+          tables.profiles ?? { data: null, error: null }
+        ),
+      };
+    }
+    return {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      is: jest.fn().mockReturnThis(),
+      order: jest.fn().mockResolvedValue(
+        tables.dreams ?? { data: [], error: null }
+      ),
+    };
+  });
+}
+
 describe('Account Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -30,19 +62,13 @@ describe('Account Service', () => {
 
     it('should return error when database fetch fails', async () => {
       (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
-        data: { user: { id: 'user-123' } },
+        data: { user: { id: 'user-123', email: 'dreamer@example.com' } },
         error: null,
       });
 
-      const mockFrom = mockedSupabase.from as jest.Mock;
-      mockFrom.mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        is: jest.fn().mockReturnThis(),
-        order: jest.fn().mockResolvedValue({
-          data: null,
-          error: { message: 'Database error' },
-        }),
+      mockFromByTable({
+        dreams: { data: null, error: { message: 'Database error' } },
+        profiles: { data: null, error: null },
       });
 
       const result = await exportUserDreams();
@@ -53,9 +79,9 @@ describe('Account Service', () => {
       }
     });
 
-    it('should export dreams with privacy-safe format', async () => {
+    it('should export dreams with privacy-safe format including profile', async () => {
       (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
-        data: { user: { id: 'user-123' } },
+        data: { user: { id: 'user-123', email: 'dreamer@example.com' } },
         error: null,
       });
 
@@ -77,15 +103,21 @@ describe('Account Service', () => {
         },
       ];
 
-      const mockFrom = mockedSupabase.from as jest.Mock;
-      mockFrom.mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        is: jest.fn().mockReturnThis(),
-        order: jest.fn().mockResolvedValue({
-          data: mockDreams,
-          error: null,
-        }),
+      const mockProfile = {
+        display_name: 'Moon Walker',
+        subscription_tier: 'premium',
+        zodiac_sign: 'pisces',
+        gender: 'non-binary',
+        age_range: '25-34',
+        reading_count: 12,
+        created_at: '2025-11-01T08:00:00Z',
+        ai_consent_granted: true,
+        ai_consent_date: '2025-12-01T08:00:00Z',
+      };
+
+      mockFromByTable({
+        dreams: { data: mockDreams, error: null },
+        profiles: { data: mockProfile, error: null },
       });
 
       const result = await exportUserDreams();
@@ -93,6 +125,7 @@ describe('Account Service', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.app).toBe('Dreamz');
+        expect(result.data.format_version).toBe(2);
         expect(result.data.total_dreams).toBe(1);
         expect(result.data.dreams[0].entry_number).toBe(1);
         expect(result.data.dreams[0].dream_text).toBe('I was flying over mountains');
@@ -101,12 +134,45 @@ describe('Account Service', () => {
         // Verify no internal IDs
         expect(result.data.dreams[0]).not.toHaveProperty('id');
         expect(result.data.dreams[0]).not.toHaveProperty('user_id');
+        // GDPR Art. 15/20 — verify profile + consent history are exported
+        expect(result.data.profile.email).toBe('dreamer@example.com');
+        expect(result.data.profile.display_name).toBe('Moon Walker');
+        expect(result.data.profile.subscription_tier).toBe('premium');
+        expect(result.data.profile.zodiac_sign).toBe('pisces');
+        expect(result.data.profile.gender).toBe('non-binary');
+        expect(result.data.profile.age_range).toBe('25-34');
+        expect(result.data.profile.reading_count).toBe(12);
+        expect(result.data.profile.ai_consent_granted).toBe(true);
+        expect(result.data.profile.ai_consent_date).toBe('2025-12-01T08:00:00Z');
+      }
+    });
+
+    it('should fall back to safe defaults when profile row is missing', async () => {
+      (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+        data: { user: { id: 'user-123', email: 'lost@example.com' } },
+        error: null,
+      });
+
+      mockFromByTable({
+        dreams: { data: [], error: null },
+        profiles: { data: null, error: null },
+      });
+
+      const result = await exportUserDreams();
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.profile.email).toBe('lost@example.com');
+        expect(result.data.profile.subscription_tier).toBe('free');
+        expect(result.data.profile.ai_consent_granted).toBe(false);
+        expect(result.data.profile.ai_consent_date).toBeNull();
+        expect(result.data.profile.zodiac_sign).toBeNull();
       }
     });
 
     it('should handle dreams without readings', async () => {
       (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
-        data: { user: { id: 'user-123' } },
+        data: { user: { id: 'user-123', email: 'dreamer@example.com' } },
         error: null,
       });
 
@@ -120,15 +186,16 @@ describe('Account Service', () => {
         },
       ];
 
-      const mockFrom = mockedSupabase.from as jest.Mock;
-      mockFrom.mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        is: jest.fn().mockReturnThis(),
-        order: jest.fn().mockResolvedValue({
-          data: mockDreams,
+      mockFromByTable({
+        dreams: { data: mockDreams, error: null },
+        profiles: {
+          data: {
+            subscription_tier: 'free',
+            reading_count: 0,
+            ai_consent_granted: false,
+          },
           error: null,
-        }),
+        },
       });
 
       const result = await exportUserDreams();
@@ -142,19 +209,20 @@ describe('Account Service', () => {
 
     it('should return empty array when user has no dreams', async () => {
       (mockedSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
-        data: { user: { id: 'user-123' } },
+        data: { user: { id: 'user-123', email: 'dreamer@example.com' } },
         error: null,
       });
 
-      const mockFrom = mockedSupabase.from as jest.Mock;
-      mockFrom.mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        is: jest.fn().mockReturnThis(),
-        order: jest.fn().mockResolvedValue({
-          data: [],
+      mockFromByTable({
+        dreams: { data: [], error: null },
+        profiles: {
+          data: {
+            subscription_tier: 'free',
+            reading_count: 0,
+            ai_consent_granted: false,
+          },
           error: null,
-        }),
+        },
       });
 
       const result = await exportUserDreams();

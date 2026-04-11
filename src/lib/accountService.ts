@@ -20,9 +20,24 @@ export interface ExportedDream {
   } | null;
 }
 
+export interface ExportedProfile {
+  email: string;
+  display_name: string | null;
+  subscription_tier: 'free' | 'premium';
+  zodiac_sign: string | null;
+  gender: string | null;
+  age_range: string | null;
+  reading_count: number;
+  account_created_at: string | null;
+  ai_consent_granted: boolean;
+  ai_consent_date: string | null;
+}
+
 export interface ExportData {
   exported_at: string;
   app: string;
+  format_version: number;
+  profile: ExportedProfile;
   total_dreams: number;
   dreams: ExportedDream[];
 }
@@ -36,7 +51,9 @@ export type DeleteAccountResult =
   | { success: false; error: string };
 
 /**
- * Exports all user dreams in a privacy-safe format (no internal IDs)
+ * Exports all user data in a privacy-safe, portable format.
+ * Covers GDPR Art. 15 (right of access) and Art. 20 (portability):
+ * dreams, profile, email, subscription tier, and AI consent history.
  */
 export async function exportUserDreams(): Promise<ExportResult> {
   try {
@@ -46,16 +63,40 @@ export async function exportUserDreams(): Promise<ExportResult> {
       return { success: false, error: 'Not authenticated' };
     }
 
-    const { data: dreams, error } = await supabase
-      .from('dreams')
-      .select('dream_text, mood, dream_type, reading, created_at')
-      .eq('user_id', user.id)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false });
+    const [dreamsResult, profileResult] = await Promise.all([
+      supabase
+        .from('dreams')
+        .select('dream_text, mood, dream_type, reading, created_at')
+        .eq('user_id', user.id)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('profiles')
+        .select('display_name, subscription_tier, zodiac_sign, gender, age_range, reading_count, created_at, ai_consent_granted, ai_consent_date')
+        .eq('id', user.id)
+        .single(),
+    ]);
+
+    const { data: dreams, error } = dreamsResult;
 
     if (error) {
       return { success: false, error: error.message };
     }
+
+    const profileRow = profileResult.data;
+
+    const exportedProfile: ExportedProfile = {
+      email: user.email ?? '',
+      display_name: profileRow?.display_name ?? null,
+      subscription_tier: profileRow?.subscription_tier ?? 'free',
+      zodiac_sign: profileRow?.zodiac_sign ?? null,
+      gender: profileRow?.gender ?? null,
+      age_range: profileRow?.age_range ?? null,
+      reading_count: profileRow?.reading_count ?? 0,
+      account_created_at: profileRow?.created_at ?? null,
+      ai_consent_granted: profileRow?.ai_consent_granted ?? false,
+      ai_consent_date: profileRow?.ai_consent_date ?? null,
+    };
 
     // Format dreams for export (privacy-safe, no internal IDs)
     const exportedDreams: ExportedDream[] = (dreams || []).map((dream, index) => ({
@@ -85,6 +126,8 @@ export async function exportUserDreams(): Promise<ExportResult> {
     const exportData: ExportData = {
       exported_at: new Date().toISOString(),
       app: 'Dreamz',
+      format_version: 2,
+      profile: exportedProfile,
       total_dreams: exportedDreams.length,
       dreams: exportedDreams,
     };

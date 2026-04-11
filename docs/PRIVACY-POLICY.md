@@ -96,7 +96,7 @@ We do not share your data with any parties beyond those listed above, and we sha
 You have full control over your data within Dreamz:
 
 - **Export your data.** You can export all of your data (dreams, readings, and profile information) as a JSON file directly from the app's Settings screen at any time.
-- **Delete individual dreams.** You can delete any dream entry from your journal. Deleted dreams enter a 30-day soft-delete recovery period, during which you can restore them. After 30 days, they are permanently and irreversibly deleted.
+- **Delete individual dreams.** You can delete any dream entry from your journal at any time. Deletion is immediate and irreversible from your perspective — a deleted dream disappears from your journal right away and cannot be restored from within the app. On our side, the record is purged permanently from our database within 30 days.
 - **Delete your account.** You can permanently delete your entire account and all associated data from the Settings screen. This action removes your profile, all dream entries, all readings, and any other data linked to your account. Account deletion is irreversible.
 - **Update your profile.** You can change or remove your optional profile details (zodiac sign, gender, age range) at any time from the Settings screen.
 - **Withhold optional information.** All profile fields beyond your email address are optional. The app functions without them; readings will simply be less personalized.
@@ -106,7 +106,7 @@ If you are located in the European Economic Area (EEA), United Kingdom, or anoth
 ## Data Retention
 
 - **Active accounts.** Your data is retained for as long as your account is active and you continue to use the service.
-- **Deleted dreams.** Individual deleted dreams are retained in a soft-delete state for 30 days to allow recovery, after which they are permanently deleted.
+- **Deleted dreams.** Individual deleted dreams are removed from your journal immediately. They remain in a soft-delete state in our database for up to 30 days as a brief grace period before being permanently purged, but they cannot be restored from within the app.
 - **Deleted accounts.** When you delete your account, all associated data is permanently removed from our systems.
 - **Inactive accounts.** We may delete accounts and their associated data after an extended period of inactivity (12 months or more), with advance notice sent to your registered email address.
 
