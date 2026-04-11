@@ -7,7 +7,7 @@ export type SaveDreamResult =
 
 export type AnalyzeDreamResult =
   | { success: true; reading: DreamReading }
-  | { success: false; error: string };
+  | { success: false; error: string; code?: string };
 
 export type UpdateDreamResult =
   | { success: true; dream: Dream }
@@ -108,7 +108,8 @@ export async function analyzeDream(
         errorBody?.message ||
         (error as { message?: string })?.message ||
         'Analysis failed';
-      return { success: false, error: message };
+      const code: string | undefined = errorBody?.error?.code || errorBody?.code;
+      return { success: false, error: message, code };
     }
 
     // data is auto-parsed JSON from supabase.functions.invoke

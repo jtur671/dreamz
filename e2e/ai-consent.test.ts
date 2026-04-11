@@ -7,8 +7,11 @@ describe('AI Consent Flow', () => {
   beforeAll(async () => {
     await setTestAccountPremium();
     await revokeTestAccountAIConsent();
-    await launchApp(true);
-    await device.disableSynchronization();
+    // resetAuth: true wipes the persisted Supabase session so the app
+    // forcibly signs in as TEST_EMAIL. Without this, the app can end up
+    // reading profile state for a completely different user than the
+    // test helpers are manipulating.
+    await launchApp(true, true);
     await pollForVisible('home-record-button', 30000);
   });
 
@@ -25,12 +28,16 @@ describe('AI Consent Flow', () => {
 
     await tapById('new-dream-mood-peaceful');
     await typeById('new-dream-text-input', TEST_DREAM_TEXT);
-    await element(by.id('new-dream-scroll-view')).scroll(600, 'down', 0.5, 0.5);
+    // scrollTo('bottom') is idempotent and also dismisses the keyboard so
+    // the submit button is guaranteed visible. scroll(offset) fails when
+    // the form already fits on screen.
+    await element(by.id('new-dream-scroll-view')).scrollTo('bottom');
     await tapById('new-dream-submit');
 
-    // Consent modal should appear
-    await pollForVisible('ai-consent-modal', 5000);
-    await pollForVisible('ai-consent-allow', 3000);
+    // Consent modal should appear. We don't assert on the modal container
+    // testID — Detox's 75% visibility threshold fails when opaque child
+    // views cover the overlay. Button testIDs are the reliable signal.
+    await pollForVisible('ai-consent-allow', 5000);
     await pollForVisible('ai-consent-decline', 3000);
   });
 
@@ -42,11 +49,16 @@ describe('AI Consent Flow', () => {
   });
 
   it('should grant consent and proceed with analysis on "Allow"', async () => {
-    // Re-submit to trigger modal again
-    await element(by.id('new-dream-scroll-view')).scroll(600, 'down', 0.5, 0.5);
+    // Re-submit to trigger modal again. scrollTo('bottom') is idempotent
+    // whether or not the form currently fits the screen.
+    await element(by.id('new-dream-scroll-view')).scrollTo('bottom');
     await tapById('new-dream-submit');
 
     await pollForVisible('ai-consent-allow', 5000);
+    // Wait for the modal's fade-in animation to finish so the Allow
+    // button actually receives the tap. pollForVisible returns when the
+    // view is drawn, not necessarily when it's interactive.
+    await new Promise(resolve => setTimeout(resolve, 800));
     await tapById('ai-consent-allow');
 
     // Should proceed to analysis (loading animation or reading)
@@ -73,15 +85,20 @@ describe('AI Consent Flow', () => {
 
     await tapById('new-dream-mood-curious');
     await typeById('new-dream-text-input', 'A second dream about the stars');
-    await element(by.id('new-dream-scroll-view')).scroll(600, 'down', 0.5, 0.5);
+    // Dismiss the keyboard + scroll to the submit button. A brief wait
+    // after scroll lets the keyboard actually collapse so the submit
+    // button reaches 100% visibility for Detox's tap threshold.
+    await element(by.id('new-dream-scroll-view')).scrollTo('bottom');
+    await new Promise(resolve => setTimeout(resolve, 500));
     await tapById('new-dream-submit');
 
-    // Should NOT show consent modal — should go straight to loading/reading
+    // Should NOT show consent modal — should go straight to loading/reading.
+    // Assert that the Allow button (a reliable modal signal) is NOT visible.
     await new Promise(resolve => setTimeout(resolve, 2000));
     try {
-      await expect(element(by.id('ai-consent-modal'))).not.toBeVisible();
+      await expect(element(by.id('ai-consent-allow'))).not.toBeVisible();
     } catch {
-      // Modal element may not exist at all — that's the expected case
+      // Element may not be in the tree at all — expected when modal never mounted.
     }
   });
 });

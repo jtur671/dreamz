@@ -3,6 +3,7 @@ import {
   getAIConsent,
   grantAIConsent as grantService,
   revokeAIConsent as revokeService,
+  refreshAIConsent as refreshService,
 } from '../lib/aiConsentService';
 
 interface UseAIConsent {
@@ -10,6 +11,8 @@ interface UseAIConsent {
   hasConsent: boolean | null;
   grantConsent: () => Promise<void>;
   revokeConsent: () => Promise<void>;
+  /** Force a fresh read from Supabase, bypassing the local cache. */
+  refreshConsent: () => Promise<boolean>;
 }
 
 export function useAIConsent(): UseAIConsent {
@@ -31,5 +34,11 @@ export function useAIConsent(): UseAIConsent {
     setHasConsent(false);
   }, []);
 
-  return { hasConsent, grantConsent, revokeConsent };
+  const refreshConsent = useCallback(async () => {
+    const state = await refreshService();
+    setHasConsent(state.granted);
+    return state.granted;
+  }, []);
+
+  return { hasConsent, grantConsent, revokeConsent, refreshConsent };
 }

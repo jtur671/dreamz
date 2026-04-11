@@ -467,6 +467,11 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.deleteWarningModal}>
+            <ScrollView
+              testID="settings-delete-modal-scroll"
+              contentContainerStyle={styles.deleteWarningScroll}
+              keyboardShouldPersistTaps="handled"
+            >
             <Text style={styles.deleteWarningIcon}>{'\u26A0\uFE0F'}</Text>
             <Text style={styles.deleteWarningTitle}>This Cannot Be Undone</Text>
 
@@ -559,6 +564,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             >
               <Text style={styles.deleteWarningCancelText}>No, Keep My Account</Text>
             </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -1100,10 +1106,13 @@ const styles = StyleSheet.create({
   deleteWarningModal: {
     backgroundColor: '#1a1a2e',
     borderRadius: 20,
-    padding: 28,
     width: '100%',
+    maxHeight: '90%',
     borderWidth: 1,
     borderColor: '#5a3a3a',
+  },
+  deleteWarningScroll: {
+    padding: 28,
   },
   deleteWarningIcon: {
     fontSize: 40,
