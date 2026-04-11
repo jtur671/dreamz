@@ -149,16 +149,36 @@ Deno.serve(async (req: Request) => {
 
     // Call Whisper API
     console.log("Calling Whisper API...");
-    const whisperResponse = await fetch(
-      "https://api.openai.com/v1/audio/transcriptions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-        },
-        body: whisperFormData,
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+    let whisperResponse: Response;
+    try {
+      whisperResponse = await fetch(
+        "https://api.openai.com/v1/audio/transcriptions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
+          },
+          body: whisperFormData,
+          signal: controller.signal,
+        }
+      );
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err instanceof Error && err.name === "AbortError") {
+        console.error("Whisper API timed out after 60s");
+        return errorResponse(
+          "TRANSCRIPTION_TIMEOUT",
+          "Transcription timed out. Please try again.",
+          504,
+          true
+        );
       }
-    );
+      throw err;
+    }
+    clearTimeout(timeoutId);
 
     if (!whisperResponse.ok) {
       const errorText = await whisperResponse.text();

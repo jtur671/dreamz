@@ -62,6 +62,15 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [authProvider, setAuthProvider] = useState<string>('email');
   const [deletePassword, setDeletePassword] = useState('');
 
+  useEffect(() => {
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+    };
+  }, []);
+
   // Re-fetch profile every time screen gains focus (fixes stale tier after upgrade)
   useFocusEffect(
     useCallback(() => {

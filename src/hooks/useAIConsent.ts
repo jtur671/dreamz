@@ -19,9 +19,18 @@ export function useAIConsent(): UseAIConsent {
   const [hasConsent, setHasConsent] = useState<boolean | null>(null);
 
   useEffect(() => {
-    getAIConsent().then((state) => {
-      setHasConsent(state.granted);
-    });
+    let cancelled = false;
+    getAIConsent()
+      .then((state) => {
+        if (!cancelled) setHasConsent(state.granted);
+      })
+      .catch((err) => {
+        console.warn('[useAIConsent] failed to load consent state', err);
+        if (!cancelled) setHasConsent(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const grantConsent = useCallback(async () => {
