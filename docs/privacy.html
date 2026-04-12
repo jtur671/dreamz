@@ -26,7 +26,7 @@
 <body>
   <div class="container">
     <h1>Privacy Policy</h1>
-    <p class="date">Effective Date: April 9, 2026</p>
+    <p class="date">Effective Date: April 11, 2026</p>
 
     <h2>Introduction</h2>
     <p>Dreamz ("we," "our," or "us") is a mobile dream journal application that uses artificial intelligence to generate mystical interpretations of your dreams. We are committed to protecting your privacy and being transparent about how we handle your data.</p>
@@ -64,21 +64,37 @@
     <h2>How We Use Your Information</h2>
     <p>We use your information solely to provide and operate the Dreamz service:</p>
     <ul>
-      <li><strong>Dream analysis.</strong> Your dream text is sent to the OpenAI API to generate AI-powered dream interpretations. Only the dream text is sent; your email and other PII are not included.</li>
-      <li><strong>Personalized readings.</strong> If you provide your zodiac sign, gender, or age range, this information tailors your readings but is not linked to your identity when sent to OpenAI.</li>
+      <li><strong>Dream analysis.</strong> Your dream text, your selected mood for that dream, and any optional profile context you have provided (zodiac sign, gender, age range) are sent to the OpenAI API to generate AI-powered dream interpretations. Your email address, account ID, name, and any other personally identifiable information are never included in these API requests. Dream analysis only occurs after you have explicitly granted AI consent in the app.</li>
+      <li><strong>Personalized readings.</strong> If you provide your zodiac sign, gender, or age range, this information subtly tailors the tone of your readings but is not linked to your identity when sent to OpenAI.</li>
       <li><strong>Authentication.</strong> Your email address secures your account.</li>
       <li><strong>Subscription management.</strong> Your subscription status determines available features.</li>
     </ul>
     <p>We do not sell, rent, or share your personal data with data brokers or any third party for marketing purposes. Limited technical identifiers (device advertising IDs) may be shared with ad networks for ad delivery as described above. We do not use your data to train AI models. We do not send marketing emails.</p>
 
-    <h2>AI Consent and Control</h2>
-    <p>Dreamz uses artificial intelligence to generate dream interpretations. Before any dream text is sent to our AI provider (OpenAI), you must explicitly grant consent through an in-app toggle found in Settings.</p>
+    <h2>AI Consent and Third-Party AI Processing</h2>
+    <p>Dreamz uses OpenAI, L.L.C. ("OpenAI") as a third-party AI service to generate dream interpretations. Before any dream text is transmitted to OpenAI, you must explicitly grant consent in the app.</p>
+
+    <h3>How consent is obtained</h3>
+    <p>The first time you request a dream reading, the app displays a full-screen consent modal titled "Before We Read Your Dream." The modal:</p>
     <ul>
-      <li><strong>Consent is optional.</strong> You can use Dreamz as a private dream journal without enabling AI readings.</li>
-      <li><strong>Consent is revocable.</strong> You can withdraw consent at any time from Settings. Once withdrawn, no new dream text will be sent to AI services. Previously generated readings remain in your account unless you delete them.</li>
-      <li><strong>What is sent.</strong> When consent is granted and you request a reading, only the dream text and optional profile details (zodiac sign, gender, age range) are sent to OpenAI. No email address or other personally identifiable information is included.</li>
-      <li><strong>We record your consent.</strong> We store whether you have granted AI consent and the date you granted it, so we can honor your preference and demonstrate compliance.</li>
+      <li>Discloses exactly what data will be sent: your dream text, your selected mood, and any optional profile details you have shared (zodiac sign, gender, age range).</li>
+      <li>Identifies OpenAI as the recipient of that data.</li>
+      <li>States that your data is processed solely to generate your reading and is not used to train AI models.</li>
+      <li>Links directly to this Privacy Policy.</li>
+      <li>Requires you to tap "Allow Dream Readings" to proceed. If you tap "Not Now," no data is sent and no reading is generated.</li>
     </ul>
+    <p>Your consent choice is stored on our servers (in your profile record) and synced across your devices. You can revoke consent at any time from <strong>Settings &rarr; AI Data Sharing &rarr; Allow AI Dream Readings</strong>. Once revoked, no additional dream text will be transmitted to OpenAI. Previously generated readings remain in your grimoire unless you delete them.</p>
+
+    <h3>Equivalent data protection by OpenAI</h3>
+    <p>When your dream data is transmitted to OpenAI, it is subject to OpenAI's API data usage policy. Per OpenAI's policy as of the effective date of this Privacy Policy:</p>
+    <ul>
+      <li>Data submitted to the OpenAI API is <strong>not used to train OpenAI's models</strong>.</li>
+      <li>Data is processed solely to generate the response to the request.</li>
+      <li>Data may be retained by OpenAI for up to <strong>30 days for abuse monitoring and legal compliance</strong>, after which it is deleted.</li>
+      <li>OpenAI maintains its own security, encryption, and access controls for data in transit and at rest.</li>
+    </ul>
+    <p>We have reviewed OpenAI's public API data usage policy and confirm that the protections OpenAI applies to data submitted through its API are <strong>equivalent to or stronger than</strong> the protections described in this Privacy Policy. OpenAI's full API data usage policy is available at <a href="https://openai.com/enterprise-privacy">https://openai.com/enterprise-privacy</a> and <a href="https://openai.com/policies/api-data-usage-policies">https://openai.com/policies/api-data-usage-policies</a>.</p>
+    <p>We do not use any other third-party AI service. OpenAI is the only recipient of dream content for AI processing.</p>
 
     <h2>Data Storage and Security</h2>
     <p>Your data is stored in a Supabase-hosted PostgreSQL database with encryption at rest. We protect your data with:</p>

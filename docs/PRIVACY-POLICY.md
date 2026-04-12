@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Effective Date:** March 23, 2026
+**Effective Date:** April 11, 2026
 
 ## Introduction
 
@@ -45,8 +45,8 @@ For more information about how AdMob collects and uses data, see: https://suppor
 
 We use your information solely to provide and operate the Dreamz service:
 
-- **Dream analysis.** Your dream text is sent to the OpenAI API to generate AI-powered dream interpretations. Only the dream text is sent; your email address and other personally identifiable information are not included in these API requests.
-- **Personalized readings.** If you choose to provide your zodiac sign, gender, or age range, this information is used to tailor the tone and content of your dream readings. These details are included in the AI prompt context but are not linked to your identity when sent to OpenAI.
+- **Dream analysis.** Your dream text, your selected mood for that dream, and any optional profile context you have provided (zodiac sign, gender, age range) are sent to the OpenAI API to generate AI-powered dream interpretations. Your email address, account ID, name, and any other personally identifiable information are never included in these API requests. Dream analysis only occurs after you have explicitly granted AI consent in the app (see "AI Consent and Third-Party AI Processing" below).
+- **Personalized readings.** The optional profile context (zodiac sign, gender, age range) is used to subtly tailor the tone and themes of your dream readings. It is included in the AI prompt context but is not linked to your identity when sent to OpenAI.
 - **Authentication.** Your email address is used to create and secure your account.
 - **Subscription management.** Your subscription status is tracked to determine which features are available to you.
 
@@ -67,7 +67,36 @@ Your data is stored in a Supabase-hosted PostgreSQL database located in the Unit
 
 ### Data in Transit to Third Parties
 
-When your dream text is sent to OpenAI for analysis, it is transmitted over an encrypted HTTPS connection. We send only the dream text and optional profile context (zodiac sign, gender, age range) -- never your email address, account ID, or other identifying information.
+When your dream text is sent to OpenAI for analysis, it is transmitted over an encrypted HTTPS connection. We send only the dream text, your selected mood, and optional profile context (zodiac sign, gender, age range) -- never your email address, account ID, or other identifying information.
+
+## AI Consent and Third-Party AI Processing
+
+Dreamz uses OpenAI, L.L.C. ("OpenAI") as a third-party AI service to generate dream interpretations. Before any dream text is transmitted to OpenAI, you must explicitly grant consent in the app.
+
+### How consent is obtained
+
+The first time you request a dream reading, the app displays a full-screen consent modal titled "Before We Read Your Dream." The modal:
+
+- Discloses exactly what data will be sent: your dream text, your selected mood, and any optional profile details you have shared (zodiac sign, gender, age range).
+- Identifies OpenAI as the recipient of that data.
+- States that your data is processed solely to generate your reading and is not used to train AI models.
+- Links directly to this Privacy Policy.
+- Requires you to tap "Allow Dream Readings" to proceed. If you tap "Not Now," no data is sent and no reading is generated.
+
+Your consent choice is stored on our servers (in your profile record) and synced across your devices. You can revoke consent at any time from **Settings → AI Data Sharing → Allow AI Dream Readings**. Once revoked, no additional dream text will be transmitted to OpenAI. Previously generated readings remain in your grimoire unless you delete them.
+
+### Equivalent data protection by OpenAI
+
+When your dream data is transmitted to OpenAI, it is subject to OpenAI's API data usage policy. Per OpenAI's policy as of the effective date of this Privacy Policy:
+
+- Data submitted to the OpenAI API is **not used to train OpenAI's models**.
+- Data is processed solely to generate the response to the request.
+- Data may be retained by OpenAI for up to **30 days for abuse monitoring and legal compliance**, after which it is deleted.
+- OpenAI maintains its own security, encryption, and access controls for data in transit and at rest.
+
+We have reviewed OpenAI's public API data usage policy and confirm that the protections OpenAI applies to data submitted through its API are **equivalent to or stronger than** the protections described in this Privacy Policy. OpenAI's full API data usage policy is available at https://openai.com/enterprise-privacy and https://openai.com/policies/api-data-usage-policies.
+
+We do not use any other third-party AI service. OpenAI is the only recipient of dream content for AI processing.
 
 ## Third-Party Services
 
