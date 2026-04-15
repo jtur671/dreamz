@@ -1,4 +1,4 @@
-# TikTok Profile Setup — @dreamz674
+# TikTok Profile Setup — @dreamz_journal
 
 > Manual checklist. Do these steps in the TikTok app.
 
@@ -32,14 +32,10 @@ Your dreams, divined. ✨ Dream journal with mystical AI readings
 Edit Profile > Website:
 
 ```
-https://dreamz-journal.com/
-```
-
-This goes to the landing page with email capture. Once the app is approved on the App Store, swap to:
-
-```
 https://apps.apple.com/app/id6760150023
 ```
+
+App is live — link directly to the App Store. (The landing page at https://dreamz-journal.com/ is still useful for cross-platform traffic and the Android waitlist, but the primary conversion goal from TikTok is an iOS install.)
 
 ## 5. Display Name
 
@@ -47,9 +43,7 @@ Set to: **Dreamz**
 
 ## 6. Username
 
-Already set: **@dreamz674**
-
-(Ideal would be @dreamzjournal if available — check and claim if so)
+Already set: **@dreamz_journal**
 
 ## Done
 

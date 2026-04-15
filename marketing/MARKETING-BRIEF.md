@@ -11,7 +11,7 @@
 **Platform:** iOS (App Store)
 **Bundle ID:** com.dreamzjournal.app
 **App Store Connect ID:** 6760150023
-**Status:** TestFlight (v1.0.0 build 3, Mar 6 2026). Pending App Store submission.
+**Status:** Live on App Store (v1.0.0 build 42). Launched 2026-04-15.
 
 ## What It Does
 
@@ -127,9 +127,9 @@ Dreamz is a mystical dream journal that transforms dream entries into AI-powered
 
 ## Open Questions
 
-- [ ] Landing page needed? (domain, design, email capture)
-- [ ] Social media accounts created? (TikTok, Instagram, Twitter/X)
+- [x] Landing page needed? — live at https://dreamz-journal.com/ (GitHub Pages, `docs/index.html`)
+- [x] Social media accounts created? — TikTok `@dreamz_journal` claimed; IG/Twitter TBD
 - [ ] Press kit / media assets needed?
-- [ ] Launch date target?
+- [x] Launch date target? — 2026-04-15 (live)
 - [ ] Promo code strategy for early adopters?
-- [ ] App Store submission timeline (after TestFlight validation)?
+- [x] App Store submission timeline — shipped, build 42 approved
