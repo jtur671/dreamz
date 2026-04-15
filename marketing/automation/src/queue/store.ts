@@ -4,7 +4,7 @@ import { cfg } from '../config.js';
 import { log } from '../utils/logger.js';
 import type { QueueItem, GeneratedContent } from '../types.js';
 
-function load(): QueueItem[] {
+export function load(): QueueItem[] {
   if (!existsSync(cfg.paths.queue)) return [];
   return JSON.parse(readFileSync(cfg.paths.queue, 'utf-8'));
 }

@@ -1,10 +1,12 @@
 import cron from 'node-cron';
+import { fileURLToPath } from 'url';
 import { getDue, markPosted, markFailed, getStats } from './queue/store.js';
+import { isPlatformEnabled } from './lib/platformState.js';
 import { log } from './utils/logger.js';
 import type { PlatformPoster, QueueItem } from './types.js';
 
 // Dynamic imports so missing credentials don't crash the scheduler
-async function loadPosters(): Promise<PlatformPoster[]> {
+export async function loadPosters(): Promise<PlatformPoster[]> {
   const modules = await Promise.allSettled([
     import('./platforms/pinterest.js'),
     import('./platforms/reddit.js'),
@@ -30,7 +32,7 @@ async function loadPosters(): Promise<PlatformPoster[]> {
   return posters;
 }
 
-async function processDueItems(posters: PlatformPoster[]) {
+export async function processDueItems(posters: PlatformPoster[]) {
   const due = getDue();
   if (due.length === 0) return;
 
@@ -45,6 +47,13 @@ async function processDueItems(posters: PlatformPoster[]) {
   }
 
   const tasks = Array.from(byPlatform.entries()).map(async ([platform, items]) => {
+    // Runtime kill switch — checked per tick so dashboard toggles take effect
+    // without a restart. Getter-level changes would not cover this case.
+    if (!isPlatformEnabled(platform as any)) {
+      log.warn('scheduler', `${platform} disabled via dashboard, skipping ${items.length} items`);
+      return;
+    }
+
     const poster = posters.find(p => p.name === platform);
     if (!poster) {
       log.warn('scheduler', `No poster for ${platform}, skipping ${items.length} items`);
@@ -99,7 +108,11 @@ async function main() {
   log.info('scheduler', 'Scheduler running. Checking every 5 minutes. Ctrl+C to stop.');
 }
 
-main().catch(err => {
-  log.err('scheduler', `Fatal: ${err}`);
-  process.exit(1);
-});
+// Run only when invoked as a script, not when imported (e.g. by dashboard.ts).
+const isMain = process.argv[1] === fileURLToPath(import.meta.url);
+if (isMain) {
+  main().catch(err => {
+    log.err('scheduler', `Fatal: ${err}`);
+    process.exit(1);
+  });
+}

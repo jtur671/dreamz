@@ -16,8 +16,10 @@ function optEnv(key: string): string | undefined {
 }
 
 export const cfg = {
-  anthropic: { apiKey: env('ANTHROPIC_API_KEY') },
-  openai: { apiKey: env('OPENAI_API_KEY') },
+  // AI keys are optional at config-load time so the dashboard can boot
+  // before the user has pasted them in. Generators validate at use-time.
+  anthropic: { apiKey: optEnv('ANTHROPIC_API_KEY') },
+  openai: { apiKey: optEnv('OPENAI_API_KEY') },
 
   pinterest: {
     accessToken: optEnv('PINTEREST_ACCESS_TOKEN'),

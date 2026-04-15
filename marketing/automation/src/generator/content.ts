@@ -6,7 +6,15 @@ import type { Platform, PostContent, GeneratedContent } from '../types.js';
 
 const TAG = 'content-gen';
 
-const anthropic = new Anthropic({ apiKey: cfg.anthropic.apiKey });
+let _anthropic: Anthropic | null = null;
+function getAnthropic(): Anthropic {
+  if (_anthropic) return _anthropic;
+  if (!cfg.anthropic.apiKey) {
+    throw new Error('ANTHROPIC_API_KEY is not set. Add it in the dashboard (http://127.0.0.1:4455) or via .env.');
+  }
+  _anthropic = new Anthropic({ apiKey: cfg.anthropic.apiKey });
+  return _anthropic;
+}
 
 // ── Dream symbols pool (rotated through for variety) ──────────────────────
 
@@ -89,7 +97,7 @@ interface BatchResponse {
 }
 
 async function callClaude(userPrompt: string): Promise<string> {
-  const response = await anthropic.messages.create({
+  const response = await getAnthropic().messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 2048,
     system: SYSTEM_PROMPT,
