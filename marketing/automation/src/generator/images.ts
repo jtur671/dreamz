@@ -6,7 +6,15 @@ import { log } from '../utils/logger.js';
 
 const TAG = 'image-gen';
 
-const openai = new OpenAI({ apiKey: cfg.openai.apiKey });
+let _openai: OpenAI | null = null;
+function getOpenAI(): OpenAI {
+  if (_openai) return _openai;
+  if (!cfg.openai.apiKey) {
+    throw new Error('OPENAI_API_KEY is not set. Add it in the dashboard (http://127.0.0.1:4455) or via .env.');
+  }
+  _openai = new OpenAI({ apiKey: cfg.openai.apiKey });
+  return _openai;
+}
 
 const IMAGES_DIR = resolve(cfg.paths.content, 'images');
 
@@ -30,7 +38,7 @@ export async function generateImage(prompt: string, filename: string): Promise<s
 
   log.info(TAG, `Generating image: "${prompt.slice(0, 80)}..." → ${filename}`);
 
-  const response = await openai.images.generate({
+  const response = await getOpenAI().images.generate({
     model: 'dall-e-3',
     prompt,
     n: 1,

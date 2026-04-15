@@ -3,6 +3,7 @@
  * Usage: npm run post
  */
 import { getDue, markPosted, markFailed, getStats } from './queue/store.js';
+import { isPlatformEnabled } from './lib/platformState.js';
 import { log } from './utils/logger.js';
 import type { PlatformPoster } from './types.js';
 
@@ -37,6 +38,10 @@ async function main() {
 
   const results = await Promise.all(
     due.map(async (item) => {
+      if (!isPlatformEnabled(item.platform)) {
+        log.warn('post-now', `${item.platform} disabled via dashboard, skipping ${item.id}`);
+        return;
+      }
       const poster = posters.find(p => p.name === item.platform);
       if (!poster) {
         log.warn('post-now', `No poster for ${item.platform}, skipping`);

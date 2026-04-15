@@ -6,6 +6,7 @@
     "start": "npx tsx src/index.ts",
     "generate": "npx tsx src/generator/content.ts",
     "post": "npx tsx src/post-now.ts",
+    "dashboard": "npx tsx src/dashboard.ts",
     "dev": "npx tsx watch src/index.ts"
   },
   "dependencies": {
