@@ -6,15 +6,24 @@
 set -euo pipefail
 
 LABEL="com.dreamzjournal.marketing-dashboard"
+OPENER_LABEL="com.dreamzjournal.marketing-dashboard-opener"
 PLIST_PATH="$HOME/Library/LaunchAgents/${LABEL}.plist"
+OPENER_PLIST_PATH="$HOME/Library/LaunchAgents/${OPENER_LABEL}.plist"
 
-if [ ! -f "$PLIST_PATH" ]; then
-    echo "Not installed (no file at $PLIST_PATH)."
+removed_any=0
+
+for plist in "$PLIST_PATH" "$OPENER_PLIST_PATH"; do
+    if [ -f "$plist" ]; then
+        launchctl unload "$plist" 2>/dev/null || true
+        rm -f "$plist"
+        echo "Removed $plist"
+        removed_any=1
+    fi
+done
+
+if [ "$removed_any" = "0" ]; then
+    echo "Nothing to remove (no dreamz marketing plists in ~/Library/LaunchAgents/)."
     exit 0
 fi
 
-launchctl unload "$PLIST_PATH" 2>/dev/null || true
-rm -f "$PLIST_PATH"
-
-echo "Removed $PLIST_PATH"
 echo "Logs preserved at ~/Library/Logs/dreamz-marketing/ — delete manually if you want."
