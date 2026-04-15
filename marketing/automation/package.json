@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
+    "dotenv": "^16.6.1",
     "node-cron": "^3.0.3",
     "openai": "^4.85.0",
     "snoowrap": "^1.23.0"
