@@ -1,5 +1,11 @@
 import { supabase, getFreshAccessToken } from './supabase';
+import { withTimeout } from './timeout';
 import type { Dream, DreamReading } from '../types';
+
+const AUTH_TIMEOUT_MS = 5000;
+const QUERY_TIMEOUT_MS = 10000;
+const ANALYZE_TIMEOUT_MS = 60000;
+const IMAGE_TIMEOUT_MS = 30000;
 
 export type SaveDreamResult =
   | { success: true; dream: Dream }
@@ -30,22 +36,30 @@ export async function saveDream(
   dreamType: 'dream' | 'nightmare' | 'forgot' = 'dream'
 ): Promise<SaveDreamResult> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await withTimeout(
+      supabase.auth.getUser(),
+      AUTH_TIMEOUT_MS,
+      'saveDream:getUser',
+    );
 
     if (!user) {
       return { success: false, error: 'Not authenticated' };
     }
 
-    const { data, error } = await supabase
-      .from('dreams')
-      .insert({
-        user_id: user.id,
-        dream_text: dreamText.trim(),
-        mood: mood || null,
-        dream_type: dreamType,
-      })
-      .select()
-      .single();
+    const { data, error } = await withTimeout(
+      supabase
+        .from('dreams')
+        .insert({
+          user_id: user.id,
+          dream_text: dreamText.trim(),
+          mood: mood || null,
+          dream_type: dreamType,
+        })
+        .select()
+        .single(),
+      QUERY_TIMEOUT_MS,
+      'saveDream:insert',
+    );
 
     if (error) {
       return { success: false, error: error.message };
@@ -75,22 +89,30 @@ export async function analyzeDream(
 ): Promise<AnalyzeDreamResult> {
   try {
     // Use getFreshAccessToken to ensure token is refreshed before API call
-    const accessToken = await getFreshAccessToken();
+    const accessToken = await withTimeout(
+      getFreshAccessToken(),
+      AUTH_TIMEOUT_MS,
+      'analyzeDream:getFreshAccessToken',
+    );
 
     if (!accessToken) {
       return { success: false, error: 'Not authenticated' };
     }
 
-    const { data, error } = await supabase.functions.invoke('analyze-dream', {
-      body: {
-        dream_text: dreamText,
-        mood: context?.mood || undefined,
-        dream_id: context?.dreamId || undefined,
-        zodiac_sign: context?.zodiacSign || undefined,
-        gender: context?.gender || undefined,
-        age_range: context?.ageRange || undefined,
-      },
-    });
+    const { data, error } = await withTimeout(
+      supabase.functions.invoke('analyze-dream', {
+        body: {
+          dream_text: dreamText,
+          mood: context?.mood || undefined,
+          dream_id: context?.dreamId || undefined,
+          zodiac_sign: context?.zodiacSign || undefined,
+          gender: context?.gender || undefined,
+          age_range: context?.ageRange || undefined,
+        },
+      }),
+      ANALYZE_TIMEOUT_MS,
+      'analyzeDream:invoke',
+    );
 
     if (error) {
       // FunctionsHttpError.context is a Response object; read real body
@@ -137,19 +159,27 @@ export async function updateDreamWithReading(
   reading: DreamReading
 ): Promise<UpdateDreamResult> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await withTimeout(
+      supabase.auth.getUser(),
+      AUTH_TIMEOUT_MS,
+      'updateDreamWithReading:getUser',
+    );
 
     if (!user) {
       return { success: false, error: 'Not authenticated' };
     }
 
-    const { data, error } = await supabase
-      .from('dreams')
-      .update({ reading })
-      .eq('id', dreamId)
-      .eq('user_id', user.id)
-      .select()
-      .single();
+    const { data, error } = await withTimeout(
+      supabase
+        .from('dreams')
+        .update({ reading })
+        .eq('id', dreamId)
+        .eq('user_id', user.id)
+        .select()
+        .single(),
+      QUERY_TIMEOUT_MS,
+      'updateDreamWithReading:update',
+    );
 
     if (error) {
       return { success: false, error: error.message };
@@ -196,18 +226,26 @@ function isValidReading(reading: unknown): reading is DreamReading {
  */
 export async function fetchUserDreams(): Promise<FetchDreamsResult> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await withTimeout(
+      supabase.auth.getUser(),
+      AUTH_TIMEOUT_MS,
+      'fetchUserDreams:getUser',
+    );
 
     if (!user) {
       return { success: false, error: 'Not authenticated' };
     }
 
-    const { data, error } = await supabase
-      .from('dreams')
-      .select('*')
-      .eq('user_id', user.id)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false });
+    const { data, error } = await withTimeout(
+      supabase
+        .from('dreams')
+        .select('*')
+        .eq('user_id', user.id)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false }),
+      QUERY_TIMEOUT_MS,
+      'fetchUserDreams:select',
+    );
 
     if (error) {
       return { success: false, error: error.message };
@@ -230,18 +268,26 @@ export async function generateDreamImage(
 ): Promise<{ success: true; image_url: string } | { success: false; error: string }> {
   try {
     // Ensure token is fresh before calling edge function (important for background backfill)
-    const accessToken = await getFreshAccessToken();
+    const accessToken = await withTimeout(
+      getFreshAccessToken(),
+      AUTH_TIMEOUT_MS,
+      'generateDreamImage:getFreshAccessToken',
+    );
     if (!accessToken) {
       return { success: false, error: 'Not authenticated' };
     }
 
-    const { data, error } = await supabase.functions.invoke('generate-dream-image', {
-      body: {
-        dream_id: dreamId,
-        dream_text: dreamText,
-        symbol_name: symbolName,
-      },
-    });
+    const { data, error } = await withTimeout(
+      supabase.functions.invoke('generate-dream-image', {
+        body: {
+          dream_id: dreamId,
+          dream_text: dreamText,
+          symbol_name: symbolName,
+        },
+      }),
+      IMAGE_TIMEOUT_MS,
+      'generateDreamImage:invoke',
+    );
 
     if (error) {
       return { success: false, error: 'Image generation failed' };
@@ -263,17 +309,25 @@ export async function generateDreamImage(
  */
 export async function deleteDream(dreamId: string): Promise<DeleteDreamResult> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await withTimeout(
+      supabase.auth.getUser(),
+      AUTH_TIMEOUT_MS,
+      'deleteDream:getUser',
+    );
 
     if (!user) {
       return { success: false, error: 'Not authenticated' };
     }
 
-    const { error } = await supabase
-      .from('dreams')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', dreamId)
-      .eq('user_id', user.id);
+    const { error } = await withTimeout(
+      supabase
+        .from('dreams')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', dreamId)
+        .eq('user_id', user.id),
+      QUERY_TIMEOUT_MS,
+      'deleteDream:update',
+    );
 
     if (error) {
       return { success: false, error: error.message };

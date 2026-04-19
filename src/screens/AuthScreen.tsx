@@ -14,10 +14,13 @@ import {
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
+import * as SecureStore from 'expo-secure-store';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { updateProfile } from '../lib/profileService';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
+import { withTimeout, TimeoutError } from '../lib/timeout';
+import { featureFlags } from '../lib/featureFlags';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -29,6 +32,8 @@ export function setOnNewUserSignup(callback: (() => void) | null) {
 
 const OAUTH_TIMEOUT_MS = 60000;
 const RETRY_HINT_DELAY_MS = 10000;
+const SIGN_IN_NETWORK_TIMEOUT_MS = 15000;
+const PROFILE_UPDATE_TIMEOUT_MS = 5000;
 
 export default function AuthScreen() {
   const navigation = useNavigation<any>();
@@ -153,19 +158,30 @@ export default function AuthScreen() {
       });
 
       if (credential.identityToken) {
-        const { data, error } = await supabase.auth.signInWithIdToken({
-          provider: 'apple',
-          token: credential.identityToken,
-        });
+        const { data, error } = await withTimeout(
+          supabase.auth.signInWithIdToken({
+            provider: 'apple',
+            token: credential.identityToken,
+          }),
+          SIGN_IN_NETWORK_TIMEOUT_MS,
+          'signInWithIdToken:apple',
+        );
 
         if (error) {
           Alert.alert('Apple Sign In Error', error.message);
         } else if (data?.user) {
-          // Save display name from Apple if provided
+          // Save display name from Apple if provided. Best-effort — don't
+          // block sign-in completion on this.
           const fullName = credential.fullName;
           if (fullName?.givenName) {
             const displayName = [fullName.givenName, fullName.familyName].filter(Boolean).join(' ');
-            await updateProfile({ display_name: displayName });
+            await withTimeout(
+              updateProfile({ display_name: displayName }),
+              PROFILE_UPDATE_TIMEOUT_MS,
+              'updateProfile:appleDisplayName',
+            ).catch((err: any) => {
+              console.warn('[Auth] updateProfile after Apple sign-in failed:', err?.message);
+            });
           }
 
           // Check if this is a new user (created within last minute)
@@ -178,12 +194,54 @@ export default function AuthScreen() {
         }
       }
     } catch (error: any) {
-      if (error.code !== 'ERR_REQUEST_CANCELED') {
+      if (error.code === 'ERR_REQUEST_CANCELED') {
+        // User cancelled the Apple sheet — silent.
+      } else if (error instanceof TimeoutError) {
+        Alert.alert(
+          'Sign-In Timed Out',
+          'Apple sign-in took too long to complete. Please check your connection and try again, or tap "Having trouble?" at the bottom to reset.',
+        );
+      } else {
         Alert.alert('Apple Sign In Error', error.message || 'An error occurred');
       }
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleResetAppData() {
+    Alert.alert(
+      'Reset Sign-In State?',
+      'This clears any stuck login session stored on this device. You can then try signing in again.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+              const url = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+              const host = url.replace(/^https?:\/\//, '').split('.')[0];
+              const key = host ? `sb-${host}-auth-token` : null;
+              if (key) {
+                await SecureStore.deleteItemAsync(key).catch(() => {});
+                await SecureStore.deleteItemAsync(`${key}_count`).catch(() => {});
+                for (let i = 0; i < 64; i++) {
+                  await SecureStore.deleteItemAsync(`${key}_chunk_${i}`).catch(() => {});
+                }
+              }
+              Alert.alert(
+                'Reset Complete',
+                'Please fully close Dreamz (swipe up from the app switcher) and reopen it.',
+              );
+            } catch (error: any) {
+              Alert.alert('Reset Error', error?.message || 'Could not reset app data.');
+            }
+          },
+        },
+      ],
+    );
   }
 
   async function handleGoogleSignIn() {
@@ -297,7 +355,7 @@ export default function AuthScreen() {
           <Text style={styles.subtitle}>Your dreams, divined</Text>
 
           <View style={styles.socialButtons}>
-            {Platform.OS === 'ios' && (
+            {Platform.OS === 'ios' && featureFlags.appleSignInEnabled && (
               <AppleAuthentication.AppleAuthenticationButton
                 buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
                 buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
@@ -307,15 +365,17 @@ export default function AuthScreen() {
               />
             )}
 
-            <TouchableOpacity
-              style={styles.googleButton}
-              onPress={handleGoogleSignIn}
-              disabled={loading}
-              accessibilityRole="button"
-              accessibilityLabel="Continue with Google"
-            >
-              <Text style={styles.googleButtonText}>Continue with Google</Text>
-            </TouchableOpacity>
+            {featureFlags.googleSignInEnabled && (
+              <TouchableOpacity
+                style={styles.googleButton}
+                onPress={handleGoogleSignIn}
+                disabled={loading}
+                accessibilityRole="button"
+                accessibilityLabel="Continue with Google"
+              >
+                <Text style={styles.googleButtonText}>Continue with Google</Text>
+              </TouchableOpacity>
+            )}
 
             {showRetryHint && (
               <TouchableOpacity
@@ -417,6 +477,16 @@ export default function AuthScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity
+            testID="auth-reset-app-data"
+            style={styles.resetButton}
+            onPress={handleResetAppData}
+            accessibilityRole="button"
+            accessibilityLabel="Having trouble signing in? Tap to reset app data"
+          >
+            <Text style={styles.resetText}>Having trouble? Tap to reset</Text>
+          </TouchableOpacity>
 
           <Text
             style={styles.privacyNote}
@@ -576,5 +646,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 32,
     textDecorationLine: 'underline',
+  },
+  resetButton: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    marginTop: 16,
+  },
+  resetText: {
+    color: '#6b5b8a',
+    fontSize: 12,
   },
 });
