@@ -21,6 +21,7 @@ import { updateProfile } from '../lib/profileService';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { withTimeout, TimeoutError } from '../lib/timeout';
 import { featureFlags } from '../lib/featureFlags';
+import { useBootstrapStatus } from '../lib/bootstrapStatus';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -44,6 +45,7 @@ export default function AuthScreen() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showRetryHint, setShowRetryHint] = useState(false);
+  const bootstrapStatus = useBootstrapStatus();
 
   async function handleEmailAuth() {
     const trimmedEmail = email.trim();
@@ -495,6 +497,12 @@ export default function AuthScreen() {
           >
             Your dreams are private. Always.
           </Text>
+
+          {bootstrapStatus !== 'ready' && (
+            <Text style={styles.bootstrapStatus} accessibilityLiveRegion="polite">
+              {bootstrapStatus === 'pending' ? '· checking session' : '· session check failed — sign in below'}
+            </Text>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -655,5 +663,12 @@ const styles = StyleSheet.create({
   resetText: {
     color: '#6b5b8a',
     fontSize: 12,
+  },
+  bootstrapStatus: {
+    color: '#4a3a6e',
+    fontSize: 10,
+    textAlign: 'center',
+    marginTop: 8,
+    opacity: 0.6,
   },
 });

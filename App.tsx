@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Notifications from 'expo-notifications';
@@ -27,15 +27,16 @@ import { initializeNotifications } from './src/lib/notificationService';
 import { initializeAds } from './src/lib/adService';
 import { withTimeout } from './src/lib/timeout';
 import { featureFlags } from './src/lib/featureFlags';
+import { setBootstrapStatus } from './src/lib/bootstrapStatus';
 
-const SESSION_BOOTSTRAP_TIMEOUT_MS = 5000;
 const PROFILE_FETCH_TIMEOUT_MS = 5000;
-// Hard safety net: no matter what happens in the bootstrap promise chain,
-// the loading spinner must dismiss within this window. Prevents the
-// "stuck on purple spinner for an hour" class of bug where `withTimeout`
-// doesn't save us (e.g. when the Supabase SDK's internal token-refresh
-// chain starves `setTimeout` callbacks via a microtask-heavy await loop).
-const LOADING_HARD_DISMISS_MS = 8000;
+
+// Kick off the session read at module-load time so it races the JS bundle's
+// initialization instead of waiting for the React tree to mount. Most cold
+// launches have a cached session in SecureStore that resolves in <300ms, so
+// by the time App mounts, the session is already available and we render
+// MainTabs on the first frame with no AuthScreen flash.
+const initialSessionPromise = supabase.auth.getSession();
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -114,7 +115,6 @@ function MainTabs() {
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
@@ -144,28 +144,15 @@ export default function App() {
       setNeedsOnboarding(true);
     });
 
-
-    // Unconditional safety net. Runs independently of the promise chain
-    // below so the user can never be trapped on the loading spinner, even
-    // if every Promise/withTimeout fails to fire.
-    const hardDismissTimer = setTimeout(() => {
-      setLoading((current) => {
-        if (current) {
-          console.warn('[App] Hard loading dismiss fired — bootstrap did not complete in time');
-        }
-        return false;
-      });
-    }, LOADING_HARD_DISMISS_MS);
-
-    // Get initial session. Both getSession (reads SecureStore) and getProfile
-    // (network) can hang silently; race them against timeouts so the loading
-    // gate is guaranteed to clear and the user always reaches AuthScreen.
-    withTimeout(
-      supabase.auth.getSession(),
-      SESSION_BOOTSTRAP_TIMEOUT_MS,
-      'getSession',
-    )
+    // Subscribe to the session kicked off at module load. We don't gate any
+    // rendering on this — the app renders AuthScreen immediately and swaps
+    // to MainTabs once the session resolves. If this Promise never settles
+    // (Supabase SDK hung), the user is still in AuthScreen and can sign in
+    // manually; they're never stuck on a blocking spinner.
+    let cancelled = false;
+    initialSessionPromise
       .then(async ({ data: { session: initialSession } }) => {
+        if (cancelled) return;
         if (initialSession && featureFlags.bootstrapProfileFetchEnabled) {
           try {
             const profile = await withTimeout(
@@ -173,22 +160,24 @@ export default function App() {
               PROFILE_FETCH_TIMEOUT_MS,
               'getProfile:bootstrap',
             );
-            if (profile?.onboarding_completed === false) {
+            if (!cancelled && profile?.onboarding_completed === false) {
               setNeedsOnboarding(true);
             }
           } catch (profileErr: any) {
             console.warn('[App] Bootstrap profile check failed:', profileErr?.message);
           }
         }
-        setSession(initialSession);
+        if (!cancelled) {
+          setSession(initialSession);
+          setBootstrapStatus('ready');
+        }
       })
       .catch((err: any) => {
         console.warn('[App] Bootstrap session check failed:', err?.message);
-        setSession(null);
-      })
-      .finally(() => {
-        clearTimeout(hardDismissTimer);
-        setLoading(false);
+        if (!cancelled) {
+          setSession(null);
+          setBootstrapStatus('failed');
+        }
       });
 
     // Listen for auth changes
@@ -219,21 +208,12 @@ export default function App() {
     );
 
     return () => {
-      clearTimeout(hardDismissTimer);
+      cancelled = true;
       subscription.unsubscribe();
       notificationResponseSub.remove();
       setOnNewUserSignup(null);
     };
   }, []);
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6b4e9e" />
-        <StatusBar style="light" />
-      </View>
-    );
-  }
 
   return (
     <SafeAreaProvider>
@@ -285,12 +265,6 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: '#1a1a2e',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   tabBar: {
     backgroundColor: '#1a1a2e',
     borderTopWidth: 0,
