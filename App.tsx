@@ -24,6 +24,18 @@ import { DreamProvider } from './src/context/DreamContext';
 import { getProfile } from './src/lib/profileService';
 import { initPurchases } from './src/lib/purchaseService';
 import { initializeNotifications } from './src/lib/notificationService';
+import { initializeAds } from './src/lib/adService';
+import { withTimeout } from './src/lib/timeout';
+import { featureFlags } from './src/lib/featureFlags';
+
+const SESSION_BOOTSTRAP_TIMEOUT_MS = 5000;
+const PROFILE_FETCH_TIMEOUT_MS = 5000;
+// Hard safety net: no matter what happens in the bootstrap promise chain,
+// the loading spinner must dismiss within this window. Prevents the
+// "stuck on purple spinner for an hour" class of bug where `withTimeout`
+// doesn't save us (e.g. when the Supabase SDK's internal token-refresh
+// chain starves `setTimeout` callbacks via a microtask-heavy await loop).
+const LOADING_HARD_DISMISS_MS = 8000;
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -113,6 +125,10 @@ export default function App() {
     // Initialize notifications
     initializeNotifications().catch((e) => console.error('[App] initializeNotifications error:', e));
 
+    // Initialize Google Mobile Ads SDK. Without this call the SDK stays
+    // dormant and free-tier users never see interstitial ads.
+    initializeAds().catch((e) => console.error('[App] initializeAds error:', e));
+
     // Navigate to NewDream when user taps a reminder notification
     const notificationResponseSub = Notifications.addNotificationResponseReceivedListener(() => {
       // Small delay to ensure navigation is ready (app may be cold-starting)
@@ -129,35 +145,67 @@ export default function App() {
     });
 
 
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      // Check profile BEFORE setting session to avoid a flash of MainTabs
-      // when the user needs onboarding (prevents DreamProvider from mounting
-      // prematurely and keeping background tasks alive).
-      if (session) {
-        const profile = await getProfile();
-        if (profile?.onboarding_completed === false) {
-          setNeedsOnboarding(true);
+    // Unconditional safety net. Runs independently of the promise chain
+    // below so the user can never be trapped on the loading spinner, even
+    // if every Promise/withTimeout fails to fire.
+    const hardDismissTimer = setTimeout(() => {
+      setLoading((current) => {
+        if (current) {
+          console.warn('[App] Hard loading dismiss fired — bootstrap did not complete in time');
         }
-      }
+        return false;
+      });
+    }, LOADING_HARD_DISMISS_MS);
 
-      setSession(session);
-      setLoading(false);
-    });
+    // Get initial session. Both getSession (reads SecureStore) and getProfile
+    // (network) can hang silently; race them against timeouts so the loading
+    // gate is guaranteed to clear and the user always reaches AuthScreen.
+    withTimeout(
+      supabase.auth.getSession(),
+      SESSION_BOOTSTRAP_TIMEOUT_MS,
+      'getSession',
+    )
+      .then(async ({ data: { session: initialSession } }) => {
+        if (initialSession && featureFlags.bootstrapProfileFetchEnabled) {
+          try {
+            const profile = await withTimeout(
+              getProfile(),
+              PROFILE_FETCH_TIMEOUT_MS,
+              'getProfile:bootstrap',
+            );
+            if (profile?.onboarding_completed === false) {
+              setNeedsOnboarding(true);
+            }
+          } catch (profileErr: any) {
+            console.warn('[App] Bootstrap profile check failed:', profileErr?.message);
+          }
+        }
+        setSession(initialSession);
+      })
+      .catch((err: any) => {
+        console.warn('[App] Bootstrap session check failed:', err?.message);
+        setSession(null);
+      })
+      .finally(() => {
+        clearTimeout(hardDismissTimer);
+        setLoading(false);
+      });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
-          // Check profile before setting session so the app goes directly to
-          // OnboardingScreen (if needed) without a flash of MainTabs.
           try {
-            const profile = await getProfile();
+            const profile = await withTimeout(
+              getProfile(),
+              PROFILE_FETCH_TIMEOUT_MS,
+              'getProfile:onAuthStateChange',
+            );
             if (profile?.onboarding_completed === false) {
               setNeedsOnboarding(true);
             }
-          } catch {
-            // Profile check failed — assume onboarding complete (safe default)
+          } catch (err: any) {
+            console.warn('[App] Post-signIn profile check failed:', err?.message);
           }
           setSession(session);
         } else if (!session) {
@@ -171,6 +219,7 @@ export default function App() {
     );
 
     return () => {
+      clearTimeout(hardDismissTimer);
       subscription.unsubscribe();
       notificationResponseSub.remove();
       setOnNewUserSignup(null);

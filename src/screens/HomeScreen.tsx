@@ -11,7 +11,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../lib/supabase';
 import { getProfile } from '../lib/profileService';
+import { withTimeout } from '../lib/timeout';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
+
+const STATS_TIMEOUT_MS = 5000;
 
 type HomeScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -63,17 +66,25 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     useCallback(() => {
       async function loadStats() {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
+          const { data: { user } } = await withTimeout(
+            supabase.auth.getUser(),
+            STATS_TIMEOUT_MS,
+            'HomeScreen:getUser',
+          );
           if (!user) return;
 
           const [dreamResult, profile] = await Promise.all([
-            supabase
-              .from('dreams')
-              .select('reading', { count: 'exact' })
-              .eq('user_id', user.id)
-              .is('deleted_at', null)
-              .order('created_at', { ascending: false })
-              .limit(1),
+            withTimeout(
+              supabase
+                .from('dreams')
+                .select('reading', { count: 'exact' })
+                .eq('user_id', user.id)
+                .is('deleted_at', null)
+                .order('created_at', { ascending: false })
+                .limit(1),
+              STATS_TIMEOUT_MS,
+              'HomeScreen:dreams',
+            ),
             getProfile(),
           ]);
 
