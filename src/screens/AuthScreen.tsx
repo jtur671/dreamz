@@ -22,6 +22,11 @@ import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { withTimeout, TimeoutError } from '../lib/timeout';
 import { featureFlags } from '../lib/featureFlags';
 import { useBootstrapStatus } from '../lib/bootstrapStatus';
+import { formatDebugLog, clearDebugLog } from '../lib/debugLog';
+
+// Bumped every hotfix. On-device testers can confirm which bundle is
+// running by looking at the badge in the top-right corner of AuthScreen.
+const BUILD_TAG = 'v4';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -353,8 +358,26 @@ export default function AuthScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={[styles.content, contentStyle]}>
-          <Text style={styles.title}>Dreamz</Text>
+          <Text
+            style={styles.title}
+            onLongPress={() => {
+              const dump = formatDebugLog();
+              Alert.alert(
+                `Debug log (${BUILD_TAG})`,
+                dump.length > 3000 ? dump.slice(-3000) : dump,
+                [
+                  { text: 'Copy / dismiss', style: 'cancel' },
+                  { text: 'Clear', style: 'destructive', onPress: () => clearDebugLog() },
+                ],
+              );
+            }}
+          >
+            Dreamz
+          </Text>
           <Text style={styles.subtitle}>Your dreams, divined</Text>
+          <View pointerEvents="none" style={styles.versionBadge}>
+            <Text style={styles.versionBadgeText}>{BUILD_TAG}</Text>
+          </View>
 
           <View style={styles.socialButtons}>
             {Platform.OS === 'ios' && featureFlags.appleSignInEnabled && (
@@ -670,5 +693,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     opacity: 0.6,
+  },
+  versionBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 16,
+    backgroundColor: '#ff3366',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  versionBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 });
