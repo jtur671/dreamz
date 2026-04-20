@@ -28,29 +28,18 @@ import { initializeAds } from './src/lib/adService';
 import { withTimeout } from './src/lib/timeout';
 import { featureFlags } from './src/lib/featureFlags';
 import { setBootstrapStatus } from './src/lib/bootstrapStatus';
-import { debugLog, loadDebugLog } from './src/lib/debugLog';
 
-// v4 build tag — used to visually confirm which bundle is running.
-// Bump this for every hotfix so on-device testers can tell at a glance.
-export const BUILD_TAG = 'v4';
+// Build tag — bumped per hotfix. Visible on-screen via AuthScreen badge
+// so testers can confirm which bundle is running without device logs.
+export const BUILD_TAG = 'v5';
 
 const PROFILE_FETCH_TIMEOUT_MS = 5000;
 
-// Load any previously-persisted debug log entries, then stamp the module-
-// load event so we can see how far bundle evaluation got.
-loadDebugLog().finally(() => debugLog('boot', `module-load ${BUILD_TAG}`));
-
 // Kick off the session read at module-load time so it races the JS bundle's
-// initialization instead of waiting for the React tree to mount. Most cold
-// launches have a cached session in SecureStore that resolves in <300ms, so
-// by the time App mounts, the session is already available and we render
-// MainTabs on the first frame with no AuthScreen flash.
-debugLog('boot', 'calling supabase.auth.getSession() at module load');
+// initialization. Most cold launches have a cached session in SecureStore
+// that resolves in <300ms, so by the time App mounts, the session is ready
+// and we render MainTabs on the first frame with no AuthScreen flash.
 const initialSessionPromise = supabase.auth.getSession();
-initialSessionPromise.then(
-  ({ data }) => debugLog('boot', `getSession resolved, session=${data?.session ? 'present' : 'null'}`),
-  (e) => debugLog('boot', `getSession rejected: ${e?.message ?? e}`),
-);
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -133,23 +122,15 @@ export default function App() {
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
   useEffect(() => {
-    debugLog('App', 'mount');
-
     // Initialize RevenueCat
-    initPurchases()
-      .then(() => debugLog('App', 'initPurchases ok'))
-      .catch((e) => { debugLog('App', `initPurchases err ${e?.message ?? e}`); console.error('[App] initPurchases error:', e); });
+    initPurchases().catch((e) => console.error('[App] initPurchases error:', e));
 
     // Initialize notifications
-    initializeNotifications()
-      .then(() => debugLog('App', 'initializeNotifications ok'))
-      .catch((e) => { debugLog('App', `initializeNotifications err ${e?.message ?? e}`); console.error('[App] initializeNotifications error:', e); });
+    initializeNotifications().catch((e) => console.error('[App] initializeNotifications error:', e));
 
     // Initialize Google Mobile Ads SDK. Without this call the SDK stays
     // dormant and free-tier users never see interstitial ads.
-    initializeAds()
-      .then(() => debugLog('App', 'initializeAds ok'))
-      .catch((e) => { debugLog('App', `initializeAds err ${e?.message ?? e}`); console.error('[App] initializeAds error:', e); });
+    initializeAds().catch((e) => console.error('[App] initializeAds error:', e));
 
     // Navigate to NewDream when user taps a reminder notification
     const notificationResponseSub = Notifications.addNotificationResponseReceivedListener(() => {
@@ -174,33 +155,27 @@ export default function App() {
     let cancelled = false;
     initialSessionPromise
       .then(async ({ data: { session: initialSession } }) => {
-        debugLog('App', `initialSessionPromise .then, session=${initialSession ? 'present' : 'null'}`);
         if (cancelled) return;
         if (initialSession && featureFlags.bootstrapProfileFetchEnabled) {
           try {
-            debugLog('App', 'calling getProfile() with 5s timeout');
             const profile = await withTimeout(
               getProfile(),
               PROFILE_FETCH_TIMEOUT_MS,
               'getProfile:bootstrap',
             );
-            debugLog('App', `getProfile returned, profile=${profile ? 'present' : 'null'}`);
             if (!cancelled && profile?.onboarding_completed === false) {
               setNeedsOnboarding(true);
             }
           } catch (profileErr: any) {
-            debugLog('App', `getProfile threw: ${profileErr?.message ?? profileErr}`);
             console.warn('[App] Bootstrap profile check failed:', profileErr?.message);
           }
         }
         if (!cancelled) {
-          debugLog('App', `setSession + bootstrapStatus=ready`);
           setSession(initialSession);
           setBootstrapStatus('ready');
         }
       })
       .catch((err: any) => {
-        debugLog('App', `initialSessionPromise rejected: ${err?.message ?? err}`);
         console.warn('[App] Bootstrap session check failed:', err?.message);
         if (!cancelled) {
           setSession(null);
