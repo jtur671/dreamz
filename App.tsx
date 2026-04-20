@@ -31,7 +31,7 @@ import { setBootstrapStatus } from './src/lib/bootstrapStatus';
 
 // Build tag — bumped per hotfix. Visible on-screen via AuthScreen badge
 // so testers can confirm which bundle is running without device logs.
-export const BUILD_TAG = 'v5';
+export const BUILD_TAG = 'v6';
 
 const PROFILE_FETCH_TIMEOUT_MS = 5000;
 
