@@ -3,7 +3,7 @@
     "name": "Dreamz",
     "slug": "dreamz",
     "scheme": "dreamz",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -17,7 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.dreamzjournal.app",
       "usesAppleSignIn": true,
-      "buildNumber": "41",
+      "buildNumber": "47",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Dreamz uses your microphone to record dreams by voice.",
         "NSUserTrackingUsageDescription": "Dreamz uses your advertising identifier to show relevant ads that keep the free tier available. You can change this any time in Settings.",
@@ -28,6 +28,9 @@
         "tabletImage": "./assets/splash-icon-tablet.png",
         "resizeMode": "contain",
         "backgroundColor": "#1a1a2e"
+      },
+      "runtimeVersion": {
+        "policy": "appVersion"
       }
     },
     "android": {
@@ -118,12 +121,19 @@
           ]
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-updates"
     ],
     "extra": {
       "eas": {
         "projectId": "7a63985f-a2fb-45fe-8dc8-311a9c270047"
       }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/7a63985f-a2fb-45fe-8dc8-311a9c270047"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }
