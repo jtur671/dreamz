@@ -17,7 +17,11 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.dreamzjournal.app",
       "usesAppleSignIn": true,
-      "buildNumber": "47",
+      "buildNumber": "48",
+      "associatedDomains": [
+        "applinks:dreamz-journal.com",
+        "webcredentials:dreamz-journal.com"
+      ],
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Dreamz uses your microphone to record dreams by voice.",
         "NSUserTrackingUsageDescription": "Dreamz uses your advertising identifier to show relevant ads that keep the free tier available. You can change this any time in Settings.",
