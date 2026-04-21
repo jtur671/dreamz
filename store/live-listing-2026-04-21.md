@@ -1,6 +1,6 @@
 # Dreamz — App Store Connect Listing Baseline
 
-_Pulled via App Store Connect API at 2026-04-21T19:18:33.415Z_
+_Pulled via App Store Connect API at 2026-04-21T20:07:42.916Z_
 
 - **App ID:** 6760150023
 - **Version:** 1.0.1
@@ -19,9 +19,9 @@ _Pulled via App Store Connect API at 2026-04-21T19:18:33.415Z_
 dream journal,dream meaning,dream,dictionary,dream analysis,nightmare,lucid,dream,symbols  
 ```
 
-**Promotional text** (0/170):
+**Promotional text** (161/170):
 ```
-
+Your dreams are speaking. Dreamz turns them into AI readings with symbols, omens, and personal rituals. 1 free reading every day. Private by default. Now on iOS.
 ```
 
 **Description** (1219/4000):
