@@ -3,19 +3,148 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dreamz — Your Dreams, Divined.</title>
+  <title>Dream Journal & AI Dream Interpretation | Dreamz Journal</title>
+  <meta name="description" content="Dreamz is a mystical dream journal that transforms your dreams into AI-powered readings with symbols, omens, and rituals. Free on the App Store. Private. Personal. Magical.">
+
+  <!-- Canonical & crawler directives -->
+  <link rel="canonical" href="https://dreamz-journal.com/">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="theme-color" content="#0d1b2a">
+
+  <!-- Apple Smart App Banner -->
+  <meta name="apple-itunes-app" content="app-id=6760150023">
+
   <link rel="icon" type="image/png" href="favicon.png">
-  <meta name="description" content="Dreamz is a mystical dream journal that transforms your dreams into AI-powered readings with symbols, omens, and rituals. Now live on iOS. Private. Personal. Magical.">
+  <link rel="apple-touch-icon" href="favicon.png">
 
   <!-- Open Graph -->
   <meta property="og:title" content="Dreamz — Your Dreams, Divined.">
   <meta property="og:description" content="A mystical dream journal that transforms your dreams into AI-powered readings — symbols, omens, and rituals. Free on the App Store.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://dreamz-journal.com/">
+  <meta property="og:image" content="https://dreamz-journal.com/images/og-home.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Dreamz — mystical dream journal on iOS">
+  <meta property="og:site_name" content="Dreamz Journal">
+  <meta property="og:locale" content="en_US">
 
-  <!-- Google Fonts -->
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Dreamz — Your Dreams, Divined.">
+  <meta name="twitter:description" content="A mystical dream journal that transforms your dreams into AI-powered readings — symbols, omens, and rituals. Free on iOS.">
+  <meta name="twitter:image" content="https://dreamz-journal.com/images/og-home.png">
+
+  <!-- RSS (stub, planned) -->
+  <link rel="alternate" type="application/rss+xml" title="Dreamz Blog" href="/blog/rss.xml">
+
+  <!-- Schema.org — MobileApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "MobileApplication",
+    "name": "Dreamz: Dream Journal & Diary",
+    "alternateName": "Dreamz Journal",
+    "operatingSystem": "iOS 16.0+",
+    "applicationCategory": "LifestyleApplication",
+    "description": "A mystical dream journal that transforms your dreams into AI-powered readings with symbols, omens, and rituals.",
+    "url": "https://dreamz-journal.com/",
+    "downloadUrl": "https://apps.apple.com/app/id6760150023",
+    "installUrl": "https://apps.apple.com/app/id6760150023",
+    "image": "https://dreamz-journal.com/favicon.png",
+    "offers": [
+      { "@type": "Offer", "price": "0", "priceCurrency": "USD", "category": "Free" },
+      { "@type": "Offer", "price": "5.99", "priceCurrency": "USD", "category": "Premium Monthly" },
+      { "@type": "Offer", "price": "49.99", "priceCurrency": "USD", "category": "Premium Annual" }
+    ],
+    "publisher": { "@type": "Organization", "name": "Dreamz Journal", "url": "https://dreamz-journal.com/" }
+  }
+  </script>
+
+  <!-- Schema.org — Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Dreamz Journal",
+    "url": "https://dreamz-journal.com/",
+    "logo": "https://dreamz-journal.com/favicon.png",
+    "sameAs": [
+      "https://www.tiktok.com/@dreamz_journal",
+      "https://www.pinterest.com/jtur671/",
+      "https://apps.apple.com/app/id6760150023"
+    ]
+  }
+  </script>
+
+  <!-- Schema.org — WebSite with SearchAction -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Dreamz Journal",
+    "url": "https://dreamz-journal.com/",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": { "@type": "EntryPoint", "urlTemplate": "https://dreamz-journal.com/blog/?s={search_term_string}" },
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+
+  <!-- Schema.org — HowTo -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to interpret your dreams with Dreamz",
+    "description": "Turn your dreams into a personalized mystical reading in three steps.",
+    "totalTime": "PT3M",
+    "step": [
+      { "@type": "HowToStep", "position": 1, "name": "Record your dream", "text": "Type or speak your dream as soon as you wake, while the details are still vivid." },
+      { "@type": "HowToStep", "position": 2, "name": "Receive your reading", "text": "AI interprets your dream into a full mystical reading with symbols, an omen, and a personal ritual." },
+      { "@type": "HowToStep", "position": 3, "name": "Grow your grimoire", "text": "Every reading is saved to your personal dream archive, revealing patterns and recurring symbols over time." }
+    ]
+  }
+  </script>
+
+  <!-- Schema.org — FAQPage (must match visible FAQ content below) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "Is Dreamz free?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Dreamz offers a free tier with one AI dream reading per day, the full journal, voice recording, and the 5,700+ symbol dictionary. Premium ($5.99/month or $49.99/year) unlocks 30 readings per month, AI dream imagery, ad-free experience, and advanced pattern insights." } },
+      { "@type": "Question", "name": "How does AI dream interpretation work?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Dreamz analyzes your dream entry using a curated framework of 5,700+ symbols rooted in cross-cultural mythology and Jungian archetypes. The AI identifies present symbols, a guiding omen, and a personal ritual — delivered as a full mystical reading rather than a static dictionary lookup." } },
+      { "@type": "Question", "name": "Is my dream content private?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Your dream entries are encrypted, never linked to your identity, and never used for AI training. You can export or delete everything at any time." } },
+      { "@type": "Question", "name": "What platforms does Dreamz support?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Dreamz is live on iOS (iPhone and iPad). An Android edition is in development — join the waitlist on this page to be notified when it ships." } },
+      { "@type": "Question", "name": "Can I record dreams by voice?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Dreamz supports both voice and text entry. Voice recordings are transcribed automatically so you can capture a dream the moment you wake, before it fades." } },
+      { "@type": "Question", "name": "What makes Dreamz different from other dream journal apps?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Most apps are either plain journals (no interpretation), static dream dictionaries (no personalization), or generic AI with no symbol framework. Dreamz pairs a 5,700+ symbol dictionary with personalized mystical readings — symbols, omens, rituals — all saved to a private Grimoire that surfaces your dream patterns over time." } }
+    ]
+  }
+  </script>
+
+  <!-- Google Fonts & third-party preconnects -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://formspree.io">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+
+  <!-- Google Analytics 4 (replace G-XXXXXXXXXX with live Measurement ID) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('consent', 'default', { ad_storage: 'denied', analytics_storage: 'denied', wait_for_update: 500 });
+    gtag('config', 'G-XXXXXXXXXX', { anonymize_ip: true });
+  </script>
 
   <style>
     /* ============================================
@@ -803,6 +932,49 @@
     }
 
     /* ============================================
+       FAQ Section
+       ============================================ */
+    .faq-section { background: var(--bg-deep); }
+    .faq-list { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 0.75rem; }
+    .faq-item { background: rgba(26, 10, 46, 0.4); border: 1px solid rgba(201, 168, 76, 0.12); border-radius: 12px; overflow: hidden; transition: border-color 0.2s ease; }
+    .faq-item:hover { border-color: rgba(201, 168, 76, 0.3); }
+    .faq-item summary { cursor: pointer; padding: 1.1rem 1.5rem; font-family: var(--font-heading); font-weight: 600; font-size: 1.05rem; color: var(--text-primary); list-style: none; display: flex; justify-content: space-between; align-items: center; }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after { content: '+'; color: var(--gold); font-size: 1.4rem; font-weight: 300; transition: transform 0.2s ease; }
+    .faq-item[open] summary::after { transform: rotate(45deg); }
+    .faq-item-body { padding: 0 1.5rem 1.25rem; color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; }
+
+    /* ============================================
+       Blog Teaser — "From the Grimoire"
+       ============================================ */
+    .grimoire-teaser { background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-purple-dark) 100%); }
+    .grimoire-grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; max-width: 1000px; margin: 0 auto; }
+    .grimoire-card { background: rgba(26, 10, 46, 0.4); border: 1px solid rgba(201, 168, 76, 0.12); border-radius: 14px; padding: 1.5rem 1.5rem 1.75rem; text-decoration: none; display: block; transition: border-color 0.2s ease, transform 0.2s ease; }
+    .grimoire-card:hover { border-color: rgba(201, 168, 76, 0.35); transform: translateY(-2px); }
+    .grimoire-card .tag { font-family: var(--font-heading); font-size: 0.72rem; color: var(--gold); font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.6rem; display: inline-block; }
+    .grimoire-card h3 { font-family: var(--font-heading); font-size: 1.2rem; color: var(--text-primary); margin-bottom: 0.5rem; line-height: 1.35; }
+    .grimoire-card p { font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6; }
+    .grimoire-card-meta { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.85rem; }
+    .grimoire-all { text-align: center; margin-top: 2rem; }
+    .grimoire-all a { color: var(--gold); font-family: var(--font-heading); font-style: italic; font-size: 0.95rem; }
+
+    @media (min-width: 640px) {
+      .grimoire-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 1024px) {
+      .grimoire-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* ============================================
+       Cookie Banner
+       ============================================ */
+    .cookie-banner { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-purple-dark); border-top: 1px solid rgba(201, 168, 76, 0.2); padding: 1rem 1.25rem; z-index: 100; display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; font-size: 0.85rem; color: var(--text-secondary); box-shadow: 0 -4px 20px rgba(0,0,0,0.3); }
+    .cookie-banner.hidden { display: none; }
+    .cookie-banner a { color: var(--gold); }
+    .cookie-banner button { padding: 0.5rem 1.25rem; background: var(--gold); color: var(--bg-deep); border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+    .cookie-banner button:hover { background: var(--gold-light); }
+
+    /* ============================================
        Accessibility — Reduced Motion
        ============================================ */
     @media (prefers-reduced-motion: reduce) {
@@ -1056,6 +1228,77 @@
   </section>
 
   <!-- ==========================================
+       FAQ
+       ========================================== -->
+  <section class="section faq-section" id="faq">
+    <div class="section-inner">
+      <p class="section-label">Questions</p>
+      <h2 class="section-title">Before you cross <em>the threshold</em></h2>
+      <p class="section-subtitle">Everything you might want to know before opening your grimoire.</p>
+
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>Is Dreamz free?</summary>
+          <div class="faq-item-body">Yes. Dreamz offers a free tier with one AI dream reading per day, the full journal, voice recording, and the 5,700+ symbol dictionary. Premium ($5.99/month or $49.99/year) unlocks 30 readings per month, AI dream imagery, ad-free experience, and advanced pattern insights.</div>
+        </details>
+        <details class="faq-item">
+          <summary>How does AI dream interpretation work?</summary>
+          <div class="faq-item-body">Dreamz analyzes your dream entry using a curated framework of 5,700+ symbols rooted in cross-cultural mythology and Jungian archetypes. The AI identifies present symbols, a guiding omen, and a personal ritual — delivered as a full mystical reading rather than a static dictionary lookup.</div>
+        </details>
+        <details class="faq-item">
+          <summary>Is my dream content private?</summary>
+          <div class="faq-item-body">Yes. Your dream entries are encrypted, never linked to your identity, and never used for AI training. You can export or delete everything at any time.</div>
+        </details>
+        <details class="faq-item">
+          <summary>What platforms does Dreamz support?</summary>
+          <div class="faq-item-body">Dreamz is live on iOS (iPhone and iPad). An Android edition is in development — join the waitlist on this page to be notified when it ships.</div>
+        </details>
+        <details class="faq-item">
+          <summary>Can I record dreams by voice?</summary>
+          <div class="faq-item-body">Yes. Dreamz supports both voice and text entry. Voice recordings are transcribed automatically so you can capture a dream the moment you wake, before it fades.</div>
+        </details>
+        <details class="faq-item">
+          <summary>What makes Dreamz different from other dream journal apps?</summary>
+          <div class="faq-item-body">Most apps are either plain journals (no interpretation), static dream dictionaries (no personalization), or generic AI with no symbol framework. Dreamz pairs a 5,700+ symbol dictionary with personalized mystical readings — symbols, omens, rituals — all saved to a private Grimoire that surfaces your dream patterns over time.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       BLOG TEASER — "From the Grimoire"
+       ========================================== -->
+  <section class="section grimoire-teaser" id="grimoire">
+    <div class="section-inner">
+      <p class="section-label">From the Grimoire</p>
+      <h2 class="section-title">Guides &amp; <em>dream lore</em></h2>
+      <p class="section-subtitle">Deep dives on dream interpretation, symbolism, and the science of your unconscious mind.</p>
+
+      <div class="grimoire-grid">
+        <a href="/blog/best-dream-interpretation-apps-2026" class="grimoire-card">
+          <span class="tag">Comparison</span>
+          <h3>Best Dream Interpretation Apps 2026</h3>
+          <p>We tested every major dream app — dreamZ, Chitta, DreamApp, Oniri, and more. The honest breakdown of what actually works.</p>
+          <div class="grimoire-card-meta">April 2026 · 7 min read</div>
+        </a>
+        <a href="/blog/best-dream-journal-apps-2026" class="grimoire-card">
+          <span class="tag">Comparison</span>
+          <h3>Best Dream Journal Apps 2026</h3>
+          <p>From capture speed to interpretation quality to privacy — every major dream journal app ranked honestly.</p>
+          <div class="grimoire-card-meta">April 2026 · 8 min read</div>
+        </a>
+        <a href="/blog/what-do-my-dreams-mean-ai-interpretation-2026" class="grimoire-card">
+          <span class="tag">Guide</span>
+          <h3>What Do My Dreams Mean?</h3>
+          <p>5,000 years of dream symbolism meets modern AI. What the technology actually does, what symbols really mean, and how to get real value from a dream journal.</p>
+          <div class="grimoire-card-meta">April 2026 · 9 min read</div>
+        </a>
+      </div>
+      <div class="grimoire-all"><a href="/blog/">Visit the full blog →</a></div>
+    </div>
+  </section>
+
+  <!-- ==========================================
        BOTTOM CTA / ANDROID WAITLIST
        ========================================== -->
   <section class="section bottom-cta" id="notify">
@@ -1092,14 +1335,51 @@
        ========================================== -->
   <footer class="footer">
     <div class="footer-links">
+      <a href="/blog/">Blog</a>
+      <a href="#faq">FAQ</a>
+      <a href="#pricing">Pricing</a>
       <a href="privacy.html">Privacy Policy</a>
       <a href="support.html">Support</a>
-      <a href="#pricing">Pricing</a>
     </div>
     <p class="footer-copy">&copy; 2026 Dreamz. Your dreams, divined.</p>
   </footer>
 
+  <!-- Cookie Banner -->
+  <div class="cookie-banner hidden" id="cookie-banner" role="dialog" aria-label="Cookie consent">
+    <span>We use cookies for analytics to improve Dreamz. <a href="privacy.html#cookies">Learn more</a>.</span>
+    <button type="button" id="cookie-accept">OK, got it</button>
+  </div>
+
   <script>
+    // Cookie consent — show banner until accepted, then grant analytics consent
+    (function() {
+      var banner = document.getElementById('cookie-banner');
+      var accept = document.getElementById('cookie-accept');
+      if (!localStorage.getItem('dreamz-consent')) {
+        banner.classList.remove('hidden');
+      } else {
+        if (typeof gtag === 'function') {
+          gtag('consent', 'update', { analytics_storage: 'granted' });
+        }
+      }
+      accept.addEventListener('click', function() {
+        localStorage.setItem('dreamz-consent', 'granted');
+        banner.classList.add('hidden');
+        if (typeof gtag === 'function') {
+          gtag('consent', 'update', { analytics_storage: 'granted' });
+        }
+      });
+    })();
+
+    // Track App Store clicks
+    document.querySelectorAll('a[href*="apps.apple.com"]').forEach(function(a) {
+      a.addEventListener('click', function() {
+        if (typeof gtag === 'function') {
+          gtag('event', 'app_store_click', { link_location: a.closest('section, footer')?.id || 'unknown' });
+        }
+      });
+    });
+
     document.getElementById('signup-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       var form = this;
@@ -1115,6 +1395,9 @@
           body: new FormData(form)
         });
         if (res.ok) {
+          if (typeof gtag === 'function') {
+            gtag('event', 'email_signup', { form_location: 'android_waitlist' });
+          }
           // Clear form and show success using safe DOM methods
           while (form.firstChild) { form.removeChild(form.firstChild); }
           var msg = document.createElement('p');
