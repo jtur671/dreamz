@@ -1,22 +1,22 @@
 # Dreamz — App Store Connect Listing Baseline
 
-_Pulled via App Store Connect API at 2026-04-21T20:07:42.916Z_
+_Pulled via App Store Connect API at 2026-04-21T20:18:42.260Z_
 
 - **App ID:** 6760150023
-- **Version:** 1.0.1
-- **App Store state:** READY_FOR_SALE
+- **Version:** 1.0.2
+- **App Store state:** PREPARE_FOR_SUBMISSION
 - **Primary category:** LIFESTYLE
 - **Secondary category:** HEALTH_AND_FITNESS
 
 ## Locale: `en-US`
 
-**Title** (14/30): Dreamz Journal
+**Title** (29/30): Dreamz: Dream Journal & Diary
 
-**Subtitle** (24/30): Your dreams are speaking
+**Subtitle** (26/30): AI Dream Meaning & Symbols
 
-**Keywords field** (91/100):
+**Keywords field** (97/100):
 ```
-dream journal,dream meaning,dream,dictionary,dream analysis,nightmare,lucid,dream,symbols  
+interpretation,dictionary,oracle,grimoire,sleep,lucid,spiritual,tarot,moon,manifestation,mystical
 ```
 
 **Promotional text** (161/170):
@@ -24,44 +24,64 @@ dream journal,dream meaning,dream,dictionary,dream analysis,nightmare,lucid,drea
 Your dreams are speaking. Dreamz turns them into AI readings with symbols, omens, and personal rituals. 1 free reading every day. Private by default. Now on iOS.
 ```
 
-**Description** (1219/4000):
+**Description** (2860/4000):
 ```
-  Your dreams are speaking. Dreamz helps you listen.                 
-                                        
-  Dreamz is a private dream journal that transforms your dreams into
-  mystical readings - symbols, omens, rituals, and reflections -
-  crafted just for you.
+Your dreams are speaking. Dreamz is a mystical dream journal that turns every dream you log into a full AI-powered reading — complete with decoded symbols, a guiding omen, and a personal ritual drawn from what your sleeping mind surfaced.
 
-  HOW IT WORKS
-  Write or speak your dream the moment you wake up. Our AI oracle
-  decodes the symbols hidden within, revealing what your unconscious
-  mind may be whispering. Every reading is saved to your personal
-  Grimoire, where patterns emerge over time.
+It's a dream diary, a dream dictionary, and a personal oracle in one — built for people who know their dreams carry meaning but want a tool that's beautiful, private, and actually insightful.
 
-  FEATURES
-  - Voice or text dream entry - capture dreams before they fade
-  - AI-powered readings with symbols, omens, and rituals
-  - 5,000+ symbol dictionary - from water to wolves, doors to dragons
-  - Personal Grimoire - your private dream archive
-  - Search and filter your dream history
-  - Plain English + mystical interpretation side by side
-  - Export all your dreams anytime
-  - No tracking. Your dreams are always private.
+WHAT YOU GET
 
-  FREE TIER
-  1 Reading per Day
+• MYSTICAL READINGS
+Every dream becomes a full interpretive reading, not a dictionary lookup. Receive the symbols at play, their meanings, a personal omen, and a ritual tied to the dream itself.
 
-  PREMIUM
-  Unlimited readings and images for $5.99/month. Dream as much as you want.
+• 5,700+ SYMBOL DICTIONARY
+Explore one of the largest curated dream symbol libraries on mobile. Each entry carries cross-cultural context, mystical meaning, and interpretive nuance — consistent meanings across every reading so your Grimoire builds real understanding over time.
 
-  Begin your journey. Your Grimoire awaits.
+• VOICE OR TEXT CAPTURE
+Record your dream the moment you wake — voice to text, or type it in. Capture before the veil closes and the details fade.
 
-Terms of Use (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+• YOUR PERSONAL GRIMOIRE
+Every dream and every reading saved to a private, searchable archive. The more you log, the more patterns emerge. Recurring symbols. Themes that return. The dream language your mind is actually speaking.
+
+• PRIVATE BY DEFAULT
+Your dream content is encrypted, never linked to your identity, and never used for AI training. Export or delete everything whenever you like. Your grimoire is yours.
+
+• BEAUTIFUL, ATMOSPHERIC UI
+Dark purples, mystical gold, midnight blues. Designed to feel like something that belongs in your midnight rituals — not a spreadsheet for your unconscious.
+
+FREE AND PREMIUM
+
+Free: 1 full AI reading every day. Full journal. Voice entry. 5,700+ symbol dictionary. Grimoire. Ad-supported.
+Premium ($5.99/month or $49.99/year): 30 readings per month. Ad-free. AI dream imagery. Advanced insights. Pattern recognition across your whole archive. Data export.
+
+FOR WHO
+
+For anyone who wakes remembering fragments and wonders what they meant. For tarot readers, astrology-curious, journaling lovers, and wellness-minded people who want their inner life taken seriously without clinical language. For people who know their dreams are saying something.
+
+A wise friend who reads tarot — in your pocket.
+
+HOW IT WORKS
+
+1. Record your dream in voice or text the moment you wake.
+2. Receive a full AI reading: decoded symbols, omen, and a ritual tied to what surfaced.
+3. Save to your Grimoire. Watch patterns emerge as you log over time.
+
+PRIVACY
+
+Your dream entries are encrypted. They are not linked to your identity. They are never used to train AI. You can export or delete your complete archive at any time.
+
+SUPPORT
+
+Questions or feedback: https://dreamz-journal.com/support
+Privacy policy: https://dreamz-journal.com/privacy
+
+Your dreams, divined.
 ```
 
-**What's New** (201):
+**What's New** (0):
 ```
-Fixed a rare issue where the app could freeze on the loading screen after sign-in. A new reset option is now available at the bottom of the sign-in screen if you get stuck. Thank you for your patience.
+
 ```
 
 - Marketing URL: https://dreamz-journal.com
