@@ -1,0 +1,16 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["JVCGFH8YU5.com.dreamzjournal.app"],
+        "components": [
+          { "/": "/blog/*", "comment": "Open blog pages in the Dreamz app if installed" },
+          { "/": "/*",       "comment": "Open all other paths in the Dreamz app if installed" }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["JVCGFH8YU5.com.dreamzjournal.app"]
+  }
+}
