@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dreamz for Clinicians — A private dream journal for between-session work</title>
+  <meta name="description" content="Dreamz is a private, structured dream-journaling companion for clients between sessions. Built for depth-psychology, trauma-informed, and integration clinicians.">
+
+  <link rel="canonical" href="https://dreamz-journal.com/for-clinicians">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <meta name="theme-color" content="#1e2430">
+
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+
+  <meta property="og:title" content="Dreamz for Clinicians — A private dream journal for between-session work">
+  <meta property="og:description" content="A private, structured dream-journaling companion for clients between sessions. Supports your modality; does not replace your expertise.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://dreamz-journal.com/for-clinicians">
+  <meta property="og:image" content="https://dreamz-journal.com/images/og-home.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="Dreamz Journal">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Dreamz for Clinicians">
+  <meta name="twitter:description" content="A private, structured dream-journaling companion for clients between sessions.">
+  <meta name="twitter:image" content="https://dreamz-journal.com/images/og-home.png">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Dreamz for Clinicians",
+    "description": "A private, structured dream-journaling companion for clients between sessions. Built for depth-psychology, trauma-informed, and integration clinicians.",
+    "url": "https://dreamz-journal.com/for-clinicians",
+    "audience": {
+      "@type": "Audience",
+      "audienceType": "Mental health professionals"
+    },
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "Dreamz Journal",
+      "url": "https://dreamz-journal.com/"
+    }
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "Is Dreamz HIPAA-compliant?",
+        "acceptedAnswer": { "@type": "Answer", "text": "No. Dreamz is a consumer journaling app, not a protected-health-information system. The client owns their journal on a personal device; the therapist never receives client data through Dreamz. That keeps Dreamz cleanly outside the boundary where HIPAA applies. If your practice requires a HIPAA-covered journaling surface, Dreamz is not the right fit." } },
+      { "@type": "Question", "name": "The main site talks about mystical readings. Is this a serious tool?",
+        "acceptedAnswer": { "@type": "Answer", "text": "The consumer brand voice is deliberate — it signals to a general wellness audience that this is for reflection, not diagnosis. The product itself is a structured dream journal with optional AI-generated reflection prompts. Every interpretive sentence is hedged ('may reflect', 'often suggests') — never diagnostic, never predictive." } },
+      { "@type": "Question", "name": "What's in the AI readings — are they diagnostic?",
+        "acceptedAnswer": { "@type": "Answer", "text": "No. A reading is a generated reflection prompt. It names symbols present, offers one possible interpretive framing, and suggests a journaling or grounding practice. Guardrails forbid naming DSM conditions, suggesting diagnoses, or claiming interpretive accuracy. Distress keywords trigger grounding output and crisis-line links in place of interpretation." } },
+      { "@type": "Question", "name": "How do I recommend this without endorsing a paid product?",
+        "acceptedAnswer": { "@type": "Answer", "text": "The free tier covers the homework use case. Unlimited journaling, voice capture, the full 5,700-symbol reference, and one AI reading per day. Premium ($5.99/month or $49.99/year) is optional. You can recommend Dreamz without effectively recommending a subscription. Dreamz does not pay clinicians, affiliates, or referral partners." } },
+      { "@type": "Question", "name": "What happens if a client journals a nightmare or discloses trauma?",
+        "acceptedAnswer": { "@type": "Answer", "text": "The product treats distressing content gently. Self-harm and crisis keywords trigger a grounding prompt and 988 / country-appropriate crisis links in place of a standard reading. Nightmare content produces a reading that names themes but avoids pathologizing language and suggests grounding practices rather than symbolic interpretation." } },
+      { "@type": "Question", "name": "What about data retention?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Dream content is encrypted at rest. We do not train models on user content. Deleting an account removes all dream content from our systems within 30 days. The client keeps their local export if they ran one." } }
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://formspree.io">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <!-- GA4 — same Measurement ID as main site so all dreamz-journal.com traffic rolls up -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FLM3J5KMW8"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('consent', 'default', { ad_storage: 'denied', analytics_storage: 'denied', wait_for_update: 500 });
+    gtag('config', 'G-FLM3J5KMW8', { anonymize_ip: true, page_path: '/for-clinicians' });
+  </script>
+
+  <style>
+    :root {
+      /* Muted palette — same brand family as the main site but desaturated */
+      --bg-base: #1e2430;          /* deep slate, replaces #0d1b2a */
+      --bg-raised: #262d3c;
+      --bg-card: #2c3445;
+      --border-soft: #3a4358;
+      --accent: #c9a84c;           /* same gold, reserved for a single accent element */
+      --accent-soft: rgba(201, 168, 76, 0.12);
+      --indigo: #6d7ea0;           /* desaturated accent, replaces vivid purples */
+      --text-primary: #e7e9ee;
+      --text-secondary: #a7adb9;
+      --text-muted: #6e7585;
+      --font-heading: 'Playfair Display', Georgia, serif;
+      --font-body: 'Fraunces', 'Source Serif 4', Georgia, serif;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    a { color: var(--accent); text-decoration: none; transition: color 0.2s ease; }
+    a:hover { color: #e0c872; }
+
+    /* Top nav — simple, no drama */
+    .topnav {
+      padding: 1.5rem 1.25rem;
+      border-bottom: 1px solid var(--border-soft);
+      background: var(--bg-base);
+    }
+    .topnav-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .topnav-brand {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text-primary);
+    }
+    .topnav-brand span { color: var(--accent); }
+    .topnav-back {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    .topnav-back:hover { color: var(--text-primary); }
+
+    /* Section scaffolding */
+    .section {
+      padding: 4.5rem 1.25rem;
+      position: relative;
+    }
+    .section-inner { max-width: 960px; margin: 0 auto; }
+    .section-label {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: var(--indigo);
+      margin-bottom: 0.75rem;
+    }
+    .section-title {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 2rem;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      letter-spacing: -0.01em;
+    }
+    .section-subtitle {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      max-width: 640px;
+      margin-bottom: 2.5rem;
+    }
+
+    /* Hero — restrained gradient, no stars, no glow */
+    .hero {
+      padding: 6rem 1.25rem 5rem;
+      background:
+        radial-gradient(ellipse 70% 50% at 30% 0%, rgba(109, 126, 160, 0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 40%, rgba(201, 168, 76, 0.06) 0%, transparent 60%),
+        var(--bg-base);
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .hero-inner { max-width: 760px; margin: 0 auto; }
+    .hero-eyebrow {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: var(--indigo);
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 2.75rem;
+      line-height: 1.12;
+      color: var(--text-primary);
+      margin-bottom: 1.25rem;
+      letter-spacing: -0.015em;
+    }
+    .hero-sub {
+      font-size: 1.15rem;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      margin-bottom: 2.5rem;
+      max-width: 620px;
+    }
+    .hero-ctas {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.85rem 1.6rem;
+      border-radius: 4px;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+      text-decoration: none;
+      border: 1px solid transparent;
+      line-height: 1;
+    }
+    .btn-primary {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+    .btn-primary:hover {
+      background: var(--accent-soft);
+      color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border-soft);
+    }
+    .btn-secondary:hover {
+      background: var(--bg-raised);
+      border-color: var(--indigo);
+      color: var(--text-primary);
+    }
+    .hero-disclaimer {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* Three-pillar grid */
+    .pillars {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    .pillar {
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 6px;
+      padding: 1.75rem;
+    }
+    .pillar h3 {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.15rem;
+      color: var(--text-primary);
+      margin-bottom: 0.75rem;
+    }
+    .pillar p {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    /* Designed for / Not designed for */
+    .designed-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    .designed-col h3 {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .designed-col ul { list-style: none; }
+    .designed-col li {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      padding: 0.5rem 0;
+      padding-left: 1.25rem;
+      position: relative;
+    }
+    .designed-col li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.1rem;
+      width: 6px;
+      height: 1px;
+      background: var(--indigo);
+    }
+
+    /* Use cases — four cards */
+    .usecases {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+    .usecase {
+      padding: 1.5rem;
+      background: var(--bg-raised);
+      border-left: 2px solid var(--indigo);
+      border-radius: 0 4px 4px 0;
+    }
+    .usecase h3 {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    .usecase p {
+      font-size: 0.93rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Advisory program */
+    .advisory {
+      background: linear-gradient(180deg, var(--bg-base) 0%, var(--bg-raised) 100%);
+      border-top: 1px solid var(--border-soft);
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .advisory-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 8px;
+      padding: 2.25rem;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .advisory-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.75rem;
+    }
+    .advisory-block h4 {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--indigo);
+      margin-bottom: 0.75rem;
+    }
+    .advisory-block ul { list-style: none; font-size: 0.95rem; color: var(--text-secondary); line-height: 1.7; }
+    .advisory-block li { padding-left: 1rem; position: relative; margin-bottom: 0.35rem; }
+    .advisory-block li::before { content: '·'; position: absolute; left: 0; color: var(--indigo); font-weight: 700; }
+
+    .advisory-form {
+      display: grid;
+      gap: 0.85rem;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border-soft);
+    }
+    .advisory-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+    .advisory-form input,
+    .advisory-form select,
+    .advisory-form textarea {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      border: 1px solid var(--border-soft);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      border-radius: 4px;
+    }
+    .advisory-form input:focus,
+    .advisory-form select:focus,
+    .advisory-form textarea:focus {
+      outline: none;
+      border-color: var(--indigo);
+    }
+    .advisory-form textarea { min-height: 90px; resize: vertical; }
+    .advisory-form label {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    .advisory-submit {
+      background: var(--accent);
+      color: var(--bg-base);
+      border: none;
+      padding: 0.9rem 1.8rem;
+      border-radius: 4px;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      justify-self: start;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+    .advisory-submit:hover { background: #e0c872; transform: translateY(-1px); }
+    .advisory-hint { font-size: 0.82rem; color: var(--text-muted); font-style: italic; margin-top: 0.25rem; }
+
+    /* FAQ accordions */
+    .faq-item {
+      border: 1px solid var(--border-soft);
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .faq-item summary {
+      padding: 1.1rem 1.25rem;
+      cursor: pointer;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--text-primary);
+      list-style: none;
+      position: relative;
+      padding-right: 3rem;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after {
+      content: '+';
+      position: absolute;
+      right: 1.25rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.4rem;
+      color: var(--indigo);
+      line-height: 1;
+      transition: transform 0.2s ease;
+    }
+    .faq-item[open] summary::after { content: '−'; }
+    .faq-body {
+      padding: 0 1.25rem 1.25rem;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .faq-body p + p { margin-top: 0.75rem; }
+    .faq-link-out {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* Contact block */
+    .contact {
+      text-align: center;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-soft);
+      border-radius: 6px;
+      padding: 2.25rem;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .contact h2 {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.4rem;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+    }
+    .contact p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 0.5rem;
+    }
+    .contact .contact-hint {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-top: 1rem;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 2.5rem 1.25rem 2rem;
+      border-top: 1px solid var(--border-soft);
+      background: var(--bg-base);
+    }
+    .footer-inner { max-width: 960px; margin: 0 auto; }
+    .footer-disclaimer {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+      margin-bottom: 1.25rem;
+      max-width: 720px;
+    }
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+    .footer-links a {
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+    }
+    .footer-links a:hover { color: var(--text-primary); }
+    .footer-copy {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero { padding: 4rem 1.25rem 3.5rem; }
+      .hero h1 { font-size: 2rem; }
+      .hero-sub { font-size: 1.02rem; }
+      .section { padding: 3.5rem 1.25rem; }
+      .section-title { font-size: 1.6rem; }
+      .pillars,
+      .usecases,
+      .designed-grid,
+      .advisory-row,
+      .advisory-form-row { grid-template-columns: 1fr; }
+      .advisory-card { padding: 1.5rem; }
+    }
+
+    @media (max-width: 480px) {
+      .hero h1 { font-size: 1.75rem; }
+      .hero-ctas { flex-direction: column; align-items: stretch; }
+      .btn { justify-content: center; }
+    }
+
+    /* Print stylesheet — the one-pager exported from this page */
+    @media print {
+      body { background: #fff; color: #000; }
+      .topnav, .footer, .advisory-form, .hero-ctas, .faq-link-out { display: none; }
+      .hero, .section { padding: 0.5rem 0; }
+      .pillar, .usecase, .advisory-card, .contact, .faq-item {
+        background: #fff; border: 1px solid #ccc; color: #000;
+      }
+      * { color: #000 !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================
+       TOP NAV
+       ========================================== -->
+  <nav class="topnav">
+    <div class="topnav-inner">
+      <a href="/" class="topnav-brand">DREAMZ <span>· for clinicians</span></a>
+      <a href="/" class="topnav-back">← Back to main site</a>
+    </div>
+  </nav>
+
+  <!-- ==========================================
+       HERO
+       ========================================== -->
+  <section class="hero">
+    <div class="hero-inner">
+      <p class="hero-eyebrow">For Mental-Health Professionals</p>
+      <h1>A dream journal your clients will actually keep.</h1>
+      <p class="hero-sub">
+        Dreamz is a private, structured dream-journaling companion designed for clinicians who assign dream work as between-session practice. It supports your modality — it does not replace your expertise.
+      </p>
+      <div class="hero-ctas">
+        <a href="/for-clinicians/dreamz-clinician-brief.pdf" class="btn btn-primary" download>
+          Download the 1-page brief (PDF)
+        </a>
+        <a href="#advisory" class="btn btn-secondary">
+          Join the Clinician Advisory →
+        </a>
+      </div>
+      <p class="hero-disclaimer">Not a medical device. Not a replacement for therapy.</p>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       THREE PILLARS
+       ========================================== -->
+  <section class="section">
+    <div class="section-inner">
+      <p class="section-label">What you can tell a client</p>
+      <h2 class="section-title">Three claims we can defend.</h2>
+      <p class="section-subtitle">
+        Every clinician-facing statement about Dreamz traces back to one of these three.
+      </p>
+      <div class="pillars">
+        <div class="pillar">
+          <h3>Private by design.</h3>
+          <p>Dream content is encrypted at rest. We never train models on user content. The client owns their journal on their device — we do not offer a therapist dashboard, a shared record, or any cross-user analytics. What the client chooses to bring to session is the only thing you see.</p>
+        </div>
+        <div class="pillar">
+          <h3>Structured between-session homework.</h3>
+          <p>Voice-to-text capture in under thirty seconds on waking. Tagged entries, recurring-symbol tracking, a searchable timeline, and a 5,700-entry reference library. Clients arrive with a readable log instead of foggy recall — and the friction is low enough that the homework actually gets done.</p>
+        </div>
+        <div class="pillar">
+          <h3>Recommend it without recommending a purchase.</h3>
+          <p>The free tier — unlimited journaling, voice capture, full reference library, and one AI-assisted reflection prompt per day — is sufficient for weekly between-session work. Premium is optional ($5.99/month or $49.99/year). You can recommend Dreamz without effectively recommending a subscription.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       DESIGNED FOR / NOT DESIGNED FOR
+       ========================================== -->
+  <section class="section" style="background: var(--bg-raised); border-top: 1px solid var(--border-soft); border-bottom: 1px solid var(--border-soft);">
+    <div class="section-inner">
+      <p class="section-label">Scope</p>
+      <h2 class="section-title">What Dreamz is, and isn't.</h2>
+      <p class="section-subtitle">
+        We'd rather tell you where we don't fit than sell you on a version of the product we didn't build.
+      </p>
+      <div class="designed-grid">
+        <div class="designed-col">
+          <h3>Designed for</h3>
+          <ul>
+            <li>Between-session dream journaling as a structured client practice</li>
+            <li>Depth-psychology and Jungian modalities where symbolic material is already a frame</li>
+            <li>Trauma-informed, EMDR, and somatic practices where nightmare and fragmented imagery matter</li>
+            <li>Psychedelic-integration work where dream activity spikes between sessions</li>
+            <li>Clinicians who want their client to journal consistently without adding clinical surface area</li>
+          </ul>
+        </div>
+        <div class="designed-col">
+          <h3>Not designed for</h3>
+          <ul>
+            <li>Clinical documentation, medical records, or any HIPAA-covered workflow</li>
+            <li>Symptom assessment, diagnosis, or clinical decision-making</li>
+            <li>In-session therapeutic intervention</li>
+            <li>Minors (App Store rated 17+; review with client before assigning to an adolescent, if at all)</li>
+            <li>Clients in acute crisis — the app shows crisis resources but is not a crisis-response system</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       USE CASES
+       ========================================== -->
+  <section class="section">
+    <div class="section-inner">
+      <p class="section-label">In practice</p>
+      <h2 class="section-title">How clinicians use Dreamz.</h2>
+      <p class="section-subtitle">
+        Four of the patterns we've seen most often during early clinician feedback.
+      </p>
+      <div class="usecases">
+        <div class="usecase">
+          <h3>Between-session homework</h3>
+          <p>A Jungian analyst assigns dream journaling as ongoing practice. The client captures dreams the moment they wake and arrives at session with a tagged timeline and a symbol-pattern view — not foggy morning-after recall.</p>
+        </div>
+        <div class="usecase">
+          <h3>Intake and pattern-finding</h3>
+          <p>A trauma-informed therapist begins work with a new client by asking them to journal dreams for four weeks. The recurring-symbol view surfaces themes — water, falling, locked doors — that become entry points for the first session's real work.</p>
+        </div>
+        <div class="usecase">
+          <h3>Nightmare and processing work</h3>
+          <p>An EMDR clinician uses Dreamz as a structured way for a client to capture nightmare content between reprocessing sessions. The app frames distressing content with grounding prompts rather than symbolic interpretation; the clinician does the interpretive work in session.</p>
+        </div>
+        <div class="usecase">
+          <h3>Integration companion</h3>
+          <p>A ketamine-assisted psychotherapy provider recommends Dreamz for the two-week integration window post-dose, when dream activity intensifies and structured capture becomes both easier and more valuable.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       ADVISORY PROGRAM
+       ========================================== -->
+  <section class="section advisory" id="advisory">
+    <div class="section-inner">
+      <p class="section-label">Advisory</p>
+      <h2 class="section-title">Clinician Advisory — 10 seats, free annual membership.</h2>
+      <p class="section-subtitle">
+        We are a solo-developer product in the first months of launch. We are recruiting 5–10 licensed clinicians as advisors to help shape the tool for real between-session work.
+      </p>
+
+      <div class="advisory-card">
+        <div class="advisory-row">
+          <div class="advisory-block">
+            <h4>You get</h4>
+            <ul>
+              <li>One year of Dreamz Premium ($49.99), free</li>
+              <li>Early access to new features</li>
+              <li>A direct line to the founder</li>
+            </ul>
+          </div>
+          <div class="advisory-block">
+            <h4>We ask</h4>
+            <ul>
+              <li>A 20-minute Zoom feedback call within 30 days</li>
+              <li>An optional short quote we can use (opt-in; decline the quote and keep the membership)</li>
+            </ul>
+          </div>
+        </div>
+
+        <p style="font-size: 0.9rem; color: var(--text-muted); font-style: italic;">
+          Requirements: licensed or licensed-track (LMFT, LPC, LCSW, PhD, PsyD, MD, DO, ND, or graduate student at an accredited program). We verify license number by eyeball — we are not a regulated actor and do not store license data.
+        </p>
+
+        <form class="advisory-form"
+              action="https://formspree.io/f/CLINICIAN_FORM_ID"
+              method="POST"
+              aria-label="Apply to join the Clinician Advisory">
+          <div class="advisory-form-row">
+            <div>
+              <label for="c-name">Name</label>
+              <input id="c-name" name="name" type="text" required autocomplete="name">
+            </div>
+            <div>
+              <label for="c-email">Email</label>
+              <input id="c-email" name="email" type="email" required autocomplete="email">
+            </div>
+          </div>
+          <div class="advisory-form-row">
+            <div>
+              <label for="c-credential">Credential</label>
+              <input id="c-credential" name="credential" type="text" placeholder="e.g. LMFT, PhD, PsyD" required>
+            </div>
+            <div>
+              <label for="c-state">State / country</label>
+              <input id="c-state" name="state" type="text" required>
+            </div>
+          </div>
+          <div class="advisory-form-row">
+            <div>
+              <label for="c-license">License number</label>
+              <input id="c-license" name="license" type="text" required>
+            </div>
+            <div>
+              <label for="c-focus">Practice focus</label>
+              <select id="c-focus" name="focus" required>
+                <option value="">Select…</option>
+                <option>Jungian / depth psychology</option>
+                <option>Trauma-informed / EMDR / somatic</option>
+                <option>Psychedelic integration</option>
+                <option>Expressive arts</option>
+                <option>Sleep / CBT-I</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label for="c-note">Brief note (optional)</label>
+            <textarea id="c-note" name="note" placeholder="Why Dreamz might fit your practice, or any questions you'd like to raise in the feedback call."></textarea>
+          </div>
+          <button type="submit" class="advisory-submit">Apply to join the Advisory</button>
+          <p class="advisory-hint">We review applications weekly. We reply to every submission — accepted or not.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       FAQ
+       ========================================== -->
+  <section class="section" id="faq">
+    <div class="section-inner">
+      <p class="section-label">Questions we've heard</p>
+      <h2 class="section-title">Clinician FAQ.</h2>
+      <p class="section-subtitle">
+        Direct answers to the questions we've heard most from early clinician conversations. Full FAQ available on request.
+      </p>
+
+      <details class="faq-item">
+        <summary>Is Dreamz HIPAA-compliant?</summary>
+        <div class="faq-body">
+          <p>No. Dreamz is a consumer journaling app, not a protected-health-information system. The client owns their journal on a personal device; the therapist never receives client data through Dreamz. There is no clinician dashboard, no shared record, and no Business Associate relationship between Dreamz and a therapist who recommends the app.</p>
+          <p>A client choosing to show dream entries to their therapist during a session is the same as a client choosing to share a paper journal — the act of sharing is under the client's control, not the app's. That keeps us cleanly outside the boundary where HIPAA applies.</p>
+          <p>If your practice requires a HIPAA-covered journaling surface, Dreamz is not the right fit and we'll say so plainly.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>The main site talks about "mystical readings" and a "grimoire." Is this a serious tool?</summary>
+        <div class="faq-body">
+          <p>Fair question. The consumer brand voice is deliberate: it signals to a general wellness audience (tarot, astrology, journaling readers) that this is designed for reflection, not diagnosis. That voice exists on the public consumer page because it moves the product in a crowded consumer market.</p>
+          <p>The product itself is a structured dream journal with optional AI-generated reflection prompts. If you open the app you will see: a timeline of entries, tags, voice-to-text capture, a searchable archive, and a 5,700-entry symbol reference. The AI readings are framed as reflection prompts using explicitly hedged language ("may suggest", "often reflects") — never diagnostic, never predictive.</p>
+          <p>We recommend clinicians evaluate the product UI before forming an opinion from the consumer marketing alone.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>What's in the AI readings — are they diagnostic?</summary>
+        <div class="faq-body">
+          <p>No. A reading is a generated reflection prompt built from the symbols a client described. It names the symbols present, offers one possible interpretive framing, and suggests a journaling or grounding practice. Every interpretive sentence is hedged ("may reflect", "one reading of this is").</p>
+          <p>Our guardrails on the reading prompt explicitly forbid naming DSM conditions, suggesting diagnoses, recommending medications, or claiming interpretive accuracy. When a dream entry contains keywords consistent with acute distress, the reading is replaced with a grounding prompt and a link to 988 (US) and international crisis resources.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>How do I recommend this without endorsing a paid product?</summary>
+        <div class="faq-body">
+          <p>The free tier is designed for exactly this use case. Unlimited journaling, voice capture, full 5,700-symbol reference, and one AI reading per day. One reading per day is more than enough for a weekly between-session homework assignment. Most clients never need to upgrade.</p>
+          <p>When you recommend Dreamz, you are recommending a free app; the upgrade is the client's independent decision. Dreamz does not pay clinicians, affiliates, or referral partners.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>What happens if a client journals a nightmare or discloses trauma?</summary>
+        <div class="faq-body">
+          <p>The product treats distressing content gently. Self-harm and crisis keywords trigger a grounding prompt and crisis-line links (988 in the US; country-appropriate lines where available) in place of a standard reading.</p>
+          <p>Nightmare and trauma content produces a reading that names themes (fear, fragmentation, loss) but avoids pathologizing language and avoids interpreting trauma content back at the client. The reading suggests grounding practices — breath, body awareness, reaching out to a trusted person or therapist — rather than symbolic interpretation.</p>
+          <p>Dreamz is a journaling companion, not a crisis-response system. The safety guardrails are meaningful but not infallible. A visible crisis-resources link appears on every screen where reading output is shown.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>What about data retention?</summary>
+        <div class="faq-body">
+          <p>Dream content is encrypted at rest on device and in our backend. We do not train models on user content — this is in our privacy policy and enforced in our contract with the model provider. Deleting an account removes all dream content from our systems within 30 days. Account inactivity does not auto-delete content; the client remains in control.</p>
+          <p>Full privacy policy: <a href="/privacy.html">dreamz-journal.com/privacy.html</a>.</p>
+        </div>
+      </details>
+
+      <p class="faq-link-out">
+        Have a question we haven't answered? <a href="mailto:support@dreamz-journal.com?subject=Clinician%20question%20">Email the founder</a>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       CONTACT
+       ========================================== -->
+  <section class="section">
+    <div class="section-inner">
+      <div class="contact">
+        <h2>Questions, feedback, partnership ideas, or just want to talk?</h2>
+        <p>Jason Tur, founder</p>
+        <p><a href="mailto:support@dreamz-journal.com">support@dreamz-journal.com</a></p>
+        <p class="contact-hint">
+          For outreach specifically about clinical use, mention your credential and state in the subject line and the email routes directly to me rather than general support.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       FOOTER
+       ========================================== -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <p class="footer-disclaimer">
+        Dreamz is a consumer journaling app, not a medical device. It does not diagnose, treat, or cure any condition, and it is not a replacement for therapy or professional mental-health care. If you are in crisis, call or text <strong>988</strong> in the US, or your country's crisis line.
+      </p>
+      <div class="footer-links">
+        <a href="/">Main site</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/support.html">Support</a>
+        <a href="https://apps.apple.com/app/id6760150023">App Store</a>
+      </div>
+      <p class="footer-copy">&copy; 2026 Dreamz Journal.</p>
+    </div>
+  </footer>
+
+  <script>
+    // GA4 click tracking for the two hero CTAs, the Advisory submit, and outbound links
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('a.btn-primary').forEach(function (el) {
+        el.addEventListener('click', function () {
+          gtag('event', 'clinician_cta_click', { cta: 'download_brief' });
+        });
+      });
+      document.querySelectorAll('a.btn-secondary').forEach(function (el) {
+        el.addEventListener('click', function () {
+          gtag('event', 'clinician_cta_click', { cta: 'join_advisory_anchor' });
+        });
+      });
+      var form = document.querySelector('.advisory-form');
+      if (form) {
+        form.addEventListener('submit', function () {
+          gtag('event', 'clinician_advisory_submit', { page: '/for-clinicians' });
+        });
+      }
+    });
+  </script>
+
+</body>
+</html>
