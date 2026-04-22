@@ -1,7 +1,7 @@
 /**
  * Generate Dream Image Edge Function
  *
- * Generates an image for a dream via OpenAI's image API (gpt-image-1-mini)
+ * Generates an image for a dream via OpenAI's image API (gpt-image-2)
  * and updates the dream record. Called asynchronously after the reading is displayed.
  *
  * Endpoint: POST /functions/v1/generate-dream-image
@@ -18,7 +18,7 @@ import {
 import { sanitizeDreamText } from "../_shared/dream-prompt.ts";
 
 const OPENAI_IMAGE_URL = "https://api.openai.com/v1/images/generations";
-const OPENAI_IMAGE_MODEL = "gpt-image-1-mini";
+const OPENAI_IMAGE_MODEL = "gpt-image-2";
 const IMAGE_TIMEOUT_MS = 60000;
 
 Deno.serve(async (req: Request) => {
@@ -136,7 +136,7 @@ Deno.serve(async (req: Request) => {
         prompt: imagePrompt,
         n: 1,
         size: "1024x1024",
-        quality: "medium",
+        quality: "low",
       }),
       signal: controller.signal,
     });

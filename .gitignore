@@ -68,6 +68,9 @@ store/generated/
 # Detox test artifacts (screenshots, logs from local test runs)
 e2e/artifacts/
 
+# Local scratch / comparison scripts
+tmp/
+
 # Marketing automation local state (dashboard toggles, runtime data)
 marketing/automation/content/platform-state.json
 e2e/reports/
