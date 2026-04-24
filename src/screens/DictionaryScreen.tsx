@@ -10,7 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import { PaperGrain } from '../components/PaperGrain';
 import { useRoute } from '@react-navigation/native';
 import {
   searchSymbols,
@@ -220,7 +220,7 @@ export default function DictionaryScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.gradient}>
+      <PaperGrain /><View style={styles.gradient}>
         <View style={[styles.headerSection, contentStyle]}>
           <Text style={styles.title}>Symbol Dictionary</Text>
 
@@ -229,7 +229,7 @@ export default function DictionaryScreen() {
               testID="dictionary-search-input"
               style={styles.searchInput}
               placeholder="Search symbols..."
-              placeholderTextColor="#6b5b8a"
+              placeholderTextColor="#8F8877"
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoCapitalize="none"
@@ -274,7 +274,7 @@ export default function DictionaryScreen() {
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#6b4e9e" />
+            <ActivityIndicator size="large" color="#C79A3A" />
           </View>
         ) : symbols.length === 0 ? (
           <View testID="dictionary-empty" style={styles.emptyContainer}>
@@ -298,12 +298,12 @@ export default function DictionaryScreen() {
             onEndReachedThreshold={0.3}
             ListFooterComponent={
               loadingMore ? (
-                <ActivityIndicator size="small" color="#6b4e9e" style={styles.footerLoader} />
+                <ActivityIndicator size="small" color="#C79A3A" style={styles.footerLoader} />
               ) : null
             }
           />
         )}
-      </LinearGradient>
+      </View>
     </SafeAreaView>
   );
 }
@@ -311,7 +311,7 @@ export default function DictionaryScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#3B1F47',
   },
   gradient: {
     flex: 1,
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     marginBottom: 16,
   },
   searchContainer: {
@@ -333,14 +333,14 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    backgroundColor: '#2a2a4e',
+    backgroundColor: '#4B2B58',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     borderWidth: 1,
-    borderColor: '#3a3a5e',
+    borderColor: '#5C3A69',
   },
   clearButton: {
     marginLeft: 12,
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   clearButtonText: {
-    color: '#9b7fd4',
+    color: '#C79A3A',
     fontSize: 14,
   },
   categoryRow: {
@@ -359,24 +359,24 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   categoryChip: {
-    backgroundColor: '#2a2a4e',
+    backgroundColor: '#4B2B58',
     borderRadius: 16,
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: '#3a3a5e',
+    borderColor: '#5C3A69',
   },
   categoryChipActive: {
-    backgroundColor: '#3a3a6e',
-    borderColor: '#9b7fd4',
+    backgroundColor: '#5C3A69',
+    borderColor: '#C79A3A',
   },
   categoryChipText: {
-    color: '#8b7fa8',
+    color: '#8F8877',
     fontSize: 13,
     fontWeight: '500',
   },
   categoryChipTextActive: {
-    color: '#e0d4f7',
+    color: '#F0E8D8',
   },
   loadingContainer: {
     flex: 1,
@@ -395,13 +395,13 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     textAlign: 'center',
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#8b7fa8',
+    color: '#8F8877',
     textAlign: 'center',
   },
   listContent: {
@@ -412,15 +412,15 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   symbolCard: {
-    backgroundColor: '#2a2a4e',
+    backgroundColor: '#4B2B58',
     borderRadius: 12,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#3a3a5e',
+    borderColor: '#5C3A69',
   },
   symbolCardExpanded: {
-    borderColor: '#6b4e9e',
+    borderColor: '#C79A3A',
   },
   symbolHeader: {
     flexDirection: 'row',
@@ -436,26 +436,26 @@ const styles = StyleSheet.create({
   symbolName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
   },
   basicBadge: {
-    backgroundColor: '#3a3a5e',
+    backgroundColor: '#5C3A69',
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
   basicBadgeText: {
     fontSize: 10,
-    color: '#8b7fa8',
+    color: '#8F8877',
   },
   expandIcon: {
-    color: '#8b7fa8',
+    color: '#8F8877',
     fontSize: 12,
   },
   symbolDetails: {
     marginTop: 14,
     borderTopWidth: 1,
-    borderTopColor: '#3a3a5e',
+    borderTopColor: '#5C3A69',
     paddingTop: 14,
   },
   detailSection: {
@@ -464,30 +464,30 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#9b7fd4',
+    color: '#C79A3A',
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 4,
   },
   detailText: {
     fontSize: 14,
-    color: '#e8e0f8',
+    color: '#F0E8D8',
     lineHeight: 20,
   },
   detailShadow: {
     fontSize: 14,
-    color: '#d8c8e8',
+    color: '#F0E8D8',
     lineHeight: 20,
     fontStyle: 'italic',
   },
   detailGuidance: {
     fontSize: 14,
-    color: '#c8f0d8',
+    color: '#7A9A7A',
     lineHeight: 20,
   },
   categoryTag: {
     fontSize: 12,
-    color: '#8b7fa8',
+    color: '#8F8877',
     fontStyle: 'italic',
     marginBottom: 8,
   },
@@ -501,13 +501,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   relatedPill: {
-    backgroundColor: '#3a3a5e',
+    backgroundColor: '#5C3A69',
     borderRadius: 12,
     paddingVertical: 4,
     paddingHorizontal: 10,
   },
   relatedPillText: {
     fontSize: 12,
-    color: '#c4b8e8',
+    color: '#C9C0AE',
   },
 });

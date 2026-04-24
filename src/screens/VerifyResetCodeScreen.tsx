@@ -185,7 +185,7 @@ export default function VerifyResetCodeScreen({ navigation, route }: VerifyReset
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#3B1F47',
   },
   scrollContent: {
     flexGrow: 1,
@@ -199,19 +199,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#a89cc8',
+    color: '#C9C0AE',
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 24,
   },
   emailText: {
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     fontWeight: '600',
   },
   codeContainer: {
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   expiryNote: {
-    color: '#6b5b8a',
+    color: '#8F8877',
     fontSize: 13,
     textAlign: 'center',
     marginBottom: 24,
@@ -229,20 +229,20 @@ const styles = StyleSheet.create({
   codeInput: {
     width: 48,
     height: 56,
-    backgroundColor: '#2a2a4e',
+    backgroundColor: '#4B2B58',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#3a3a5e',
+    borderColor: '#5C3A69',
     textAlign: 'center',
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
   },
   codeInputFilled: {
-    borderColor: '#6b4e9e',
+    borderColor: '#C79A3A',
   },
   button: {
-    backgroundColor: '#6b4e9e',
+    backgroundColor: '#C79A3A',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   resendText: {
-    color: '#9b7fd4',
+    color: '#C79A3A',
     fontSize: 14,
   },
   backButton: {
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   backText: {
-    color: '#6b5b8a',
+    color: '#8F8877',
     fontSize: 14,
   },
 });

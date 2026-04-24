@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   messageText: {
-    color: '#8b7fa8',
+    color: '#8F8877',
     fontSize: 14,
     fontStyle: 'italic',
     textAlign: 'center',

@@ -11,7 +11,6 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import ViewShot from 'react-native-view-shot';
@@ -21,6 +20,8 @@ import { supabase } from '../lib/supabase';
 import { refreshDreamImageUrl, getDreamImagePath } from '../lib/imageService';
 import PaintBrushAnimation from '../components/PaintBrushAnimation';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
+import { colors, typography, spacing, radii } from '../theme';
+import { PaperGrain } from '../components/PaperGrain';
 
 type ReadingScreenParams = {
   reading: DreamReading;
@@ -137,7 +138,7 @@ export default function ReadingScreen() {
     } catch {
       // Fallback to text share if image capture fails
       const tagsText = reading.tags?.length > 0 ? `\n\n#${reading.tags.join(' #')}` : '';
-      const shareText = `✧ ${reading.title} ✧
+      const shareText = `${reading.title}
 
 "${reading.plain_english || reading.omen}"
 
@@ -145,8 +146,7 @@ Ritual: ${reading.ritual}
 
 Reflect: ${reading.journal_prompt}${tagsText}
 
----
-Interpreted with Dreamz`;
+— Interpreted with Dreamz`;
 
       await Share.share({
         message: shareText,
@@ -160,10 +160,7 @@ Interpreted with Dreamz`;
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <LinearGradient
-        colors={['#1a1a2e', '#1e1a3a', '#16213e']}
-        style={styles.gradient}
-      >
+      <PaperGrain />
       {/* Share Card Modal */}
       <Modal
         visible={showShareCard}
@@ -208,7 +205,7 @@ Interpreted with Dreamz`;
                     ))}
                   </View>
 
-                  <Text style={styles.shareCardBranding}>✧ dreamz ✧</Text>
+                  <Text style={styles.shareCardBranding}>DREAMZ</Text>
                 </View>
               </View>
             </ViewShot>
@@ -291,7 +288,7 @@ Interpreted with Dreamz`;
               accessibilityLabel={showDreamText ? 'Hide your dream' : 'View your dream'}
             >
               <Text style={styles.dreamTextToggleText}>
-                {showDreamText ? '▼ Hide Your Dream' : '▶ View Your Dream'}
+                {showDreamText ? 'Hide your dream —' : 'View your dream +'}
               </Text>
             </TouchableOpacity>
             {showDreamText && (
@@ -405,7 +402,6 @@ Interpreted with Dreamz`;
           </TouchableOpacity>
         </View>
       </ScrollView>
-      </LinearGradient>
     </SafeAreaView>
   );
 }
@@ -447,7 +443,7 @@ function SymbolCard({ symbol, inDictionary }: { symbol: DreamSymbol; inDictionar
           accessibilityLabel={`Info about ${label}`}
         >
           <Text style={styles.symbolSectionLabel}>{label}</Text>
-          <Text style={styles.tooltipIcon}>ⓘ</Text>
+          <Text style={styles.tooltipIcon}>?</Text>
         </TouchableOpacity>
         {activeTooltip === label && (
           <Text testID={`symbol-tooltip-text-${label.toLowerCase()}`} style={styles.tooltipText}>{TOOLTIP_TEXT[label]}</Text>
@@ -469,7 +465,7 @@ function SymbolCard({ symbol, inDictionary }: { symbol: DreamSymbol; inDictionar
             accessibilityLabel={`View ${symbol.name} in dictionary`}
             style={styles.dictionaryBadge}
           >
-            <Text style={styles.dictionaryBadgeText}>📖 Dictionary</Text>
+            <Text style={styles.dictionaryBadgeText}>In the Dictionary →</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -483,262 +479,224 @@ function SymbolCard({ symbol, inDictionary }: { symbol: DreamSymbol; inDictionar
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
-  },
-  gradient: {
-    flex: 1,
+    backgroundColor: colors.ink.aubergine,
   },
   imageContainer: {
-    marginHorizontal: -24,
-    marginTop: -8,
-    marginBottom: 20,
-    position: 'relative',
+    marginHorizontal: 0,
+    marginBottom: spacing.xl,
+    padding: spacing.sm,
+    backgroundColor: colors.paper.bone,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.ochre.gold,
+    alignSelf: 'center',
+    maxWidth: '100%',
   },
   dreamImage: {
-    backgroundColor: '#252542',
+    backgroundColor: colors.ink.aubergineLift,
+    borderRadius: radii.image,
   },
   imageOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 60,
+    height: 0,
     backgroundColor: 'transparent',
-    // Gradient fade effect at bottom
     borderBottomWidth: 0,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.gutter,
   },
   backButton: {
-    paddingVertical: 8,
-    paddingRight: 16,
+    paddingVertical: spacing.sm,
+    paddingRight: spacing.base,
   },
   backButtonText: {
-    color: '#6b4e9e',
-    fontSize: 16,
-    fontWeight: '500',
+    ...typography.label,
+    fontSize: 11,
+    color: colors.ochre.gold,
   },
   container: {
     flex: 1,
   },
   content: {
-    padding: 24,
-    paddingTop: 8,
-    paddingBottom: 48,
+    padding: spacing.gutter,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.section,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#e0d4f7',
-    marginBottom: 24,
-    textAlign: 'center',
+    ...typography.display,
+    fontSize: 36,
+    lineHeight: 40,
+    color: colors.paper.bone,
+    marginBottom: spacing.xl,
+    textAlign: 'left',
   },
   dreamTextSection: {
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   dreamTextToggle: {
-    backgroundColor: '#252542',
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
+    paddingVertical: spacing.sm,
   },
   dreamTextToggleText: {
-    color: '#9b7fd4',
-    fontSize: 14,
-    fontWeight: '500',
+    ...typography.label,
+    fontSize: 10,
+    color: colors.ochre.gold,
   },
   dreamTextCard: {
-    backgroundColor: '#1e1e38',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
+    paddingVertical: spacing.md,
+    paddingHorizontal: 0,
+    marginTop: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.ink.aubergineHair,
   },
   dreamTextContent: {
-    color: '#c4b8e8',
+    ...typography.serifBody,
     fontSize: 15,
-    lineHeight: 24,
+    color: colors.paper.boneMuted,
     fontStyle: 'italic',
   },
   section: {
-    marginBottom: 28,
+    marginBottom: spacing.xxl,
   },
   sectionDivider: {
-    height: 1,
-    backgroundColor: '#2a2a4e',
-    marginBottom: 16,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.ink.aubergineHair,
+    marginBottom: spacing.base,
   },
   plainEnglishCard: {
-    backgroundColor: '#252545',
-    borderRadius: 16,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#4a4a6e',
+    paddingVertical: spacing.md,
+    paddingHorizontal: 0,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.ink.aubergineHair,
   },
   plainEnglishText: {
-    fontSize: 16,
-    color: '#e8e0f8',
-    lineHeight: 26,
+    ...typography.bodyLarge,
+    color: colors.paper.bone,
   },
   sectionLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#9b7fd4',
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    marginBottom: 12,
+    ...typography.label,
+    color: colors.ochre.gold,
+    marginBottom: spacing.md,
   },
   tldr: {
-    fontSize: 18,
-    color: '#e0d4f7',
+    ...typography.serifBody,
+    fontSize: 19,
     lineHeight: 28,
+    color: colors.paper.bone,
     fontStyle: 'italic',
   },
   symbolCard: {
-    backgroundColor: '#252542',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#4a4a6e',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    paddingVertical: spacing.base,
+    marginBottom: spacing.base,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.ink.aubergineHair,
   },
   symbolNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: spacing.base,
   },
   symbolName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#f0e8ff',
-    letterSpacing: 0.5,
+    ...typography.title,
+    fontSize: 22,
+    color: colors.paper.bone,
     flex: 1,
   },
   symbolNameLinked: {
     marginBottom: 0,
   },
   dictionaryBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#2e2a4a',
-    borderRadius: 20,
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#5a4a7e',
-    marginLeft: 10,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    marginLeft: spacing.sm,
   },
   dictionaryBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#b8a8d8',
-    letterSpacing: 0.3,
+    ...typography.label,
+    fontSize: 9,
+    color: colors.ochre.gold,
   },
   symbolSection: {
-    marginBottom: 14,
-    paddingLeft: 12,
+    marginBottom: spacing.md,
+    paddingLeft: spacing.md,
     borderLeftWidth: 2,
-    borderLeftColor: '#5a4a7e',
+    borderLeftColor: colors.ochre.gold,
   },
   symbolSectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: spacing.xs,
   },
   symbolSectionLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#b8a8d8',
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
+    ...typography.label,
+    fontSize: 10,
+    color: colors.ochre.gold,
   },
   tooltipIcon: {
-    fontSize: 13,
-    color: '#8b7fa8',
-    marginLeft: 6,
+    ...typography.caption,
+    fontSize: 11,
+    color: colors.paper.boneFaint,
+    marginLeft: spacing.xs,
+    fontStyle: 'italic',
   },
   tooltipText: {
+    ...typography.caption,
     fontSize: 12,
-    color: '#a89cc8',
+    color: colors.paper.boneFaint,
     fontStyle: 'italic',
-    marginBottom: 6,
-    lineHeight: 18,
+    marginBottom: spacing.xs,
   },
   symbolMeaning: {
-    fontSize: 15,
-    color: '#e8e0f8',
-    lineHeight: 22,
+    ...typography.body,
+    color: colors.paper.bone,
   },
   symbolShadow: {
-    fontSize: 15,
-    color: '#d8c8e8',
-    lineHeight: 22,
+    ...typography.body,
+    color: colors.paper.boneMuted,
     fontStyle: 'italic',
   },
   symbolGuidance: {
-    fontSize: 15,
-    color: '#c8f0d8',
-    lineHeight: 22,
+    ...typography.body,
+    color: colors.hope.sage,
   },
   omenCard: {
-    backgroundColor: '#2a2a52',
-    borderRadius: 16,
-    padding: 20,
-    borderLeftWidth: 3,
-    borderLeftColor: '#9b7fd4',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    paddingVertical: spacing.base,
+    paddingHorizontal: spacing.base,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.ochre.gold,
+    backgroundColor: colors.ink.aubergineLift,
   },
   omenText: {
-    fontSize: 16,
-    color: '#e0d4f7',
-    lineHeight: 24,
+    ...typography.serifBody,
+    fontSize: 17,
+    color: colors.paper.bone,
     fontStyle: 'italic',
   },
   ritualCard: {
-    backgroundColor: '#252540',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    paddingVertical: spacing.base,
+    paddingHorizontal: 0,
   },
   ritualText: {
-    fontSize: 15,
-    color: '#d4c4f7',
-    lineHeight: 24,
+    ...typography.bodyLarge,
+    color: colors.paper.bone,
   },
   promptCard: {
-    backgroundColor: '#1e1e38',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
+    paddingVertical: spacing.base,
+    paddingHorizontal: 0,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.ink.aubergineHair,
     borderStyle: 'dashed',
   },
   promptText: {
-    fontSize: 15,
-    color: '#c4b8e8',
-    lineHeight: 24,
+    ...typography.serifBody,
+    fontSize: 17,
+    color: colors.paper.boneMuted,
     fontStyle: 'italic',
   },
   tagsContainer: {
@@ -746,55 +704,53 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   tag: {
-    backgroundColor: '#3a3a5e',
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    marginRight: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#4a4a6e',
+    borderRadius: radii.pill,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    marginRight: spacing.sm,
+    marginBottom: spacing.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.ink.aubergineHair,
   },
   tagText: {
-    fontSize: 13,
-    color: '#c4b8e8',
+    ...typography.caption,
+    fontSize: 12,
+    color: colors.paper.boneMuted,
+    letterSpacing: 0.3,
   },
   actionContainer: {
-    marginTop: 16,
+    marginTop: spacing.base,
+    gap: spacing.md,
   },
   viewGrimoireButton: {
-    backgroundColor: '#2e4540',
-    borderRadius: 16,
-    padding: 18,
+    backgroundColor: colors.paper.bone,
+    borderRadius: radii.button,
+    paddingVertical: spacing.base,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#4a7a6a',
-    marginBottom: 12,
   },
   viewGrimoireButtonText: {
-    color: '#8bc4a8',
-    fontSize: 18,
-    fontWeight: '600',
+    ...typography.subtitle,
+    fontSize: 17,
+    color: colors.ink.aubergine,
   },
   shareButton: {
-    backgroundColor: '#3a3a5e',
-    borderRadius: 16,
-    padding: 18,
+    paddingVertical: spacing.base,
     alignItems: 'center',
-    marginBottom: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.ink.aubergineHair,
   },
   shareButtonText: {
-    color: '#c4b8e8',
-    fontSize: 16,
-    fontWeight: '500',
+    ...typography.label,
+    fontSize: 11,
+    color: colors.ochre.gold,
   },
   // Share Card Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: 'rgba(42, 19, 50, 0.92)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: spacing.gutter,
   },
   shareModalContent: {
     width: '100%',
@@ -802,95 +758,97 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   shareModalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#e0d4f7',
-    marginBottom: 20,
+    ...typography.label,
+    fontSize: 11,
+    color: colors.ochre.gold,
+    marginBottom: spacing.lg,
   },
   shareCardContainer: {
     width: '100%',
-    borderRadius: 20,
     overflow: 'hidden',
   },
   shareCard: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 20,
+    backgroundColor: colors.paper.bone,
+    padding: spacing.sm,
     overflow: 'hidden',
   },
   shareCardImage: {
     width: '100%',
-    height: 180,
-    backgroundColor: '#252542',
+    height: 220,
+    backgroundColor: colors.ink.aubergineLift,
   },
   shareCardContent: {
-    padding: 20,
+    padding: spacing.lg,
   },
   shareCardTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#e0d4f7',
+    ...typography.display,
+    fontSize: 26,
+    lineHeight: 30,
+    color: colors.ink.aubergine,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.base,
   },
   shareCardOmen: {
-    backgroundColor: '#2e2545',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderLeftWidth: 3,
-    borderLeftColor: '#9b7fd4',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.base,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.ochre.goldDeep,
   },
   shareCardOmenText: {
+    ...typography.serifBody,
     fontSize: 15,
-    color: '#d4c4f7',
+    color: colors.ink.aubergine,
     fontStyle: 'italic',
-    lineHeight: 22,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   shareCardTags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.base,
   },
   shareCardTag: {
-    backgroundColor: '#3a3a5e',
-    borderRadius: 12,
     paddingVertical: 4,
-    paddingHorizontal: 10,
+    paddingHorizontal: spacing.sm,
     marginRight: 6,
     marginBottom: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.ink.aubergineHair,
   },
   shareCardTagText: {
-    fontSize: 12,
-    color: '#b8a8d8',
+    ...typography.caption,
+    fontSize: 11,
+    color: colors.ink.aubergine,
   },
   shareCardBranding: {
-    fontSize: 14,
-    color: '#6b5b8a',
+    ...typography.label,
+    fontSize: 12,
+    color: colors.ochre.goldDeep,
     textAlign: 'center',
-    letterSpacing: 2,
+    letterSpacing: 3,
   },
   shareImageButton: {
-    backgroundColor: '#6b4e9e',
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    marginTop: 20,
+    backgroundColor: colors.paper.bone,
+    borderRadius: radii.button,
+    paddingVertical: spacing.base,
+    paddingHorizontal: spacing.xxl,
+    marginTop: spacing.lg,
     width: '100%',
     alignItems: 'center',
   },
   shareImageButtonText: {
-    color: '#fff',
+    ...typography.subtitle,
     fontSize: 16,
-    fontWeight: '600',
+    color: colors.ink.aubergine,
   },
   shareCancelButton: {
-    paddingVertical: 12,
-    marginTop: 8,
+    paddingVertical: spacing.md,
+    marginTop: spacing.sm,
   },
   shareCancelButtonText: {
-    color: '#8b7fa8',
-    fontSize: 14,
+    ...typography.label,
+    fontSize: 11,
+    color: colors.paper.boneFaint,
   },
 });

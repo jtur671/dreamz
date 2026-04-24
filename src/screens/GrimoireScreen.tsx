@@ -13,8 +13,10 @@ import {
   ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
+import { colors, typography, spacing, radii } from '../theme';
+import { PaperGrain } from '../components/PaperGrain';
+import { SymbolIcon } from '../components/SymbolIcon';
 import { useDreams } from '../hooks/useDreams';
 import { deleteDream as deleteDreamService } from '../lib/dreamService';
 import { getDreamStats } from '../lib/insightsService';
@@ -148,12 +150,9 @@ function DreamImageCard({
         imageStyle={imageStyle}
         onError={handleError}
       >
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.7)']}
-          style={styles.journalCardOverlay}
-        >
+        <View style={styles.journalCardOverlay}>
           {children}
-        </LinearGradient>
+        </View>
       </ImageBackground>
     </TouchableOpacity>
   );
@@ -368,7 +367,9 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
           style={styles.forgotCard}
           accessibilityLabel={`No dream recalled, ${dateLabel}`}
         >
-          <Text style={styles.forgotIcon}>{'\u{1F319}'}</Text>
+          <View style={styles.forgotIconHolder}>
+            <SymbolIcon name="moon" size={28} color={colors.paper.boneFaint} strokeWidth={1.5} />
+          </View>
           <View style={styles.forgotContent}>
             <Text style={styles.forgotDate}>{dateLabel}</Text>
             <Text style={styles.forgotText}>No dream recalled</Text>
@@ -396,27 +397,15 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
           }}
           onLongPress={() => handleDeletePress(item)}
         >
-          <LinearGradient
-            colors={isNightmare
-              ? ['#3a1a30', '#2a1528', '#1e1a2a']
-              : ['#2d2860', '#252050', '#1a1a3e']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.journalCardFallback]}
-          >
-            <View style={styles.starsOverlay} pointerEvents="none">
-              <View style={[styles.star, styles.star1]} />
-              <View style={[styles.star, styles.star2]} />
-              <View style={[styles.star, styles.starLg, styles.star3]} />
-            </View>
+          <View style={[
+            styles.journalCardFallback,
+            isNightmare && styles.journalCardFallbackNightmare,
+          ]}>
             <View style={styles.dateBadge}>
               <Text style={styles.dateBadgeMonth}>{dateBadge.month}</Text>
               <Text style={styles.dateBadgeDay}>{dateBadge.day}</Text>
             </View>
             <View style={styles.journalCardBottom}>
-              <Text style={styles.typeIcon}>
-                {isNightmare ? '\u{26A1}' : '\u{1F319}'}
-              </Text>
               {item.mood && (
                 <Text style={[styles.dreamPreview, isNightmare && styles.nightmareText]}>
                   {item.mood}
@@ -429,7 +418,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
                 {item.dream_text}
               </Text>
             </View>
-          </LinearGradient>
+          </View>
         </TouchableOpacity>
       );
     }
@@ -443,9 +432,6 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
           <Text style={styles.dateBadgeDay}>{dateBadge.day}</Text>
         </View>
         <View style={styles.journalCardBottom}>
-          <Text style={styles.typeIcon}>
-            {isNightmare ? '\u{26A1}' : '\u{1F319}'}
-          </Text>
           {title && (
             <Text
               style={[styles.dreamTitle, isNightmare && styles.nightmareTitle]}
@@ -492,29 +478,12 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
         onLongPress={() => handleDeletePress(item)}
         disabled={!hasReading}
       >
-        <LinearGradient
-          colors={isNightmare
-            ? ['#3a1a30', '#2a1528', '#1e1a2a']
-            : ['#2d2860', '#252050', '#1a1a3e']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.journalCardFallback]}
-        >
-          {/* Decorative stars for no-image cards */}
-          <View style={styles.starsOverlay} pointerEvents="none">
-            <View style={[styles.star, styles.star1]} />
-            <View style={[styles.star, styles.star2]} />
-            <View style={[styles.star, styles.starLg, styles.star3]} />
-            <View style={[styles.star, styles.star4]} />
-            <View style={[styles.star, styles.star5]} />
-          </View>
-          {/* Subtle glow accent */}
-          <View style={[
-            styles.glowAccent,
-            isNightmare && styles.glowAccentNightmare,
-          ]} pointerEvents="none" />
+        <View style={[
+          styles.journalCardFallback,
+          isNightmare && styles.journalCardFallbackNightmare,
+        ]}>
           {cardInner}
-        </LinearGradient>
+        </View>
       </TouchableOpacity>
     );
   }, [handleDreamPress, handleDeletePress]);
@@ -522,7 +491,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6b4e9e" />
+        <ActivityIndicator size="large" color={colors.ochre.gold} />
       </View>
     );
   }
@@ -530,26 +499,24 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
   if (error && dreams.length === 0) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.gradient}>
+        <PaperGrain />
+        <View style={styles.gradient}>
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>{'  '}</Text>
             <Text style={styles.emptyText}>Could not load your dreams</Text>
             <Text style={styles.emptySubtext}>{error}</Text>
             <TouchableOpacity style={styles.emptyButton} onPress={handleRefresh}>
               <Text style={styles.emptyButtonText}>Try Again</Text>
             </TouchableOpacity>
           </View>
-        </LinearGradient>
+        </View>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <LinearGradient
-        colors={['#1a1a2e', '#16213e']}
-        style={styles.gradient}
-      >
+      <PaperGrain />
+      <View style={styles.gradient}>
         <View style={[styles.innerContainer, contentStyle]}>
         <AIConsentModal
           visible={showConsentModal}
@@ -618,7 +585,7 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
               testID="grimoire-search-input"
               style={styles.searchInput}
               placeholder="Search dreams, symbols, tags..."
-              placeholderTextColor="#6b5b8a"
+              placeholderTextColor={colors.paper.boneFaint}
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoCapitalize="none"
@@ -640,13 +607,18 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
 
         {dreams.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>
-              {hasConsent === false ? '\u{1F4D3}' : '\u{1F4D6}'}
-            </Text>
+            <View style={styles.emptyIconHolder}>
+              <SymbolIcon
+                name={hasConsent === false ? 'scroll' : 'book'}
+                size={64}
+                color={colors.ochre.gold}
+                strokeWidth={1.5}
+              />
+            </View>
             <Text style={styles.emptyText}>
               {hasConsent === false
-                ? 'Your journal awaits its first entry...'
-                : 'Your grimoire awaits its first entry...'}
+                ? 'Your journal awaits its first entry'
+                : 'Your grimoire awaits its first entry'}
             </Text>
             <Text style={styles.emptySubtext}>
               Record a dream to begin your journey
@@ -661,7 +633,9 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
           </View>
         ) : filteredDreams.length === 0 ? (
           <View testID="grimoire-empty-no-results" style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>🔮</Text>
+            <View style={styles.emptyIconHolder}>
+              <SymbolIcon name="eye" size={64} color={colors.ochre.gold} strokeWidth={1.5} />
+            </View>
             <Text style={styles.emptyText}>
               No dreams match your search
             </Text>
@@ -689,13 +663,13 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={handleRefresh}
-                tintColor="#6b4e9e"
+                tintColor={colors.ochre.gold}
               />
             }
           />
         )}
         </View>
-      </LinearGradient>
+      </View>
     </SafeAreaView>
   );
 }
@@ -703,310 +677,265 @@ export default function GrimoireScreen({ navigation }: GrimoireScreenProps) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colors.ink.aubergine,
   },
   gradient: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingHorizontal: spacing.gutter,
+    paddingTop: spacing.lg,
   },
   innerContainer: {
     flex: 1,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colors.ink.aubergine,
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#e0d4f7',
-    marginBottom: 4,
+    ...typography.display,
+    fontSize: 32,
+    lineHeight: 36,
+    color: colors.paper.bone,
+    marginBottom: spacing.xs,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#8b7fa8',
+    ...typography.caption,
+    color: colors.paper.boneMuted,
   },
   subtitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 12,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
   streakBadge: {
-    backgroundColor: '#3a2a5e',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: '#6b4e9e',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.ochre.gold,
   },
   streakText: {
-    color: '#c9b8f0',
-    fontSize: 13,
-    fontWeight: '600',
+    ...typography.label,
+    fontSize: 10,
+    color: colors.ochre.gold,
   },
   pillRow: {
     height: 44,
-    marginBottom: 12,
+    marginBottom: spacing.md,
     flexShrink: 0,
   },
   pillRowContent: {
-    gap: 8,
+    gap: spacing.sm,
     alignItems: 'center',
   },
   pill: {
-    backgroundColor: '#2a2a4e',
-    borderRadius: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.ink.aubergineHair,
   },
   pillActive: {
-    backgroundColor: '#3a3a6e',
-    borderColor: '#9b7fd4',
+    borderColor: colors.ochre.gold,
+    backgroundColor: colors.ochre.gold,
   },
   pillText: {
-    color: '#8b7fa8',
-    fontSize: 14,
-    fontWeight: '500',
+    ...typography.caption,
+    color: colors.paper.boneMuted,
   },
   pillTextActive: {
-    color: '#e0d4f7',
+    color: colors.ink.aubergine,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.base,
   },
   searchInput: {
+    ...typography.body,
     flex: 1,
-    backgroundColor: '#2a2a4e',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#e0d4f7',
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
+    paddingHorizontal: 0,
+    paddingVertical: spacing.md,
+    color: colors.paper.bone,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.ink.aubergineHair,
   },
   clearButton: {
-    marginLeft: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    marginLeft: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
   },
   clearButtonText: {
-    color: '#9b7fd4',
-    fontSize: 14,
+    ...typography.label,
+    fontSize: 10,
+    color: colors.ochre.gold,
   },
   sectionHeader: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#8b7fa8',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: 16,
-    marginBottom: 8,
+    ...typography.label,
+    fontSize: 10,
+    color: colors.ochre.gold,
+    marginTop: spacing.base,
+    marginBottom: spacing.sm,
   },
   listContent: {
-    paddingBottom: 24,
+    paddingBottom: spacing.xl,
   },
   journalCard: {
-    borderRadius: 16,
-    marginBottom: 12,
+    marginBottom: spacing.md,
     height: 180,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    borderRadius: radii.card,
   },
   journalCardImage: {
     flex: 1,
   },
   journalCardImageStyle: {
-    borderRadius: 16,
+    borderRadius: radii.card,
   },
   journalCardOverlay: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: radii.card,
     justifyContent: 'space-between',
-    padding: 14,
+    padding: spacing.md,
+    backgroundColor: 'rgba(42,19,50,0.55)',
   },
   journalCardFallback: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: radii.card,
     justifyContent: 'space-between',
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#4a4a7a',
+    padding: spacing.md,
     overflow: 'hidden',
+    backgroundColor: colors.ink.aubergineLift,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.ochre.gold,
   },
-  starsOverlay: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  star: {
-    position: 'absolute',
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: 'rgba(200, 190, 240, 0.25)',
-  },
-  starLg: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(200, 190, 240, 0.35)',
-  },
-  star1: { top: 30, right: 40 },
-  star2: { top: 55, right: 80 },
-  star3: { top: 20, right: 120 },
-  star4: { top: 70, right: 25 },
-  star5: { top: 45, right: 150 },
-  glowAccent: {
-    position: 'absolute',
-    top: -40,
-    right: -40,
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(107, 78, 158, 0.15)',
-  },
-  glowAccentNightmare: {
-    backgroundColor: 'rgba(138, 58, 90, 0.15)',
+  journalCardFallbackNightmare: {
+    borderLeftColor: colors.nightmare.vermilion,
   },
   dateBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(26, 26, 46, 0.8)',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(107, 78, 158, 0.3)',
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: colors.ochre.gold,
   },
   dateBadgeMonth: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#a89cc8',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    ...typography.label,
+    fontSize: 9,
+    color: colors.ochre.gold,
   },
   dateBadgeDay: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#e0d4f7',
+    ...typography.display,
+    fontSize: 18,
+    lineHeight: 20,
+    color: colors.paper.bone,
   },
   journalCardBottom: {
-    gap: 2,
-  },
-  typeIcon: {
-    fontSize: 14,
+    gap: spacing.xs / 2,
   },
   dreamTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#e0d4f7',
+    ...typography.title,
+    fontSize: 17,
+    color: colors.paper.bone,
   },
   nightmareTitle: {
-    color: '#e8b8c8',
+    color: colors.paper.bone,
   },
   dreamPreview: {
+    ...typography.caption,
     fontSize: 13,
-    color: '#c0b8d8',
-    lineHeight: 18,
+    color: colors.paper.boneMuted,
   },
   nightmareText: {
-    color: '#b89ca8',
+    color: colors.paper.boneMuted,
   },
   noReadingIndicator: {
-    fontSize: 12,
-    color: '#6b5b8a',
+    ...typography.caption,
+    color: colors.paper.boneFaint,
     fontStyle: 'italic',
   },
   forgotCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2a2a4e',
-    borderRadius: 16,
-    marginBottom: 12,
-    padding: 16,
-    opacity: 0.6,
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
+    marginBottom: spacing.md,
+    padding: spacing.base,
+    opacity: 0.7,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.ink.aubergineHair,
+    borderStyle: 'dashed',
   },
-  forgotIcon: {
-    fontSize: 24,
-    marginRight: 12,
+  forgotIconHolder: {
+    marginRight: spacing.md,
   },
   forgotContent: {
     flex: 1,
   },
   forgotDate: {
-    fontSize: 12,
-    color: '#8b7fa8',
-    marginBottom: 2,
+    ...typography.label,
+    fontSize: 10,
+    color: colors.paper.boneFaint,
+    marginBottom: spacing.xs / 2,
   },
   forgotText: {
-    fontSize: 14,
-    color: '#a89cc8',
-    marginBottom: 2,
+    ...typography.serifBody,
+    fontSize: 15,
+    color: colors.paper.boneMuted,
+    marginBottom: spacing.xs / 2,
   },
   forgotEncouragement: {
-    fontSize: 12,
-    color: '#8b7fa8',
+    ...typography.caption,
+    color: colors.paper.boneFaint,
     fontStyle: 'italic',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing.gutter,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 16,
+  emptyIconHolder: {
+    marginBottom: spacing.base,
   },
   emptyText: {
-    fontSize: 18,
-    color: '#e0d4f7',
+    ...typography.title,
+    color: colors.paper.bone,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   emptySubtext: {
-    fontSize: 14,
-    color: '#8b7fa8',
+    ...typography.serifBody,
+    fontSize: 15,
+    fontStyle: 'italic',
+    color: colors.paper.boneMuted,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   emptyButton: {
-    backgroundColor: '#6b4e9e',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
+    backgroundColor: colors.paper.bone,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: radii.button,
   },
   emptyButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    ...typography.subtitle,
+    fontSize: 15,
+    color: colors.ink.aubergine,
   },
   consentBanner: {
-    backgroundColor: '#2a2a5e',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(107, 78, 158, 0.4)',
+    padding: spacing.base,
+    marginBottom: spacing.base,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.ochre.gold,
+    backgroundColor: colors.ink.aubergineLift,
   },
   consentBannerText: {
-    fontSize: 14,
-    color: '#c0b8d8',
-    lineHeight: 20,
-    marginBottom: 12,
+    ...typography.body,
+    color: colors.paper.boneMuted,
+    marginBottom: spacing.md,
   },
   consentBannerButtons: {
     flexDirection: 'row',
@@ -1014,18 +943,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   consentEnableButton: {
-    backgroundColor: '#6b4e9e',
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    backgroundColor: colors.paper.bone,
+    borderRadius: radii.button,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
   },
   consentEnableText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    ...typography.label,
+    fontSize: 10,
+    color: colors.ink.aubergine,
   },
   consentDismissText: {
-    color: '#8b7fa8',
-    fontSize: 14,
+    ...typography.label,
+    fontSize: 10,
+    color: colors.paper.boneFaint,
   },
 });

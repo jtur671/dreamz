@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import { PaperGrain } from '../components/PaperGrain';
 import { PieChart, BarChart } from 'react-native-gifted-charts';
 import { useDreams } from '../hooks/useDreams';
 import {
@@ -27,8 +27,8 @@ type InsightsScreenProps = {
   navigation: NativeStackNavigationProp<any>;
 };
 
-const DONUT_COLORS = ['#9b7fd4', '#6b4e9e', '#c4a8f0', '#8b6cc1', '#5a3a8e', '#d4c4f7', '#7a5ab0'];
-const BAR_COLOR = '#9b7fd4';
+const DONUT_COLORS = ['#C79A3A', '#C79A3A', '#C79A3A', '#C79A3A', '#5a3a8e', '#F0E8D8', '#7a5ab0'];
+const BAR_COLOR = '#C79A3A';
 const MIN_DREAMS_FOR_INSIGHTS = 5;
 
 export default function InsightsScreen({ navigation }: InsightsScreenProps) {
@@ -46,7 +46,7 @@ export default function InsightsScreen({ navigation }: InsightsScreenProps) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6b4e9e" />
+        <ActivityIndicator size="large" color="#C79A3A" />
       </View>
     );
   }
@@ -54,7 +54,7 @@ export default function InsightsScreen({ navigation }: InsightsScreenProps) {
   if (dreams.length < MIN_DREAMS_FOR_INSIGHTS) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.gradient}>
+        <PaperGrain /><View style={styles.gradient}>
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>✧</Text>
             <Text style={styles.emptyTitle}>Your Insights Await</Text>
@@ -73,7 +73,7 @@ export default function InsightsScreen({ navigation }: InsightsScreenProps) {
               <Text style={styles.ctaButtonText}>Record a Dream</Text>
             </TouchableOpacity>
           </View>
-        </LinearGradient>
+        </View>
       </SafeAreaView>
     );
   }
@@ -87,7 +87,7 @@ export default function InsightsScreen({ navigation }: InsightsScreenProps) {
 
   const dreamTypeData = dreamTypes.map((item, i) => ({
     value: item.count,
-    color: item.name === 'nightmare' ? '#8a3a5a' : DONUT_COLORS[i % DONUT_COLORS.length],
+    color: item.name === 'nightmare' ? '#B23A3A' : DONUT_COLORS[i % DONUT_COLORS.length],
     text: item.name,
   }));
 
@@ -110,7 +110,7 @@ export default function InsightsScreen({ navigation }: InsightsScreenProps) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.gradient}>
+      <PaperGrain /><View style={styles.gradient}>
         <ScrollView
           contentContainerStyle={[styles.content, contentStyle]}
           showsVerticalScrollIndicator={false}
@@ -143,8 +143,8 @@ export default function InsightsScreen({ navigation }: InsightsScreenProps) {
                 width={chartWidth}
                 barWidth={Math.floor(chartWidth / 8 - 10)}
                 spacing={10}
-                xAxisColor="#3a3a5e"
-                yAxisColor="#3a3a5e"
+                xAxisColor="#5C3A69"
+                yAxisColor="#5C3A69"
                 xAxisLabelTextStyle={styles.chartAxisLabel}
                 yAxisTextStyle={styles.chartAxisLabel}
                 noOfSections={4}
@@ -165,7 +165,7 @@ export default function InsightsScreen({ navigation }: InsightsScreenProps) {
                   donut
                   radius={70}
                   innerRadius={45}
-                  innerCircleColor="#1a1a2e"
+                  innerCircleColor="#3B1F47"
                   centerLabelComponent={() => (
                     <Text style={styles.donutCenter}>{stats.total}</Text>
                   )}
@@ -194,7 +194,7 @@ export default function InsightsScreen({ navigation }: InsightsScreenProps) {
                   donut
                   radius={70}
                   innerRadius={45}
-                  innerCircleColor="#1a1a2e"
+                  innerCircleColor="#3B1F47"
                 />
                 <View style={styles.legendContainer}>
                   {topSymbolsData.map((item, i) => (
@@ -269,7 +269,7 @@ export default function InsightsScreen({ navigation }: InsightsScreenProps) {
 
           <View style={{ height: 32 }} />
         </ScrollView>
-      </LinearGradient>
+      </View>
     </SafeAreaView>
   );
 }
@@ -277,14 +277,14 @@ export default function InsightsScreen({ navigation }: InsightsScreenProps) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#3B1F47',
   },
   gradient: {
     flex: 1,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#3B1F47',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -295,12 +295,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#8b7fa8',
+    color: '#8F8877',
     marginBottom: 20,
   },
   // Empty state
@@ -312,30 +312,30 @@ const styles = StyleSheet.create({
   },
   emptyIcon: {
     fontSize: 48,
-    color: '#9b7fd4',
+    color: '#C79A3A',
     marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     marginBottom: 12,
   },
   emptyText: {
     fontSize: 15,
-    color: '#8b7fa8',
+    color: '#8F8877',
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 12,
   },
   emptyCount: {
     fontSize: 14,
-    color: '#6b4e9e',
+    color: '#C79A3A',
     fontWeight: '600',
     marginBottom: 24,
   },
   ctaButton: {
-    backgroundColor: '#6b4e9e',
+    backgroundColor: '#C79A3A',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,
@@ -353,42 +353,42 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#252542',
+    backgroundColor: '#4B2B58',
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#3a3a5e',
+    borderColor: '#5C3A69',
   },
   statNumber: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
   },
   statLabel: {
     fontSize: 12,
-    color: '#8b7fa8',
+    color: '#8F8877',
     marginTop: 4,
     fontWeight: '500',
   },
   // Chart sections
   chartSection: {
-    backgroundColor: '#252542',
+    backgroundColor: '#4B2B58',
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#3a3a5e',
+    borderColor: '#5C3A69',
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 12,
-    color: '#8b7fa8',
+    color: '#8F8877',
     marginBottom: 16,
   },
   chartContainer: {
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   chartAxisLabel: {
-    color: '#6b5b8a',
+    color: '#8F8877',
     fontSize: 10,
   },
   // Donut chart layout
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   donutCenter: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
   },
   legendContainer: {
     flex: 1,
@@ -428,11 +428,11 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 13,
-    color: '#c4b8e8',
+    color: '#C9C0AE',
   },
   legendTextLink: {
     textDecorationLine: 'underline',
-    textDecorationColor: '#6b4e9e',
+    textDecorationColor: '#C79A3A',
   },
   // Mood distribution
   moodList: {
@@ -447,25 +447,25 @@ const styles = StyleSheet.create({
   moodName: {
     width: 80,
     fontSize: 13,
-    color: '#c4b8e8',
+    color: '#C9C0AE',
     fontWeight: '500',
   },
   moodBarTrack: {
     flex: 1,
     height: 8,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#3B1F47',
     borderRadius: 4,
     overflow: 'hidden',
   },
   moodBarFill: {
     height: '100%',
-    backgroundColor: '#8b6cc1',
+    backgroundColor: '#C79A3A',
     borderRadius: 4,
   },
   moodCount: {
     width: 24,
     fontSize: 13,
-    color: '#8b7fa8',
+    color: '#8F8877',
     textAlign: 'right',
   },
   // Recurring symbols
@@ -478,25 +478,25 @@ const styles = StyleSheet.create({
   recurringName: {
     width: 80,
     fontSize: 13,
-    color: '#c4b8e8',
+    color: '#C9C0AE',
     fontWeight: '500',
   },
   recurringBarTrack: {
     flex: 1,
     height: 8,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#3B1F47',
     borderRadius: 4,
     overflow: 'hidden',
   },
   recurringBarFill: {
     height: '100%',
-    backgroundColor: '#9b7fd4',
+    backgroundColor: '#C79A3A',
     borderRadius: 4,
   },
   recurringCount: {
     width: 24,
     fontSize: 13,
-    color: '#8b7fa8',
+    color: '#8F8877',
     textAlign: 'right',
   },
 });

@@ -322,7 +322,7 @@ export default function VoiceRecorder({ onTranscription, disabled, compact, larg
         )}
         {recordingState === 'transcribing' && (
           <View style={styles.compactBanner}>
-            <ActivityIndicator size="small" color="#9b7fd4" />
+            <ActivityIndicator size="small" color="#C79A3A" />
             <Text style={styles.statusText}>Transcribing...</Text>
           </View>
         )}
@@ -345,7 +345,7 @@ export default function VoiceRecorder({ onTranscription, disabled, compact, larg
           }
         >
           {recordingState === 'transcribing' ? (
-            <ActivityIndicator size="small" color="#e0d4f7" />
+            <ActivityIndicator size="small" color="#F0E8D8" />
           ) : (
             <Text style={[styles.compactButtonIcon, large && styles.compactButtonIconLarge]}>
               {recordingState === 'recording' ? '⏹' : '🎙'}
@@ -380,7 +380,7 @@ export default function VoiceRecorder({ onTranscription, disabled, compact, larg
         }
       >
         {recordingState === 'transcribing' ? (
-          <ActivityIndicator size="small" color="#e0d4f7" />
+          <ActivityIndicator size="small" color="#F0E8D8" />
         ) : (
           <Text style={styles.buttonIcon}>
             {recordingState === 'recording' ? '⏹' : '🎙'}
@@ -467,11 +467,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#3a3a5e',
+    backgroundColor: '#5C3A69',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#4a4a6e',
+    borderColor: '#5C3A69',
   },
   compactButtonLarge: {
     width: 72,
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   compactButtonRecording: {
-    backgroundColor: '#5e3a3a',
+    backgroundColor: '#5C3A69',
     borderColor: '#8a4a4a',
   },
   compactButtonIcon: {
@@ -511,14 +511,14 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#3a3a5e',
+    backgroundColor: '#5C3A69',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#4a4a6e',
+    borderColor: '#5C3A69',
   },
   buttonRecording: {
-    backgroundColor: '#5e3a3a',
+    backgroundColor: '#5C3A69',
     borderColor: '#8a4a4a',
   },
   buttonDisabled: {
@@ -545,12 +545,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   statusText: {
-    color: '#9b7fd4',
+    color: '#C79A3A',
     fontSize: 13,
     marginTop: 8,
   },
   hintText: {
-    color: '#6b5b8a',
+    color: '#8F8877',
     fontSize: 12,
     marginTop: 6,
   },

@@ -22,6 +22,8 @@ import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { withTimeout, TimeoutError } from '../lib/timeout';
 import { featureFlags } from '../lib/featureFlags';
 import { useBootstrapStatus } from '../lib/bootstrapStatus';
+import { colors, typography, spacing, radii } from '../theme';
+import { PaperGrain } from '../components/PaperGrain';
 
 // Bumped every hotfix. On-device testers can confirm which bundle is
 // running by looking at the badge in the top-right corner of AuthScreen.
@@ -352,6 +354,7 @@ export default function AuthScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
+      <PaperGrain />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -409,7 +412,7 @@ export default function AuthScreen() {
               testID="auth-email-input"
               style={styles.input}
               placeholder="Email"
-              placeholderTextColor="#8b7fa8"
+              placeholderTextColor={colors.paper.boneFaint}
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -420,7 +423,7 @@ export default function AuthScreen() {
                 testID="auth-password-input"
                 style={styles.passwordInput}
                 placeholder="Password"
-                placeholderTextColor="#8b7fa8"
+                placeholderTextColor={colors.paper.boneFaint}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -432,7 +435,7 @@ export default function AuthScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
               >
-                <Text style={styles.eyeIcon}>{showPassword ? '👁' : '👁‍🗨'}</Text>
+                <Text style={styles.eyeLabel}>{showPassword ? 'Hide' : 'Show'}</Text>
               </TouchableOpacity>
             </View>
 
@@ -519,7 +522,7 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colors.ink.aubergine,
   },
   scrollContent: {
     flexGrow: 1,
@@ -527,169 +530,173 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 48,
+    paddingHorizontal: spacing.gutter,
+    paddingVertical: spacing.section,
   },
   title: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#e0d4f7',
+    ...typography.display,
+    fontSize: 56,
+    lineHeight: 60,
+    color: colors.paper.bone,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.xs,
   },
   subtitle: {
-    fontSize: 18,
-    color: '#a89cc8',
+    ...typography.serifBody,
+    fontSize: 16,
+    fontStyle: 'italic',
+    color: colors.paper.boneMuted,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.lg,
   },
   socialButtons: {
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   appleButton: {
     height: 50,
     width: '100%',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   googleButton: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.paper.bone,
+    borderRadius: radii.button,
     padding: 14,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
   },
   googleButtonText: {
-    color: '#333',
+    ...typography.bodyLarge,
+    fontFamily: 'InstrumentSans_600SemiBold',
+    color: colors.ink.aubergine,
     fontSize: 16,
-    fontWeight: '600',
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 24,
+    marginVertical: spacing.xl,
   },
   dividerLine: {
     flex: 1,
-    height: 1,
-    backgroundColor: '#3a3a5e',
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.ink.aubergineHair,
   },
   dividerText: {
-    color: '#8b7fa8',
-    paddingHorizontal: 16,
-    fontSize: 14,
+    ...typography.label,
+    color: colors.paper.boneFaint,
+    paddingHorizontal: spacing.base,
   },
-  form: {
-  },
+  form: {},
   input: {
-    backgroundColor: '#2a2a4e',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: '#e0d4f7',
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
-    marginBottom: 16,
+    ...typography.bodyLarge,
+    color: colors.paper.bone,
+    paddingVertical: spacing.md,
+    paddingHorizontal: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.ink.aubergineHair,
+    marginBottom: spacing.base,
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2a2a4e',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
-    marginBottom: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.ink.aubergineHair,
+    marginBottom: spacing.base,
   },
   passwordInput: {
+    ...typography.bodyLarge,
     flex: 1,
-    padding: 16,
-    fontSize: 16,
-    color: '#e0d4f7',
+    paddingVertical: spacing.md,
+    color: colors.paper.bone,
   },
   eyeButton: {
-    padding: 16,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.md,
   },
-  eyeIcon: {
-    fontSize: 20,
+  eyeLabel: {
+    ...typography.label,
+    fontSize: 10,
+    color: colors.ochre.gold,
   },
   forgotRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: -8,
-    marginBottom: 8,
+    marginTop: -spacing.xs,
+    marginBottom: spacing.sm,
   },
   forgotPasswordText: {
-    color: '#9b7fd4',
-    fontSize: 13,
+    ...typography.caption,
+    color: colors.ochre.gold,
   },
   button: {
-    backgroundColor: '#6b4e9e',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.paper.bone,
+    borderRadius: radii.button,
+    paddingVertical: spacing.base,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    ...typography.subtitle,
+    color: colors.ink.aubergine,
+    fontSize: 17,
   },
   switchButton: {
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: spacing.base,
   },
   switchText: {
-    color: '#a89cc8',
+    ...typography.body,
+    color: colors.paper.boneMuted,
     fontSize: 14,
   },
   retryHint: {
     alignItems: 'center',
-    paddingVertical: 10,
-    marginTop: 8,
+    paddingVertical: spacing.md,
+    marginTop: spacing.sm,
   },
   retryHintText: {
-    color: '#9b7fd4',
-    fontSize: 14,
-    fontWeight: '500',
+    ...typography.body,
+    color: colors.ochre.gold,
   },
   privacyNote: {
-    color: '#6b5b8a',
-    fontSize: 12,
+    ...typography.caption,
+    color: colors.paper.boneFaint,
     textAlign: 'center',
-    marginTop: 32,
+    marginTop: spacing.xxl,
     textDecorationLine: 'underline',
   },
   resetButton: {
     alignItems: 'center',
-    paddingVertical: 10,
-    marginTop: 16,
+    paddingVertical: spacing.md,
+    marginTop: spacing.base,
   },
   resetText: {
-    color: '#6b5b8a',
-    fontSize: 12,
+    ...typography.caption,
+    color: colors.paper.boneFaint,
   },
   bootstrapStatus: {
-    color: '#4a3a6e',
+    ...typography.caption,
     fontSize: 10,
+    color: colors.paper.boneFaint,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: spacing.sm,
     opacity: 0.6,
   },
   versionBadge: {
     position: 'absolute',
     top: 8,
     right: 16,
-    backgroundColor: '#ff3366',
+    backgroundColor: colors.nightmare.vermilion,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: radii.hairline,
   },
   versionBadgeText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
+    ...typography.label,
+    fontSize: 9,
+    color: colors.paper.bone,
   },
 });

@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1a1a2e"
+      "backgroundColor": "#3B1F47"
     },
     "ios": {
       "supportsTablet": true,
@@ -31,7 +31,7 @@
         "image": "./assets/splash-icon.png",
         "tabletImage": "./assets/splash-icon-tablet.png",
         "resizeMode": "contain",
-        "backgroundColor": "#1a1a2e"
+        "backgroundColor": "#3B1F47"
       },
       "runtimeVersion": {
         "policy": "appVersion"
@@ -40,7 +40,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1a1a2e"
+        "backgroundColor": "#3B1F47"
       },
       "googleServicesFile": "./google-services.json",
       "package": "com.dreamzjournal.app",

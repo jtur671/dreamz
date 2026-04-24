@@ -1,13 +1,27 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Notifications from 'expo-notifications';
+import * as SplashScreen from 'expo-splash-screen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Session } from '@supabase/supabase-js';
+import {
+  useFonts as useFraunces,
+  Fraunces_400Regular,
+  Fraunces_600SemiBold,
+  Fraunces_700Bold,
+} from '@expo-google-fonts/fraunces';
+import {
+  InstrumentSans_400Regular,
+  InstrumentSans_500Medium,
+  InstrumentSans_600SemiBold,
+} from '@expo-google-fonts/instrument-sans';
 import { supabase } from './src/lib/supabase';
+import { SymbolIcon, type SymbolName } from './src/components/SymbolIcon';
+import { colors, typography } from './src/theme';
 
 import AuthScreen, { setOnNewUserSignup } from './src/screens/AuthScreen';
 import HomeScreen from './src/screens/HomeScreen';
@@ -41,25 +55,33 @@ const PROFILE_FETCH_TIMEOUT_MS = 5000;
 // and we render MainTabs on the first frame with no AuthScreen flash.
 const initialSessionPromise = supabase.auth.getSession();
 
+// Keep splash visible until fonts resolve
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // It's fine if this is called twice or the splash is already hidden
+});
+
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 
-// Tab icon component
+// Tab icon — hand-drawn ochre line illustrations via SymbolIcon.
+// Replaces the old emoji icons (☽ 📖 ✧ 📜 ⚙) which were the loudest
+// "AI slop" signal in the codebase per the aubergine redesign plan.
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
-  const icons: Record<string, string> = {
-    Home: '☽',
-    Grimoire: '📖',
-    Insights: '✧',
-    Dictionary: '📜',
-    Settings: '⚙',
+  const icons: Record<string, SymbolName> = {
+    Home: 'moon',
+    Grimoire: 'book',
+    Insights: 'eye',
+    Dictionary: 'scroll',
+    Settings: 'gear',
   };
 
+  const symbolName = icons[name] ?? 'moon';
+  const tint = focused ? colors.ochre.gold : colors.paper.boneFaint;
+
   return (
-    <View style={[styles.tabIconContainer, focused && styles.tabIconContainerFocused]}>
-      <Text style={[styles.tabIcon, focused && styles.tabIconFocused]}>
-        {icons[name] || '•'}
-      </Text>
+    <View style={styles.tabIconContainer}>
+      <SymbolIcon name={symbolName} size={26} color={tint} strokeWidth={1.75} />
     </View>
   );
 }
@@ -78,8 +100,8 @@ function MainTabs() {
             paddingBottom: Math.max(insets.bottom, 8),
             height: 62 + Math.max(insets.bottom, 8),
           },
-          tabBarActiveTintColor: '#e0d4f7',
-          tabBarInactiveTintColor: '#6b5b8a',
+          tabBarActiveTintColor: colors.ochre.gold,
+          tabBarInactiveTintColor: colors.paper.boneFaint,
           tabBarIcon: ({ focused }) => (
             <TabIcon name={route.name} focused={focused} />
           ),
@@ -120,6 +142,23 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
+
+  const [fontsLoaded, fontError] = useFraunces({
+    Fraunces_400Regular,
+    Fraunces_600SemiBold,
+    Fraunces_700Bold,
+    InstrumentSans_400Regular,
+    InstrumentSans_500Medium,
+    InstrumentSans_600SemiBold,
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded || fontError) {
+      // Hide splash once fonts are ready (or have failed and we'll fall back).
+      // The fall-back-on-error behavior matches expo-splash-screen docs.
+      await SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fontsLoaded, fontError]);
 
   useEffect(() => {
     // Initialize RevenueCat
@@ -218,8 +257,14 @@ export default function App() {
     };
   }, []);
 
+  if (!fontsLoaded && !fontError) {
+    // Splash screen is still up — let it cover the blank root until fonts resolve.
+    return null;
+  }
+
   return (
     <SafeAreaProvider>
+      <View style={styles.root} onLayout={onLayoutRootView}>
       <NavigationContainer ref={navigationRef}>
         <StatusBar style="light" />
         {session ? (
@@ -227,7 +272,7 @@ export default function App() {
             initialRouteName={needsOnboarding ? 'Onboarding' : 'MainTabs'}
             screenOptions={{
               headerShown: false,
-              contentStyle: { backgroundColor: '#1a1a2e' },
+              contentStyle: { backgroundColor: colors.ink.aubergine },
             }}
           >
             {needsOnboarding ? (
@@ -255,7 +300,7 @@ export default function App() {
           <Stack.Navigator
             screenOptions={{
               headerShown: false,
-              contentStyle: { backgroundColor: '#1a1a2e' },
+              contentStyle: { backgroundColor: colors.ink.aubergine },
             }}
           >
             <Stack.Screen name="Auth" component={AuthScreen} />
@@ -263,37 +308,33 @@ export default function App() {
           </Stack.Navigator>
         )}
       </NavigationContainer>
+      </View>
     </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: colors.ink.aubergine,
+  },
   tabBar: {
-    backgroundColor: '#1a1a2e',
-    borderTopWidth: 0,
+    backgroundColor: colors.ink.aubergineDeep,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.ink.aubergineHair,
     paddingTop: 8,
-    // paddingBottom and height are set dynamically based on safe area insets
     elevation: 0,
   },
   tabIconContainer: {
     width: 40,
     height: 40,
-    borderRadius: 20,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
   },
-  tabIconContainerFocused: {
-    backgroundColor: 'rgba(107,78,158,0.15)',
-  },
-  tabIcon: {
-    fontSize: 24,
-    color: '#6b5b8a',
-  },
-  tabIconFocused: {
-    color: '#e0d4f7',
-  },
   tabLabel: {
-    fontSize: 11,
-    marginTop: 4,
+    ...typography.label,
+    fontSize: 10,
+    letterSpacing: 1.2,
+    marginTop: 2,
   },
 });

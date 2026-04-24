@@ -6,13 +6,15 @@ import {
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../lib/supabase';
 import { getProfile } from '../lib/profileService';
 import { withTimeout } from '../lib/timeout';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
+import { colors, typography, spacing, radii } from '../theme';
+import { PaperGrain } from '../components/PaperGrain';
+import { SymbolIcon } from '../components/SymbolIcon';
 
 const STATS_TIMEOUT_MS = 5000;
 
@@ -101,75 +103,64 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <LinearGradient
-        colors={['#1a1a2e', '#16213e']}
-        style={styles.gradient}
-      >
-        <View style={[styles.container, contentStyle]}>
-          <View style={styles.header}>
-            <View style={styles.moonGlow}>
-              <Text style={styles.moonIcon}>{'\u{1F319}'}</Text>
-            </View>
-            <Text style={styles.greeting}>
-              {getGreeting()}, {displayName?.split(' ')[0] || 'Dreamer'}
-            </Text>
-            <Text style={styles.subtitle}>What did you dream last night?</Text>
+      <PaperGrain />
+      <View style={[styles.container, contentStyle]}>
+        <View style={styles.header}>
+          <View style={styles.moonHolder}>
+            <SymbolIcon name="moon" size={72} color={colors.ochre.gold} strokeWidth={1.75} />
           </View>
+          <Text style={styles.greeting}>
+            {getGreeting()}, {displayName?.split(' ')[0] || 'Dreamer'}
+          </Text>
+          <Text style={styles.subtitle}>What did you dream last night?</Text>
+        </View>
 
-          <View style={styles.actions}>
-            {lastDreamTitle && (
-              <TouchableOpacity
-                testID="home-last-dream-card"
-                style={styles.lastDreamCard}
-                onPress={() => navigation.navigate('Grimoire')}
-                accessibilityRole="button"
-                accessibilityLabel={`Last reading: ${lastDreamTitle}. View your grimoire.`}
-              >
-                <Text style={styles.lastDreamLabel}>Last reading</Text>
-                <Text style={styles.lastDreamTitle}>{lastDreamTitle}</Text>
-                {dreamCount > 1 && (
-                  <Text style={styles.dreamCountText}>
-                    {dreamCount} dreams in your grimoire
-                  </Text>
-                )}
-              </TouchableOpacity>
-            )}
-
+        <View style={styles.actions}>
+          {lastDreamTitle && (
             <TouchableOpacity
-              testID="home-record-button"
-              style={styles.newDreamButton}
-              onPress={() => navigation.navigate('NewDream')}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel="Record a Dream"
-            >
-              <LinearGradient
-                colors={['#6b4e9e', '#8b6cc1']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.ctaGradient}
-              >
-                <Text style={styles.newDreamButtonText}>Record a Dream</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              testID="home-grimoire-button"
-              style={styles.grimoireButton}
+              testID="home-last-dream-card"
+              style={styles.lastDreamCard}
               onPress={() => navigation.navigate('Grimoire')}
               accessibilityRole="button"
-              accessibilityLabel="View Your Grimoire"
+              accessibilityLabel={`Last reading: ${lastDreamTitle}. View your grimoire.`}
             >
-              <Text style={styles.grimoireButtonText}>View Your Grimoire</Text>
+              <Text style={styles.lastDreamLabel}>Last reading</Text>
+              <Text style={styles.lastDreamTitle}>{lastDreamTitle}</Text>
+              {dreamCount > 1 && (
+                <Text style={styles.dreamCountText}>
+                  {dreamCount} dreams in your grimoire
+                </Text>
+              )}
             </TouchableOpacity>
-          </View>
+          )}
 
-          <View style={styles.quoteContainer}>
-            <Text style={styles.quoteText}>"{getDailyQuote().text}"</Text>
-            <Text style={styles.quoteAuthor}>— {getDailyQuote().author}</Text>
-          </View>
+          <TouchableOpacity
+            testID="home-record-button"
+            style={styles.newDreamButton}
+            onPress={() => navigation.navigate('NewDream')}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Record a Dream"
+          >
+            <Text style={styles.newDreamButtonText}>Record a Dream</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            testID="home-grimoire-button"
+            style={styles.grimoireButton}
+            onPress={() => navigation.navigate('Grimoire')}
+            accessibilityRole="button"
+            accessibilityLabel="View Your Grimoire"
+          >
+            <Text style={styles.grimoireButtonText}>View Your Grimoire</Text>
+          </TouchableOpacity>
         </View>
-      </LinearGradient>
+
+        <View style={styles.quoteContainer}>
+          <Text style={styles.quoteText}>&ldquo;{getDailyQuote().text}&rdquo;</Text>
+          <Text style={styles.quoteAuthor}>— {getDailyQuote().author}</Text>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -177,132 +168,101 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
-  },
-  gradient: {
-    flex: 1,
+    backgroundColor: colors.ink.aubergine,
   },
   container: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing.gutter,
     justifyContent: 'space-between',
   },
   header: {
     alignItems: 'center',
-    paddingTop: 48,
+    paddingTop: spacing.section,
   },
-  moonGlow: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(155,127,212,0.12)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  moonIcon: {
-    fontSize: 48,
-  },
-  ctaGradient: {
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
+  moonHolder: {
+    marginBottom: spacing.base,
   },
   greeting: {
+    ...typography.display,
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#e0d4f7',
-    marginBottom: 8,
+    lineHeight: 36,
+    color: colors.paper.bone,
+    marginBottom: spacing.xs,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 18,
-    color: '#a89cc8',
+    ...typography.serifBody,
+    fontSize: 15,
+    fontStyle: 'italic',
+    color: colors.paper.boneMuted,
     textAlign: 'center',
   },
-  actions: {
-    // gap: 16 removed - causes Android type casting issues
-  },
+  actions: {},
   lastDreamCard: {
-    backgroundColor: '#2a2a4e',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
-    borderLeftWidth: 4,
-    borderLeftColor: '#9b7fd4',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    backgroundColor: colors.ink.aubergineLift,
+    borderRadius: radii.card,
+    padding: spacing.base,
+    marginBottom: spacing.base,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.ochre.gold,
   },
   lastDreamLabel: {
-    fontSize: 11,
-    color: '#8b7fa8',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 4,
+    ...typography.label,
+    color: colors.ochre.gold,
+    marginBottom: spacing.xs,
   },
   lastDreamTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#e0d4f7',
+    ...typography.title,
+    fontSize: 20,
+    color: colors.paper.bone,
   },
   dreamCountText: {
-    fontSize: 12,
-    color: '#6b5b8a',
-    marginTop: 4,
+    ...typography.caption,
+    color: colors.paper.boneFaint,
+    marginTop: spacing.xs,
   },
   newDreamButton: {
-    borderRadius: 16,
-    marginBottom: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    backgroundColor: colors.paper.bone,
+    borderRadius: radii.button,
+    paddingVertical: spacing.lg,
+    alignItems: 'center',
+    marginBottom: spacing.md,
   },
   newDreamButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    ...typography.subtitle,
+    color: colors.ink.aubergine,
+    fontSize: 17,
   },
   grimoireButton: {
-    backgroundColor: '#2a2a4e',
-    borderRadius: 16,
-    padding: 20,
+    paddingVertical: spacing.base,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.ink.aubergineHair,
   },
   grimoireButtonText: {
-    color: '#e0d4f7',
-    fontSize: 18,
-    fontWeight: '600',
+    ...typography.label,
+    fontSize: 11,
+    color: colors.ochre.gold,
   },
   quoteContainer: {
-    paddingBottom: 24,
-    paddingHorizontal: 8,
+    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.ink.aubergineHair,
+    paddingTop: spacing.base,
   },
   quoteText: {
-    color: '#8b7fa8',
+    ...typography.serifBody,
     fontSize: 13,
-    textAlign: 'center',
     fontStyle: 'italic',
-    lineHeight: 19,
-    marginBottom: 4,
+    color: colors.paper.boneMuted,
+    textAlign: 'center',
+    marginBottom: spacing.xs,
   },
   quoteAuthor: {
-    color: '#7a7a9a',
-    fontSize: 11,
+    ...typography.label,
+    fontSize: 10,
+    color: colors.paper.boneFaint,
     textAlign: 'center',
   },
 });

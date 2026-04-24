@@ -11,8 +11,10 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { colors, typography, spacing, radii } from '../theme';
+import { PaperGrain } from '../components/PaperGrain';
+import { SymbolIcon } from '../components/SymbolIcon';
 import { saveDream, analyzeDream, AnalyzeDreamContext } from '../lib/dreamService';
 import { getProfile } from '../lib/profileService';
 import { saveDraft, loadDraft, clearDraft } from '../lib/draftService';
@@ -379,10 +381,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
         onAllow={handleConsentAllow}
         onDecline={handleConsentDecline}
       />
-      <LinearGradient
-        colors={['#1a1a2e', '#1e1a3a']}
-        style={styles.gradient}
-      >
+      <PaperGrain />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
@@ -441,9 +440,12 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                 accessibilityLabel="Dream"
                 accessibilityState={{ selected: dreamType === 'dream' }}
               >
-                <Text style={[styles.dreamTypeIcon, isTablet && styles.dreamTypeIconTablet]}>
-                  {dreamType === 'dream' ? '\u{1F319}' : '\u{1F311}'}
-                </Text>
+                <SymbolIcon
+                  name="moon"
+                  size={isTablet ? 24 : 18}
+                  color={dreamType === 'dream' ? colors.ochre.gold : colors.paper.boneFaint}
+                  strokeWidth={1.75}
+                />
                 <Text
                   style={[
                     styles.dreamTypeText,
@@ -467,9 +469,12 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
                 accessibilityLabel="Nightmare"
                 accessibilityState={{ selected: dreamType === 'nightmare' }}
               >
-                <Text style={[styles.dreamTypeIcon, isTablet && styles.dreamTypeIconTablet]}>
-                  {dreamType === 'nightmare' ? '\u{26A1}' : '\u{1F329}'}
-                </Text>
+                <SymbolIcon
+                  name="fire"
+                  size={isTablet ? 24 : 18}
+                  color={dreamType === 'nightmare' ? colors.nightmare.vermilion : colors.paper.boneFaint}
+                  strokeWidth={1.75}
+                />
                 <Text
                   style={[
                     styles.dreamTypeText,
@@ -491,8 +496,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
               accessibilityLabel="I don't remember my dream"
               activeOpacity={0.7}
             >
-              <Text style={[styles.forgotButtonIcon, isTablet && styles.forgotButtonIconTablet]}>{'\u{1F319}'}</Text>
-              <Text style={[styles.forgotButtonText, isTablet && styles.forgotButtonTextTablet]}>{"I don't remember"}</Text>
+              <Text style={[styles.forgotButtonText, isTablet && styles.forgotButtonTextTablet]}>{"I don't remember —"}</Text>
             </TouchableOpacity>
 
             <View style={styles.moodContainer}>
@@ -563,7 +567,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
               testID="new-dream-text-input"
               style={[styles.dreamInput, isTablet && styles.dreamInputTablet]}
               placeholder="I was walking through a forest when..."
-              placeholderTextColor="#6b5b8a"
+              placeholderTextColor={colors.paper.boneFaint}
               value={dreamText}
               onChangeText={setDreamText}
               multiline
@@ -586,25 +590,17 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
               />
               <TouchableOpacity
                 testID="new-dream-submit"
-                style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
+                style={[styles.submitButton, isTablet && styles.submitButtonTablet, isLoading && styles.submitButtonDisabled]}
                 onPress={() => handleSubmit()}
                 disabled={isLoading}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
               >
-                <LinearGradient
-                  colors={['#6b4e9e', '#8b6cc1']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={[styles.ctaGradient, isTablet && styles.ctaGradientTablet]}
-                >
-                  <Text style={[styles.submitButtonText, isTablet && styles.submitButtonTextTablet]}>Interpret Dream</Text>
-                </LinearGradient>
+                <Text style={[styles.submitButtonText, isTablet && styles.submitButtonTextTablet]}>Interpret Dream</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
         )}
       </KeyboardAvoidingView>
-      </LinearGradient>
     </SafeAreaView>
   );
 }
@@ -612,10 +608,7 @@ export default function NewDreamScreen({ navigation }: NewDreamScreenProps) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
-  },
-  gradient: {
-    flex: 1,
+    backgroundColor: colors.ink.aubergine,
   },
   container: {
     flex: 1,
@@ -623,17 +616,17 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.gutter,
   },
   backButton: {
-    paddingVertical: 8,
-    paddingRight: 16,
+    paddingVertical: spacing.sm,
+    paddingRight: spacing.base,
   },
   backButtonText: {
-    color: '#6b4e9e',
-    fontSize: 16,
-    fontWeight: '500',
+    ...typography.label,
+    fontSize: 11,
+    color: colors.ochre.gold,
   },
   disabledText: {
     opacity: 0.5,
@@ -642,270 +635,226 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 24,
-    paddingTop: 8,
+    padding: spacing.gutter,
+    paddingTop: spacing.sm,
   },
   contentTablet: {
     flexGrow: 1,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#e0d4f7',
-    marginBottom: 8,
+    ...typography.display,
+    fontSize: 32,
+    lineHeight: 36,
+    color: colors.paper.bone,
+    marginBottom: spacing.xs,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#a89cc8',
-    marginBottom: 16,
+    ...typography.serifBody,
+    fontSize: 15,
+    fontStyle: 'italic',
+    color: colors.paper.boneMuted,
+    marginBottom: spacing.base,
   },
   draftBanner: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#2e3545',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#4a5568',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.base,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.ochre.gold,
+    backgroundColor: colors.ink.aubergineLift,
   },
   draftBannerText: {
-    fontSize: 13,
-    color: '#a8b8c8',
+    ...typography.caption,
+    color: colors.paper.boneMuted,
   },
   draftClearText: {
-    fontSize: 13,
-    color: '#9b7fd4',
-    fontWeight: '500',
+    ...typography.label,
+    fontSize: 10,
+    color: colors.ochre.gold,
   },
   forgotButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     alignSelf: 'center',
-    backgroundColor: '#252542',
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
-    gap: 8,
-  },
-  forgotButtonIcon: {
-    fontSize: 14,
-  },
-  forgotButtonIconTablet: {
-    fontSize: 18,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.base,
   },
   forgotButtonTablet: {
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 16,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xxl,
   },
   forgotButtonText: {
-    color: '#8b7fa8',
-    fontSize: 14,
-    fontWeight: '500',
+    ...typography.label,
+    fontSize: 10,
+    color: colors.paper.boneMuted,
   },
   forgotButtonTextTablet: {
-    fontSize: 18,
+    fontSize: 12,
   },
   moodContainer: {
-    marginBottom: 16,
+    marginBottom: spacing.base,
   },
   moodLabel: {
-    fontSize: 14,
-    color: '#a89cc8',
-    marginBottom: 2,
-    fontWeight: '600',
+    ...typography.label,
+    color: colors.ochre.gold,
+    marginBottom: spacing.xs / 2,
   },
   moodHint: {
-    fontSize: 12,
-    color: '#6b5b8a',
-    marginBottom: 8,
+    ...typography.caption,
+    color: colors.paper.boneFaint,
+    marginBottom: spacing.sm,
   },
   moodChips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
   moodChip: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
-    backgroundColor: '#2a2a4e',
-    marginRight: 8,
-    marginBottom: 8,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.ink.aubergineHair,
+    marginRight: spacing.sm,
+    marginBottom: spacing.sm,
   },
   moodChipSelected: {
-    borderColor: '#9b7fd4',
-    backgroundColor: '#3a3a6e',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    borderColor: colors.ochre.gold,
+    backgroundColor: colors.ochre.gold,
   },
   nightmareMoodChip: {
-    borderColor: '#4a2a3e',
-    backgroundColor: '#2e1a2a',
+    borderColor: colors.ink.aubergineHair,
   },
   nightmareMoodChipSelected: {
-    borderColor: '#8a3a5a',
-    backgroundColor: '#3e2a3a',
+    borderColor: colors.nightmare.vermilion,
+    backgroundColor: colors.nightmare.vermilion,
   },
   moodChipText: {
-    color: '#a89cc8',
+    ...typography.caption,
+    color: colors.paper.boneMuted,
     fontSize: 13,
-    fontWeight: '500',
   },
   nightmareMoodChipText: {
-    color: '#b89ca8',
+    color: colors.paper.boneMuted,
   },
   moodChipTextSelected: {
-    color: '#e0d4f7',
+    color: colors.ink.aubergine,
   },
   nightmareMoodChipTextSelected: {
-    color: '#e8b8c8',
+    color: colors.paper.bone,
   },
   moodMoreChip: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#6b4e9e',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.ochre.gold,
     borderStyle: 'dashed',
     backgroundColor: 'transparent',
-    marginRight: 8,
-    marginBottom: 8,
+    marginRight: spacing.sm,
+    marginBottom: spacing.sm,
   },
   moodMoreText: {
-    color: '#9b7fd4',
+    ...typography.caption,
     fontSize: 13,
-    fontWeight: '500',
+    color: colors.ochre.gold,
   },
   dreamTypeContainer: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: spacing.base,
+    gap: spacing.md,
   },
   dreamTypeButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2a2a4e',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
-    marginRight: 12,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.base,
+    borderRadius: radii.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.ink.aubergineHair,
+    gap: spacing.sm,
   },
   dreamTypeButtonTablet: {
-    paddingVertical: 18,
-    borderRadius: 16,
+    paddingVertical: spacing.lg,
   },
   dreamTypeButtonSelected: {
-    backgroundColor: '#3a3a6e',
-    borderColor: '#9b7fd4',
+    borderColor: colors.ochre.gold,
   },
   nightmareTypeButtonSelected: {
-    backgroundColor: '#3e2a3a',
-    borderColor: '#8a3a5a',
-  },
-  dreamTypeIcon: {
-    fontSize: 18,
-    marginRight: 8,
-  },
-  dreamTypeIconTablet: {
-    fontSize: 24,
+    borderColor: colors.nightmare.vermilion,
   },
   dreamTypeText: {
+    ...typography.subtitle,
     fontSize: 15,
-    color: '#a89cc8',
-    fontWeight: '500',
+    color: colors.paper.boneMuted,
   },
   dreamTypeTextTablet: {
-    fontSize: 20,
+    fontSize: 18,
   },
   dreamTypeTextSelected: {
-    color: '#e0d4f7',
+    color: colors.paper.bone,
   },
   nightmareTypeTextSelected: {
-    color: '#e8b8c8',
+    color: colors.paper.bone,
   },
   dreamInput: {
-    backgroundColor: '#2a2a4e',
-    borderRadius: 16,
-    padding: 16,
-    fontSize: 16,
-    color: '#e0d4f7',
-    borderWidth: 1,
-    borderColor: '#3a3a5e',
+    ...typography.serifBody,
+    fontSize: 17,
+    color: colors.paper.bone,
+    paddingVertical: spacing.base,
+    paddingHorizontal: 0,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.ink.aubergineHair,
+    borderBottomColor: colors.ink.aubergineHair,
     minHeight: 200,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
   },
   dreamInputTablet: {
     flex: 1,
     minHeight: 300,
-    fontSize: 18,
+    fontSize: 19,
   },
   errorContainer: {
-    backgroundColor: '#3e2a2a',
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: '#5e3a3a',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.base,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.nightmare.vermilion,
+    backgroundColor: colors.ink.aubergineLift,
   },
   errorText: {
-    color: '#e8a8a8',
-    fontSize: 14,
-    textAlign: 'center',
+    ...typography.body,
+    color: colors.nightmare.vermilion,
+    textAlign: 'left',
   },
   submitRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 12,
-    marginTop: 32,
+    gap: spacing.md,
+    marginTop: spacing.xxl,
   },
   submitButton: {
     flex: 1,
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  submitButtonDisabled: {
-    opacity: 0.6,
-  },
-  ctaGradient: {
-    borderRadius: 16,
-    padding: 18,
+    backgroundColor: colors.paper.bone,
+    borderRadius: radii.button,
+    paddingVertical: spacing.base,
     alignItems: 'center',
   },
-  ctaGradientTablet: {
-    padding: 32,
-    borderRadius: 20,
+  submitButtonTablet: {
+    paddingVertical: spacing.lg,
+  },
+  submitButtonDisabled: {
+    opacity: 0.5,
   },
   submitButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    ...typography.subtitle,
+    fontSize: 17,
+    color: colors.ink.aubergine,
   },
   submitButtonTextTablet: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 22,
   },
 });

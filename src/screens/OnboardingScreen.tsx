@@ -206,7 +206,7 @@ export default function OnboardingScreen() {
           value={displayName}
           onChangeText={setDisplayName}
           placeholder="Your name (optional)"
-          placeholderTextColor="#6b5b8a"
+          placeholderTextColor="#8F8877"
           autoCapitalize="words"
           autoCorrect={false}
           maxLength={50}
@@ -423,7 +423,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#3B1F47',
   },
   progressContainer: {
     flexDirection: 'row',
@@ -434,11 +434,11 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#3a3a5e',
+    backgroundColor: '#5C3A69',
     marginHorizontal: 6,
   },
   progressDotActive: {
-    backgroundColor: '#6b4e9e',
+    backgroundColor: '#C79A3A',
   },
   stepContent: {
     flexGrow: 1,
@@ -448,23 +448,23 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     textAlign: 'center',
     marginBottom: 8,
   },
   stepSubtitle: {
     fontSize: 16,
-    color: '#a89cc8',
+    color: '#C9C0AE',
     textAlign: 'center',
     marginBottom: 32,
   },
   tierCard: {
-    backgroundColor: '#2a2a4e',
+    backgroundColor: '#4B2B58',
     borderRadius: 16,
     padding: 24,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#3a3a5e',
+    borderColor: '#5C3A69',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -472,21 +472,21 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   tierCardSelected: {
-    borderColor: '#9b7fd4',
+    borderColor: '#C79A3A',
     backgroundColor: '#322d54',
-    shadowColor: '#6b4e9e',
+    shadowColor: '#C79A3A',
     shadowOpacity: 0.5,
     shadowRadius: 12,
   },
   tierCardDimmed: {
     opacity: 0.45,
-    borderColor: '#2a2a4e',
+    borderColor: '#4B2B58',
   },
   selectedBadge: {
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: '#6b4e9e',
+    backgroundColor: '#C79A3A',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -500,30 +500,30 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: '#6b4e9e',
+    backgroundColor: '#C79A3A',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
   },
   pricingBadgeText: {
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     fontSize: 12,
     fontWeight: '600',
   },
   tierName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     marginBottom: 4,
   },
   tierDescription: {
     fontSize: 14,
-    color: '#a89cc8',
+    color: '#C9C0AE',
     marginBottom: 4,
   },
   tierPricing: {
     fontSize: 13,
-    color: '#9b7fd4',
+    color: '#C79A3A',
     fontWeight: '600',
     marginBottom: 12,
   },
@@ -532,15 +532,15 @@ const styles = StyleSheet.create({
   },
   tierFeature: {
     fontSize: 14,
-    color: '#c0b4e0',
+    color: '#C9C0AE',
     marginBottom: 8,
     paddingLeft: 8,
   },
   premiumFeature: {
-    color: '#8b7fa8',
+    color: '#8F8877',
   },
   continueButton: {
-    backgroundColor: '#6b4e9e',
+    backgroundColor: '#C79A3A',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -566,39 +566,39 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     marginBottom: 12,
   },
   nameInput: {
-    backgroundColor: '#2a2a4e',
+    backgroundColor: '#4B2B58',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     borderWidth: 1,
-    borderColor: '#3a3a5e',
+    borderColor: '#5C3A69',
   },
   optionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
   optionChip: {
-    backgroundColor: '#2a2a4e',
+    backgroundColor: '#4B2B58',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
     marginRight: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#3a3a5e',
+    borderColor: '#5C3A69',
   },
   optionChipSelected: {
-    backgroundColor: '#6b4e9e',
-    borderColor: '#6b4e9e',
+    backgroundColor: '#C79A3A',
+    borderColor: '#C79A3A',
   },
   optionChipText: {
-    color: '#a89cc8',
+    color: '#C9C0AE',
     fontSize: 14,
   },
   optionChipTextSelected: {
@@ -614,7 +614,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   skipButtonText: {
-    color: '#8b7fa8',
+    color: '#8F8877',
     fontSize: 16,
   },
   buttonDisabled: {
@@ -633,19 +633,19 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     textAlign: 'center',
     marginBottom: 16,
   },
   welcomeSubtitle: {
     fontSize: 16,
-    color: '#a89cc8',
+    color: '#C9C0AE',
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
   },
   grimoireExplainer: {
-    backgroundColor: '#2a2a5e',
+    backgroundColor: '#4B2B58',
     borderRadius: 12,
     padding: 16,
     marginBottom: 28,
@@ -654,25 +654,25 @@ const styles = StyleSheet.create({
   },
   grimoireExplainerText: {
     fontSize: 14,
-    color: '#c0b8d8',
+    color: '#C9C0AE',
     lineHeight: 20,
     textAlign: 'center',
   },
   grimoireExplainerBold: {
     fontWeight: '700',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
   },
   welcomeFeatures: {
     marginBottom: 40,
   },
   welcomeFeature: {
     fontSize: 14,
-    color: '#c0b4e0',
+    color: '#C9C0AE',
     textAlign: 'center',
     marginBottom: 12,
   },
   beginButton: {
-    backgroundColor: '#6b4e9e',
+    backgroundColor: '#C79A3A',
     borderRadius: 12,
     paddingHorizontal: 48,
     paddingVertical: 16,
@@ -688,7 +688,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   disclosureCard: {
-    backgroundColor: '#2a2a5e',
+    backgroundColor: '#4B2B58',
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
@@ -697,17 +697,17 @@ const styles = StyleSheet.create({
   },
   disclosureText: {
     fontSize: 15,
-    color: '#c0b8d8',
+    color: '#C9C0AE',
     lineHeight: 22,
     marginBottom: 12,
   },
   disclosureEmphasis: {
     fontWeight: '600',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     marginBottom: 0,
   },
   privacyLinkText: {
-    color: '#9b7fd4',
+    color: '#C79A3A',
     fontSize: 14,
     textAlign: 'center',
     textDecorationLine: 'underline',

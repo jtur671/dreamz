@@ -169,7 +169,7 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
 
         {/* Pricing */}
         {loading ? (
-          <ActivityIndicator testID="paywall-loading" size="large" color="#9b7fd4" style={styles.loader} />
+          <ActivityIndicator testID="paywall-loading" size="large" color="#C79A3A" style={styles.loader} />
         ) : monthlyPackage ? (
           <View testID="paywall-pricing" style={styles.pricingContainer}>
             {/* Plan selector */}
@@ -352,7 +352,7 @@ export default function PaywallScreen({ navigation, route }: PaywallScreenProps)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#3B1F47',
   },
   scrollContent: {
     padding: 24,
@@ -363,20 +363,20 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   closeText: {
-    color: '#8b7fa8',
+    color: '#8F8877',
     fontSize: 16,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#a89cc8',
+    color: '#C9C0AE',
     textAlign: 'center',
     marginBottom: 32,
   },
@@ -391,21 +391,21 @@ const styles = StyleSheet.create({
   premiumColumn: {
     marginRight: 0,
     marginLeft: 8,
-    backgroundColor: '#2a2a4e',
+    backgroundColor: '#4B2B58',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#6b4e9e',
+    borderColor: '#C79A3A',
   },
   tierHeader: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#8b7fa8',
+    color: '#8F8877',
     marginBottom: 16,
     textAlign: 'center',
   },
   premiumHeader: {
-    color: '#e0d4f7',
+    color: '#F0E8D8',
   },
   featureRow: {
     flexDirection: 'row',
@@ -415,20 +415,20 @@ const styles = StyleSheet.create({
   featureCheck: {
     fontSize: 14,
     marginRight: 8,
-    color: '#8b7fa8',
+    color: '#8F8877',
   },
   premiumCheck: {
     fontSize: 14,
     marginRight: 8,
-    color: '#9b7fd4',
+    color: '#C79A3A',
   },
   featureText: {
     fontSize: 13,
-    color: '#8b7fa8',
+    color: '#8F8877',
     flex: 1,
   },
   premiumFeatureText: {
-    color: '#c0b4e0',
+    color: '#C9C0AE',
   },
   loader: {
     marginVertical: 24,
@@ -446,46 +446,46 @@ const styles = StyleSheet.create({
   planCard: {
     flex: 1,
     borderWidth: 2,
-    borderColor: '#3a3a5e',
+    borderColor: '#5C3A69',
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     position: 'relative',
   },
   planCardSelected: {
-    borderColor: '#9b7fd4',
-    backgroundColor: '#2a2a4e',
+    borderColor: '#C79A3A',
+    backgroundColor: '#4B2B58',
   },
   planLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#8b7fa8',
+    color: '#8F8877',
     marginBottom: 4,
   },
   planLabelSelected: {
-    color: '#c0b4e0',
+    color: '#C9C0AE',
   },
   planPrice: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#8b7fa8',
+    color: '#8F8877',
   },
   planPriceSelected: {
-    color: '#e0d4f7',
+    color: '#F0E8D8',
   },
   planPeriod: {
     fontSize: 13,
-    color: '#8b7fa8',
+    color: '#8F8877',
     marginTop: 2,
   },
   planPeriodSelected: {
-    color: '#a89cc8',
+    color: '#C9C0AE',
   },
   saveBadge: {
     position: 'absolute',
     top: -10,
     right: -1,
-    backgroundColor: '#9b7fd4',
+    backgroundColor: '#C79A3A',
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -498,23 +498,23 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#e0d4f7',
+    color: '#F0E8D8',
     marginBottom: 8,
   },
   trialText: {
     fontSize: 14,
-    color: '#a89cc8',
+    color: '#C9C0AE',
     marginBottom: 16,
     textAlign: 'center',
   },
   unavailableText: {
     fontSize: 14,
-    color: '#8b7fa8',
+    color: '#8F8877',
     marginTop: 8,
     textAlign: 'center',
   },
   purchaseButton: {
-    backgroundColor: '#6b4e9e',
+    backgroundColor: '#C79A3A',
     borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: 48,
@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
   },
   trialNote: {
     fontSize: 13,
-    color: '#a89cc8',
+    color: '#C9C0AE',
     marginTop: 12,
     textAlign: 'center',
   },
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   restoreText: {
-    color: '#9b7fd4',
+    color: '#C79A3A',
     fontSize: 14,
   },
   legalText: {
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
   },
   legalLink: {
     fontSize: 12,
-    color: '#8b7fa8',
+    color: '#8F8877',
     textDecorationLine: 'underline',
   },
   legalSeparator: {
