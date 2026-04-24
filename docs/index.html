@@ -146,7 +146,11 @@
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('consent', 'default', { ad_storage: 'denied', analytics_storage: 'denied', wait_for_update: 500 });
+    // Grant analytics by default (we anonymize IPs and don't run Google Ads);
+    // ad_storage stays denied so we remain defensive on advertising signals.
+    // Previously denied-by-default blocked app_store_click events for any visitor
+    // who tapped through before accepting the cookie banner (i.e. all ad traffic).
+    gtag('consent', 'default', { ad_storage: 'denied', analytics_storage: 'granted' });
     gtag('config', 'G-FLM3J5KMW8', { anonymize_ip: true });
   </script>
 
