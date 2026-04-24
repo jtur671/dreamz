@@ -1380,11 +1380,32 @@
       });
     })();
 
-    // Track App Store clicks
+    // In-app WebViews (TikTok, Instagram, Facebook, etc.) don't always honor Apple
+    // Universal Links, so tapping apps.apple.com loads the web page inside the WebView
+    // instead of opening the native App Store. Force the itms-apps:// scheme for these
+    // visitors, which iOS hands off to the App Store app more reliably.
+    var IN_APP_BROWSER_UA = /TikTok|musical_ly|Bytedance|BytedanceWebview|Instagram|FBAN|FBAV|FB_IAB|Messenger|Line\/|Twitter|LinkedInApp|Pinterest|Snapchat/i;
+    function isInAppBrowser() { return IN_APP_BROWSER_UA.test(navigator.userAgent || ''); }
+    function isIOS() { return /iPad|iPhone|iPod/.test(navigator.userAgent || '') && !window.MSStream; }
+
     document.querySelectorAll('a[href*="apps.apple.com"]').forEach(function(a) {
-      a.addEventListener('click', function() {
+      a.addEventListener('click', function(e) {
+        var inApp = isInAppBrowser();
         if (typeof gtag === 'function') {
-          gtag('event', 'app_store_click', { link_location: a.closest('section, footer')?.id || 'unknown' });
+          gtag('event', 'app_store_click', {
+            link_location: a.closest('section, footer')?.id || 'unknown',
+            in_app_browser: inApp ? 'yes' : 'no'
+          });
+        }
+        if (inApp && isIOS()) {
+          e.preventDefault();
+          var itms = 'itms-apps://apps.apple.com/us/app/dreamz-journal/id6760150023';
+          var https = 'https://apps.apple.com/us/app/dreamz-journal/id6760150023';
+          window.location.href = itms;
+          setTimeout(function() {
+            // If the App Store opened, the WebView is backgrounded — don't navigate.
+            if (document.visibilityState === 'visible') window.location.href = https;
+          }, 600);
         }
       });
     });
