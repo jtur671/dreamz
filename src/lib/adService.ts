@@ -5,10 +5,22 @@
  * (e.g., before the dev build includes it), all functions are safe no-ops.
  */
 
+// Production AdMob interstitial unit IDs ("Readings" unit, format: Interstitial).
+// Hard-coded as a fallback so that if EAS Build doesn't have the
+// EXPO_PUBLIC_ADMOB_INTERSTITIAL_* env vars set (a real bug we hit on
+// build 46), we still request the production unit instead of falling back
+// to TestIds.INTERSTITIAL — which Google's exchange refuses to fill in
+// production-signed apps. Verified live in the AdMob console on 2026-04-25.
+const PROD_INTERSTITIAL_IOS = 'ca-app-pub-8597027816949059/4714295967';
+const PROD_INTERSTITIAL_ANDROID = 'ca-app-pub-8597027816949059/4583968876';
+
 let AdModule: any = null;
 let interstitial: any = null;
 let adLoaded = false;
 let initialized = false;
+let lastErrorCode: string | null = null;
+let lastErrorMessage: string | null = null;
+let lastLoadAttemptAt = 0;
 
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -47,9 +59,43 @@ function getAdUnitId(): string {
   const { TestIds } = AdModule;
   if (__DEV__) return TestIds.INTERSTITIAL;
   const { Platform } = require('react-native');
-  return Platform.OS === 'ios'
-    ? (process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_IOS || TestIds.INTERSTITIAL)
-    : (process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ANDROID || TestIds.INTERSTITIAL);
+  // Order: env override (for staging / future ad-unit rotations) → hard-coded
+  // production constants → TestIds (last resort, only useful in dev). The
+  // hard-coded layer is what makes this OTA/binary-portable: even if the
+  // env var is missing in EAS Build, production users still hit a real
+  // ad unit Google will actually fill.
+  if (Platform.OS === 'ios') {
+    return process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_IOS
+      || PROD_INTERSTITIAL_IOS
+      || TestIds.INTERSTITIAL;
+  }
+  return process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ANDROID
+    || PROD_INTERSTITIAL_ANDROID
+    || TestIds.INTERSTITIAL;
+}
+
+/**
+ * Snapshot of ad-loader state for debug surfaces (e.g. an opt-in "ad health"
+ * row in Settings). Never throws; safe to call from any render path.
+ */
+export function getAdHealth(): {
+  initialized: boolean;
+  unitId: string;
+  loaded: boolean;
+  hasInstance: boolean;
+  lastLoadAttemptAt: number;
+  lastErrorCode: string | null;
+  lastErrorMessage: string | null;
+} {
+  return {
+    initialized,
+    unitId: getAdUnitId(),
+    loaded: adLoaded,
+    hasInstance: !!interstitial,
+    lastLoadAttemptAt,
+    lastErrorCode,
+    lastErrorMessage,
+  };
 }
 
 /**
@@ -61,15 +107,31 @@ export function preloadInterstitialAd(): void {
 
   try {
     const { InterstitialAd, AdEventType } = AdModule;
-    interstitial = InterstitialAd.createForAdRequest(getAdUnitId());
+    const unitId = getAdUnitId();
+    lastLoadAttemptAt = Date.now();
+    interstitial = InterstitialAd.createForAdRequest(unitId);
 
     interstitial.addAdEventListener(AdEventType.LOADED, () => {
       adLoaded = true;
+      lastErrorCode = null;
+      lastErrorMessage = null;
+      console.log('[ads] interstitial LOADED', { unitId });
     });
 
-    interstitial.addAdEventListener(AdEventType.ERROR, () => {
+    // Per feedback_ads_priority: never silently swallow ad delivery failures.
+    // Log the actual code so we can tell apart no-fill / network-error /
+    // internal-error / invalid-request from a single console line.
+    interstitial.addAdEventListener(AdEventType.ERROR, (error: unknown) => {
       adLoaded = false;
       interstitial = null;
+      const e = (error || {}) as { code?: string; message?: string };
+      lastErrorCode = e.code ?? 'unknown';
+      lastErrorMessage = e.message ?? String(error);
+      console.warn('[ads] interstitial ERROR', {
+        unitId,
+        code: lastErrorCode,
+        message: lastErrorMessage,
+      });
     });
 
     interstitial.addAdEventListener(AdEventType.CLOSED, () => {
@@ -79,9 +141,12 @@ export function preloadInterstitialAd(): void {
     });
 
     interstitial.load();
-  } catch {
+  } catch (e: any) {
     interstitial = null;
     adLoaded = false;
+    lastErrorCode = 'create-failed';
+    lastErrorMessage = e?.message ?? String(e);
+    console.warn('[ads] interstitial create/load threw', e);
   }
 }
 
@@ -130,7 +195,13 @@ export function showInterstitialAd(timeoutMs = 3000): Promise<void> {
       }
       if (Date.now() - start > timeoutMs) {
         clearInterval(poll);
-        console.warn('[ads] interstitial not available within wait window');
+        console.warn('[ads] interstitial not available within wait window', {
+          waitedMs: Date.now() - start,
+          lastErrorCode,
+          lastErrorMessage,
+          hasInstance: !!interstitial,
+          unitId: getAdUnitId(),
+        });
         resolve();
       }
     }, 100);

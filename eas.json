@@ -17,11 +17,19 @@
       "android": {
         "buildType": "apk"
       },
-      "channel": "preview"
+      "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_ADMOB_INTERSTITIAL_IOS": "ca-app-pub-8597027816949059/4714295967",
+        "EXPO_PUBLIC_ADMOB_INTERSTITIAL_ANDROID": "ca-app-pub-8597027816949059/4583968876"
+      }
     },
     "production": {
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_ADMOB_INTERSTITIAL_IOS": "ca-app-pub-8597027816949059/4714295967",
+        "EXPO_PUBLIC_ADMOB_INTERSTITIAL_ANDROID": "ca-app-pub-8597027816949059/4583968876"
+      }
     },
     "detox": {
       "distribution": "internal",
