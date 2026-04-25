@@ -25,7 +25,7 @@ import { useBootstrapStatus } from '../lib/bootstrapStatus';
 
 // Bumped every hotfix. On-device testers can confirm which bundle is
 // running by looking at the badge in the top-right corner of AuthScreen.
-const BUILD_TAG = 'v7';
+const BUILD_TAG = 'v8-ads';
 
 WebBrowser.maybeCompleteAuthSession();
 
