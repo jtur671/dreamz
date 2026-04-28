@@ -974,7 +974,26 @@
       .grimoire-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (min-width: 1024px) {
-      .grimoire-grid { grid-template-columns: repeat(3, 1fr); }
+      .grimoire-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    /* ============================================
+       Popular Dream Symbols Strip
+       ============================================ */
+    .symbols-strip { background: var(--bg-deep); }
+    .symbols-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; max-width: 1000px; margin: 0 auto; }
+    .symbol-tile { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: rgba(26, 10, 46, 0.4); border: 1px solid rgba(201, 168, 76, 0.12); border-radius: 12px; text-decoration: none; transition: border-color 0.2s ease, transform 0.2s ease; }
+    .symbol-tile:hover { border-color: rgba(201, 168, 76, 0.4); transform: translateY(-2px); }
+    .symbol-tile .symbol-thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--bg-purple-dark); }
+    .symbol-tile .symbol-label { font-family: var(--font-heading); font-size: 1rem; color: var(--text-primary); font-weight: 500; }
+    .symbol-tile .symbol-sub { display: block; font-family: var(--font-body); font-size: 0.78rem; color: var(--text-muted); font-weight: 400; margin-top: 0.1rem; font-style: italic; }
+    .symbols-all { text-align: center; margin-top: 2rem; }
+    .symbols-all a { color: var(--gold); font-family: var(--font-heading); font-style: italic; font-size: 0.95rem; }
+    @media (min-width: 640px) {
+      .symbols-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (min-width: 1024px) {
+      .symbols-grid { grid-template-columns: repeat(4, 1fr); }
     }
 
     /* ============================================
@@ -1118,6 +1137,7 @@
           <p>
             Explore the largest curated dream symbol dictionary available on mobile.
             Each symbol comes with cultural context, mystical meaning, and guidance for interpretation.
+            Or <a href="/blog/dream-symbol/">browse the Grimoire online</a> — a free, web-readable index of 300+ dream symbols.
           </p>
           <ul>
             <li>Browse or search by keyword</li>
@@ -1278,6 +1298,69 @@
   </section>
 
   <!-- ==========================================
+       POPULAR DREAM SYMBOLS
+       ========================================== -->
+  <section class="section symbols-strip" id="symbols">
+    <div class="section-inner">
+      <p class="section-label">Popular Dream Symbols</p>
+      <h2 class="section-title">What did you <em>dream of?</em></h2>
+      <p class="section-subtitle">Twelve of the most common symbols people search — start here, or browse the full Grimoire of 300+.</p>
+
+      <div class="symbols-grid">
+        <a href="/blog/dream-symbol/falling/" class="symbol-tile">
+          <img class="symbol-thumb" src="/blog/dream-symbol/falling/hero.jpg" alt="" loading="lazy" width="44" height="44">
+          <span class="symbol-label">Falling<span class="symbol-sub">loss of control</span></span>
+        </a>
+        <a href="/blog/dream-symbol/teeth/" class="symbol-tile">
+          <img class="symbol-thumb" src="/blog/dream-symbol/teeth/hero.jpg" alt="" loading="lazy" width="44" height="44">
+          <span class="symbol-label">Teeth<span class="symbol-sub">power, anxiety</span></span>
+        </a>
+        <a href="/blog/dream-symbol/chased/" class="symbol-tile">
+          <img class="symbol-thumb" src="/blog/dream-symbol/chased/hero.jpg" alt="" loading="lazy" width="44" height="44">
+          <span class="symbol-label">Chased<span class="symbol-sub">avoidance</span></span>
+        </a>
+        <a href="/blog/dream-symbol/snake/" class="symbol-tile">
+          <img class="symbol-thumb" src="/blog/dream-symbol/snake/hero.jpg" alt="" loading="lazy" width="44" height="44">
+          <span class="symbol-label">Snake<span class="symbol-sub">transformation</span></span>
+        </a>
+        <a href="/blog/dream-symbol/water/" class="symbol-tile">
+          <img class="symbol-thumb" src="/blog/dream-symbol/water/hero.jpg" alt="" loading="lazy" width="44" height="44">
+          <span class="symbol-label">Water<span class="symbol-sub">emotion, depth</span></span>
+        </a>
+        <a href="/blog/dream-symbol/flying/" class="symbol-tile">
+          <img class="symbol-thumb" src="/blog/dream-symbol/flying/hero.jpg" alt="" loading="lazy" width="44" height="44">
+          <span class="symbol-label">Flying<span class="symbol-sub">freedom</span></span>
+        </a>
+        <a href="/blog/dream-symbol/death/" class="symbol-tile">
+          <img class="symbol-thumb" src="/blog/dream-symbol/death/hero.jpg" alt="" loading="lazy" width="44" height="44">
+          <span class="symbol-label">Death<span class="symbol-sub">endings, change</span></span>
+        </a>
+        <a href="/blog/dream-symbol/pregnancy/" class="symbol-tile">
+          <img class="symbol-thumb" src="/blog/dream-symbol/pregnancy/hero.jpg" alt="" loading="lazy" width="44" height="44">
+          <span class="symbol-label">Pregnancy<span class="symbol-sub">new beginning</span></span>
+        </a>
+        <a href="/blog/dream-symbol/ex-boyfriend/" class="symbol-tile">
+          <img class="symbol-thumb" src="/blog/dream-symbol/ex-boyfriend/hero.jpg" alt="" loading="lazy" width="44" height="44">
+          <span class="symbol-label">Ex<span class="symbol-sub">unfinished feeling</span></span>
+        </a>
+        <a href="/blog/dream-symbol/house/" class="symbol-tile">
+          <img class="symbol-thumb" src="/blog/dream-symbol/house/hero.jpg" alt="" loading="lazy" width="44" height="44">
+          <span class="symbol-label">House<span class="symbol-sub">the self</span></span>
+        </a>
+        <a href="/blog/dream-symbol/fire/" class="symbol-tile">
+          <img class="symbol-thumb" src="/blog/dream-symbol/fire/hero.jpg" alt="" loading="lazy" width="44" height="44">
+          <span class="symbol-label">Fire<span class="symbol-sub">passion, warning</span></span>
+        </a>
+        <a href="/blog/dream-symbol/baby/" class="symbol-tile">
+          <img class="symbol-thumb" src="/blog/dream-symbol/baby/hero.jpg" alt="" loading="lazy" width="44" height="44">
+          <span class="symbol-label">Baby<span class="symbol-sub">vulnerability</span></span>
+        </a>
+      </div>
+      <div class="symbols-all"><a href="/blog/dream-symbol/">Browse all 300+ dream symbols →</a></div>
+    </div>
+  </section>
+
+  <!-- ==========================================
        BLOG TEASER — "From the Grimoire"
        ========================================== -->
   <section class="section grimoire-teaser" id="grimoire">
@@ -1287,6 +1370,12 @@
       <p class="section-subtitle">Deep dives on dream interpretation, symbolism, and the science of your unconscious mind.</p>
 
       <div class="grimoire-grid">
+        <a href="/blog/dream-symbol/" class="grimoire-card">
+          <span class="tag">Library</span>
+          <h3>The Grimoire — A–Z Dream Symbols</h3>
+          <p>An illuminated index of 300+ dream symbols, their meanings, and what they may be whispering. Browse by letter or search the archive.</p>
+          <div class="grimoire-card-meta">Living index · Updated weekly</div>
+        </a>
         <a href="/blog/best-dream-interpretation-apps-2026" class="grimoire-card">
           <span class="tag">Comparison</span>
           <h3>Best Dream Interpretation Apps 2026</h3>
@@ -1348,6 +1437,7 @@
   <footer class="footer">
     <div class="footer-links">
       <a href="/blog/">Blog</a>
+      <a href="/blog/dream-symbol/">Dream Symbols</a>
       <a href="#faq">FAQ</a>
       <a href="#pricing">Pricing</a>
       <a href="privacy.html">Privacy Policy</a>
