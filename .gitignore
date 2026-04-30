@@ -65,6 +65,10 @@ store/generated/
 .enrich-progress.json
 .enrich-missing-progress.json
 
+# Seed scripts that hardcode test credentials — keep local only, never commit
+scripts/seed-test-data.ts
+scripts/seed-pills-test.ts
+
 # Detox test artifacts (screenshots, logs from local test runs)
 e2e/artifacts/
 

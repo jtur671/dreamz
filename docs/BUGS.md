@@ -58,7 +58,7 @@ All new account sign-ups fail with HTTP 500 `unexpected_failure` and the message
 # Confirmed HTTP 500 on every sign-up attempt:
 curl -X POST "${SUPABASE_URL}/auth/v1/signup" \
   -H "apikey: ${ANON_KEY}" -H "Content-Type: application/json" \
-  -d '{"email":"<redacted-email>","password":"***REMOVED***"}'
+  -d '{"email":"<test-user>","password":"<redacted>"}'
 # → {"code":500,"error_code":"unexpected_failure","msg":"Database error saving new user"}
 
 # Confirmed all 13 migrations are applied to remote:

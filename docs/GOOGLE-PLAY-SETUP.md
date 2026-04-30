@@ -157,10 +157,10 @@ Go to **Policy > App content > Data safety**:
 Go to **Policy > App content > App access**:
 
 - Select **All or some functionality is restricted**
-- Add credentials so the reviewer can sign in:
-  - **Email:** `<redacted-email>`
-  - **Password:** `***REMOVED***`
-  - **Instructions:** `Sign in with email/password. The account has premium access enabled. Create a dream entry to see an AI reading.`
+- Add credentials so the reviewer can sign in.
+  - Reviewer email/password are stored ONLY in Google Play Console "App access" — never in this repo.
+  - Generate a fresh password before each submission and rotate after each review cycle.
+  - Reviewer instructions: `Sign in with email/password. The account has premium access enabled. Create a dream entry to see an AI reading.`
 
 ---
 
