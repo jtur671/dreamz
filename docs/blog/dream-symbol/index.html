@@ -15,13 +15,199 @@
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8597027816949059" crossorigin="anonymous"></script>
 <style>
   body{background:#0d1b2a;color:#f0e6d3;margin:0;line-height:1.7}
-  nav{display:flex;justify-content:space-between;align-items:center;padding:1.5rem 2rem;border-bottom:1px solid rgba(201,168,76,0.15);position:relative;z-index:2}
-  nav a.logo{font-family:'Playfair Display',Georgia,serif;font-size:1.4rem;color:#c9a84c;text-decoration:none}
-  nav a.cta{background:#c9a84c;color:#0d1b2a;padding:.5rem 1.2rem;border-radius:6px;font-weight:600;font-size:.9rem;text-decoration:none}
+  nav.site-nav{display:flex;justify-content:space-between;align-items:center;padding:1.5rem 2rem;border-bottom:1px solid rgba(201,168,76,0.15);position:relative;z-index:6}
+  nav.site-nav a.logo{font-family:'Playfair Display',Georgia,serif;font-size:1.4rem;color:#c9a84c;text-decoration:none}
+  nav.site-nav a.cta{background:#c9a84c;color:#0d1b2a;padding:.5rem 1.2rem;border-radius:6px;font-weight:600;font-size:.9rem;text-decoration:none}
+
+  /* Hero glow */
+  .grimoire-hub > header h1 em {
+    text-shadow: 0 0 20px rgba(201,168,76,0.45);
+    animation: grTitleGlow 5.5s ease-in-out infinite;
+  }
+  @keyframes grTitleGlow {
+    0%,100% { text-shadow: 0 0 18px rgba(201,168,76,0.35); }
+    50%     { text-shadow: 0 0 32px rgba(201,168,76,0.7); }
+  }
+  .gr-count {
+    display:inline-block;
+    margin-top:1.1rem;
+    color:#c9a84c;
+    font-family:'Playfair Display',Georgia,serif;
+    font-size:.82rem;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+  }
+
+  /* Sticky toolbar */
+  .gr-toolbar {
+    position:sticky;
+    top:0;
+    z-index:5;
+    background:rgba(13,27,42,0.92);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(201,168,76,0.18);
+    padding:1rem 1.5rem;
+    margin:0 0 2.5rem;
+  }
+  .gr-toolbar-inner {
+    max-width:1080px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:.85rem;
+  }
+  .gr-search-wrap { position:relative; }
+  .gr-search {
+    width:100%;
+    box-sizing:border-box;
+    background:rgba(26,10,46,0.65);
+    border:1px solid rgba(201,168,76,0.3);
+    border-radius:999px;
+    padding:.85rem 1.25rem .85rem 3rem;
+    color:#f0e6d3;
+    font-family:'Fraunces',Georgia,serif;
+    font-size:1rem;
+    outline:none;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .gr-search::placeholder { color:#6b5f73; font-style:italic; }
+  .gr-search:focus {
+    border-color:#c9a84c;
+    box-shadow:0 0 0 3px rgba(201,168,76,0.18);
+  }
+  .gr-search-icon {
+    position:absolute;
+    left:1.05rem;
+    top:50%;
+    transform:translateY(-50%);
+    color:#c9a84c;
+    pointer-events:none;
+    font-size:1.05rem;
+  }
+  .gr-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:.4rem;
+    align-items:center;
+  }
+  .gr-row-label {
+    font-family:'Playfair Display',Georgia,serif;
+    font-style:italic;
+    font-size:.78rem;
+    color:#6b5f73;
+    text-transform:uppercase;
+    letter-spacing:.15em;
+    margin-right:.25rem;
+    min-width:1.25rem;
+  }
+  .gr-row button {
+    background:transparent;
+    border:1px solid rgba(201,168,76,0.22);
+    color:#a89bb0;
+    font-family:'Playfair Display',Georgia,serif;
+    font-size:.92rem;
+    padding:.38rem .68rem;
+    border-radius:6px;
+    cursor:pointer;
+    transition:background .15s,border-color .15s,color .15s,transform .15s;
+    min-width:2.2rem;
+    line-height:1;
+  }
+  .gr-row.gr-cats button {
+    font-family:'Fraunces',Georgia,serif;
+    font-size:.82rem;
+    padding:.42rem .9rem;
+    border-radius:999px;
+  }
+  .gr-row button:hover:not(:disabled) {
+    border-color:#c9a84c;
+    color:#f0e6d3;
+  }
+  .gr-row button.active {
+    background:#c9a84c;
+    color:#0d1b2a;
+    border-color:#c9a84c;
+  }
+  .gr-row button:disabled {
+    opacity:.22;
+    cursor:not-allowed;
+  }
+  .gr-row button.all {
+    font-style:italic;
+    margin-left:.5rem;
+    color:#c9a84c;
+  }
+  .gr-row button.all.active {
+    color:#0d1b2a;
+  }
+
+  /* Tile polish */
+  .chapter-entries li.hidden { display:none !important; }
+  .chapter.empty { display:none; }
+  .chapter-entries a {
+    border:1px solid transparent;
+    padding:.55rem .65rem !important;
+  }
+  .chapter-entries a:hover {
+    border-color:rgba(201,168,76,0.3);
+    transform:translateY(-1px);
+    background:rgba(201,168,76,0.07);
+  }
+  .chapter-entries .thumb {
+    width:52px !important;
+    height:52px !important;
+    transition:box-shadow .2s, transform .2s;
+  }
+  .chapter-entries a:hover .thumb {
+    box-shadow:0 4px 16px rgba(0,0,0,.45), 0 0 0 1px rgba(201,168,76,0.6);
+  }
+
+  /* Empty state */
+  .gr-empty {
+    display:none;
+    text-align:center;
+    padding:5rem 1.5rem 4rem;
+    color:#a89bb0;
+    font-family:'Fraunces',Georgia,serif;
+    font-size:1.05rem;
+    font-style:italic;
+    line-height:1.7;
+  }
+  .gr-empty.show { display:block; }
+  .gr-empty strong {
+    color:#c9a84c;
+    font-style:normal;
+    font-weight:600;
+  }
+  .gr-empty .gr-empty-action {
+    display:inline-block;
+    margin-top:1.2rem;
+    color:#c9a84c;
+    font-family:'Playfair Display',Georgia,serif;
+    font-style:italic;
+    cursor:pointer;
+    text-decoration:underline dotted;
+    background:none;
+    border:0;
+    font-size:.95rem;
+  }
+
+  @media (max-width: 720px) {
+    .gr-toolbar { padding:.85rem 1rem; }
+    .gr-row button { font-size:.84rem; padding:.32rem .6rem; min-width:1.95rem; }
+    .gr-row.gr-cats button { font-size:.78rem; padding:.36rem .75rem; }
+    .gr-row-label { display:none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grimoire-hub > header h1 em { animation:none; }
+    .chapter-entries a, .chapter-entries .thumb { transition:none; }
+  }
 </style>
 </head>
 <body class="veil">
-<nav>
+<nav class="site-nav">
   <a href="/" class="logo">Dreamz Journal</a>
   <a href="https://apps.apple.com/app/id6760150023" class="cta">Download Free</a>
 </nav>
@@ -29,7 +215,25 @@
   <header>
     <h1>The <em>Grimoire</em></h1>
     <p class="subtitle">An illuminated index of 302 dream symbols — their meanings, their shadows, and what they may be whispering to you.</p>
+    <p class="gr-count" id="gr-count">302 symbols</p>
   </header>
+
+  <div class="gr-toolbar" role="search">
+    <div class="gr-toolbar-inner">
+      <div class="gr-search-wrap">
+        <span class="gr-search-icon" aria-hidden="true">⌕</span>
+        <input id="gr-search" class="gr-search" type="search" autocomplete="off" spellcheck="false"
+               placeholder="Search 302 symbols — falling, teeth, snake…" aria-label="Search dream symbols">
+      </div>
+      <div class="gr-row gr-az" id="gr-az" role="toolbar" aria-label="Filter by letter">
+        <span class="gr-row-label">A–Z</span>
+      </div>
+      <div class="gr-row gr-cats" id="gr-cats" role="toolbar" aria-label="Filter by category">
+        <span class="gr-row-label">Theme</span>
+      </div>
+    </div>
+  </div>
+
   <section class="chapter" id="chapter-a">
         <div class="chapter-letter" aria-hidden="true">A</div>
         <ul class="chapter-entries">
@@ -442,6 +646,241 @@
           <li><a href="/blog/dream-symbol/writing/"><img class="thumb" src="/blog/dream-symbol/writing/hero.jpg" alt="" loading="lazy" width="44" height="44"><span class="label">Writing</span></a></li>
         </ul>
       </section>
+
+  <div class="gr-empty" id="gr-empty" role="status" aria-live="polite">
+    No symbols match <strong id="gr-empty-q"></strong>.
+    <br>Try a shorter word, a different spelling, or
+    <button type="button" class="gr-empty-action" id="gr-empty-reset">browse alphabetically</button>.
+  </div>
 </main>
+
+<script>
+(function(){
+  // Category mapping for all 302 symbols
+  var CATS = {
+    "aardvark":"animals","abacus":"objects","abalone":"animals","abandonment":"emotions","abbey":"places","abbot":"people","abbreviation":"objects","abdomen":"body","abduction":"actions","abhorrence":"emotions","abnormal":"emotions","abode":"places","airplane":"objects","airport":"places","altar":"objects","angel":"death","animals":"animals","ant":"animals","ants":"animals","aquarium":"places","arrest":"actions","attack":"actions","attic":"places",
+    "babies":"people","baby":"people","basement":"places","bat":"animals","bathroom":"places","beach":"nature","bear":"animals","bee":"animals","being-arrested":"actions","being-attacked":"actions","being-dead":"death","being-late":"emotions","being-watched":"emotions","betrayal":"emotions","bird":"animals","birth":"actions","bite":"actions","biting":"actions","blood":"body","boat":"objects","book":"objects","boss":"people","bride":"people","bridge":"places","bright-light":"nature","broken-phone":"objects","broken-tooth":"body","burning":"actions","bus":"objects","bus-stop":"places","butterfly":"animals",
+    "cage":"objects","car":"objects","car-accident":"actions","cat":"animals","cave":"nature","cemetery":"places","chased":"actions","chasing":"actions","cheating":"actions","child":"people","childbirth":"actions","childhood-home":"places","church":"places","climbing":"actions","climbing-stairs":"actions","clothes":"objects","cockroach":"animals","cooking":"actions","cousin":"people","coworker":"people","crash":"actions","crow":"animals","crown":"objects","crush":"emotions","crying":"actions",
+    "dancing":"actions","dark":"emotions","darkness":"emotions","day":"nature","death":"death","deceased-family":"death","deer":"animals","demon":"death","desert":"nature","devil":"death","diamond":"objects","dirt":"nature","divorce":"actions","dog":"animals","dog-biting":"actions","dolphin":"animals","door":"objects","dress":"objects","driving":"actions","drowning":"actions","dying":"death",
+    "eagle":"animals","earthquake":"nature","eating":"actions","edge":"places","elephant":"animals","elevator":"objects","elevator-falling":"actions","empty-rooms":"places","escalator":"objects","escape":"actions","ex-boyfriend":"people","ex-girlfriend":"people","exam":"emotions","exes":"people","explosion":"nature","eyes":"body",
+    "face":"body","failing-test":"emotions","falling":"actions","falling-in-love":"emotions","falling-off-cliff":"actions","father":"people","fighting":"actions","fire":"nature","fish":"animals","fish-out-of-water":"animals","flood":"nature","flower":"nature","flying":"actions","following":"actions","food":"objects","forest":"nature","friend":"people","frog":"animals","funeral":"death",
+    "galaxy":"nature","garden":"nature","ghost":"death","giving-birth":"actions","gold":"objects","grandfather":"people","grandmother":"people","grave":"death","graveyard":"places","groom":"people","gun":"objects",
+    "hair":"body","hawk":"animals","hiding":"actions","holding-hands":"actions","horse":"animals","hospital":"places","house":"places","hugging":"actions","hurricane":"nature",
+    "infant":"people","insect":"animals","island":"nature",
+    "jail":"places","jewelry":"objects","jumping":"actions",
+    "key":"objects","killing":"death","kissing":"actions","kissing-someone":"actions","kitchen":"places","knife":"objects",
+    "lake":"nature","laughing":"actions","letter":"objects","library":"places","light":"nature","lightning":"nature","lion":"animals","lock":"objects","loose-tooth":"body","lost":"emotions","lost-keys":"emotions",
+    "marriage":"actions","mirror":"objects","miscarriage":"death","missing":"emotions","missing-tooth":"body","money":"objects","moon":"nature","mosque":"places","mother":"people","mountain":"nature","mountain-top":"nature","mouse":"animals","mouth":"body","mud":"nature","murder":"death","music":"objects",
+    "naked":"body","naked-in-public":"emotions","newborn":"people","night":"nature","nightmare":"emotions","nude":"body","nudity":"body",
+    "ocean":"nature","office":"places","owl":"animals",
+    "phone":"objects","phone-call":"actions","plane":"objects","plane-crash":"actions","police":"people","police-chase":"actions","pond":"nature","pregnancy":"actions","pregnant":"actions","pregnant-woman":"people","prison":"places",
+    "quicksand":"nature",
+    "rabbit":"animals","rain":"nature","rainbow":"nature","rat":"animals","raven":"animals","restaurant":"places","ring":"objects","river":"nature","road":"places","rose":"nature","running":"actions","running-late":"emotions",
+    "satan":"death","school":"places","scream":"actions","screaming":"actions","sea":"nature","searching":"actions","sex":"actions","sexual":"actions","shadow":"emotions","shark":"animals","shedding":"body","shoes":"objects","shooting":"actions","shout":"actions","sibling":"people","sick":"body","silent":"emotions","singing":"actions","smoke":"nature","snake":"animals","snake-in-bed":"animals","snake-skin":"animals","snakes":"animals","snakes-biting":"actions","snow":"nature","soldier":"people","song":"objects","spider":"animals","stabbing":"actions","staircase":"places","stairs":"places","star":"nature","storm":"nature","stranger":"people","sun":"nature","sunrise":"nature","sunset":"nature","sword":"objects","swimming":"actions",
+    "teacher":"people","teeth":"body","temple":"places","test":"emotions","text-message":"objects","thunder":"nature","tiger":"animals","toddler":"people","toilet":"objects","tombstone":"death","tornado":"nature","train":"objects","train-station":"places","trap":"objects","tree":"nature","tree-falling":"actions","truck":"objects","tsunami":"nature",
+    "valley":"nature",
+    "waking-up":"actions","war":"actions","water":"nature","waterfall":"nature","wave":"nature","weapon":"objects","wedding":"actions","wedding-dress":"objects","well":"places","whale":"animals","window":"objects","witch":"people","wolf":"animals","work":"actions","wound":"body","writing":"actions"
+  };
+
+  var CATEGORIES = [
+    {id:"animals",label:"Animals"},
+    {id:"people",label:"People"},
+    {id:"places",label:"Places"},
+    {id:"body",label:"Body"},
+    {id:"actions",label:"Actions"},
+    {id:"emotions",label:"Emotions"},
+    {id:"death",label:"Death & Spirits"},
+    {id:"objects",label:"Objects"},
+    {id:"nature",label:"Nature"}
+  ];
+
+  var state = { query:"", letter:"", category:"" };
+  var items = [];
+  var presentLetters = new Set();
+  var TOTAL = 0;
+
+  function reducedMotion(){
+    return window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  function init(){
+    var lis = document.querySelectorAll(".chapter-entries li");
+    TOTAL = lis.length;
+    Array.prototype.forEach.call(lis, function(li){
+      var a = li.querySelector("a");
+      var href = a ? a.getAttribute("href") : "";
+      var m = href.match(/dream-symbol\/([^\/]+)/);
+      var slug = m ? m[1] : "";
+      var labelEl = li.querySelector(".label");
+      var label = (labelEl ? labelEl.textContent : "").toLowerCase().trim();
+      var letter = label.charAt(0);
+      var category = CATS[slug] || "other";
+      items.push({el:li, slug:slug, label:label, letter:letter, category:category});
+      presentLetters.add(letter);
+      li.dataset.category = category;
+    });
+
+    // Read URL params for deep-links
+    var p = new URLSearchParams(location.search);
+    state.query = (p.get("q") || "").toLowerCase().trim();
+    state.letter = (p.get("letter") || "").toLowerCase().trim();
+    state.category = (p.get("cat") || "").toLowerCase().trim();
+    if (!CATEGORIES.some(function(c){return c.id===state.category;})) state.category = "";
+
+    buildToolbar();
+    var input = document.getElementById("gr-search");
+    // Defensive: if the URL didn't supply ?q= but the input already has a
+    // value (browser autofill, or a test driver that typed before init ran),
+    // honor it instead of clobbering with empty state.
+    if (!state.query && input.value) {
+      state.query = input.value.toLowerCase().trim();
+    }
+    input.value = state.query;
+    var debounce;
+    input.addEventListener("input", function(e){
+      clearTimeout(debounce);
+      var v = e.target.value.toLowerCase().trim();
+      debounce = setTimeout(function(){
+        state.query = v;
+        applyFilters();
+      }, 80);
+    });
+
+    var reset = document.getElementById("gr-empty-reset");
+    reset.addEventListener("click", function(){
+      state.query = ""; state.letter = ""; state.category = "";
+      input.value = "";
+      applyFilters();
+      window.scrollTo({top:0, behavior: reducedMotion() ? "auto" : "smooth"});
+    });
+
+    applyFilters();
+  }
+
+  function buildToolbar(){
+    var az = document.getElementById("gr-az");
+    for (var c = 97; c <= 122; c++){
+      (function(letter){
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = letter.toUpperCase();
+        btn.dataset.letter = letter;
+        btn.setAttribute("aria-pressed","false");
+        if (!presentLetters.has(letter)) {
+          btn.disabled = true;
+          btn.setAttribute("aria-label", letter.toUpperCase()+" — no symbols");
+        }
+        btn.addEventListener("click", function(){
+          state.letter = state.letter === letter ? "" : letter;
+          applyFilters();
+          var target = document.getElementById("chapter-"+letter);
+          if (target && state.letter === letter){
+            target.scrollIntoView({behavior: reducedMotion() ? "auto" : "smooth", block:"start"});
+          }
+        });
+        az.appendChild(btn);
+      })(String.fromCharCode(c));
+    }
+    var allBtn = document.createElement("button");
+    allBtn.type = "button";
+    allBtn.textContent = "All";
+    allBtn.className = "all";
+    allBtn.addEventListener("click", function(){
+      state.letter = ""; state.category = "";
+      applyFilters();
+    });
+    az.appendChild(allBtn);
+
+    var catRow = document.getElementById("gr-cats");
+    CATEGORIES.forEach(function(c){
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = c.label;
+      btn.dataset.cat = c.id;
+      btn.setAttribute("aria-pressed","false");
+      btn.addEventListener("click", function(){
+        if (state.category === c.id){
+          state.category = "";
+        } else {
+          state.category = c.id;
+          state.letter = "";
+        }
+        applyFilters();
+      });
+      catRow.appendChild(btn);
+    });
+  }
+
+  function applyFilters(){
+    var visible = 0;
+    var lettersWithMatches = new Set();
+    var lettersWithQueryMatches = new Set();
+    items.forEach(function(it){
+      var matchQ = !state.query || it.label.indexOf(state.query) !== -1;
+      var matchC = !state.category || it.category === state.category;
+      var matchL = !state.letter || it.letter === state.letter;
+      if (matchQ && matchC) lettersWithQueryMatches.add(it.letter);
+      var show = matchQ && matchL && matchC;
+      it.el.classList.toggle("hidden", !show);
+      if (show) {
+        visible++;
+        lettersWithMatches.add(it.letter);
+      }
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll(".chapter"), function(s){
+      var any = s.querySelectorAll(".chapter-entries li:not(.hidden)").length > 0;
+      s.classList.toggle("empty", !any);
+    });
+
+    var countEl = document.getElementById("gr-count");
+    if (visible === TOTAL){
+      countEl.textContent = TOTAL + " symbols";
+    } else if (visible === 1){
+      countEl.textContent = "1 of " + TOTAL + " symbols";
+    } else {
+      countEl.textContent = visible + " of " + TOTAL + " symbols";
+    }
+
+    var empty = document.getElementById("gr-empty");
+    var emptyQ = document.getElementById("gr-empty-q");
+    if (visible === 0){
+      var hint = state.query ? "“" + state.query + "”" :
+                 state.category ? (CATEGORIES.find(function(c){return c.id===state.category;})||{}).label :
+                 state.letter ? "letter " + state.letter.toUpperCase() : "your filters";
+      emptyQ.textContent = hint;
+      empty.classList.add("show");
+    } else {
+      empty.classList.remove("show");
+    }
+
+    var filterActive = !!(state.query || state.category);
+    Array.prototype.forEach.call(document.querySelectorAll("#gr-az button[data-letter]"), function(b){
+      var letter = b.dataset.letter;
+      var on = state.letter === letter;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      // When search or category narrows the set, disable letters that have no
+      // matches under those filters. Without a search/category, fall back to
+      // the global presence map (X/Y/Z disabled by default).
+      var enabled = filterActive ? lettersWithQueryMatches.has(letter) : presentLetters.has(letter);
+      b.disabled = !enabled;
+    });
+    var allBtn = document.querySelector("#gr-az button.all");
+    if (allBtn) allBtn.classList.toggle("active", !state.letter && !state.category);
+    Array.prototype.forEach.call(document.querySelectorAll("#gr-cats button[data-cat]"), function(b){
+      var on = state.category === b.dataset.cat;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+
+  if (document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
 </body>
 </html>

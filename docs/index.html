@@ -1016,9 +1016,242 @@
       .hero::after { animation: none; }
       .showcase-image { animation: none; }
     }
+
+    /* ============================================
+       Top nav (sticky)
+       ============================================ */
+    .top-nav {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.85rem 1.5rem;
+      background: rgba(13, 27, 42, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(201, 168, 76, 0.15);
+    }
+    .top-nav .brand {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      color: var(--gold);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+    .top-nav .brand em { font-style: italic; }
+    .top-nav .nav-links {
+      display: flex; align-items: center; gap: 1.5rem;
+      list-style: none; margin: 0; padding: 0;
+    }
+    .top-nav .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      transition: color 0.2s ease;
+    }
+    .top-nav .nav-links a:hover { color: var(--text-primary); }
+    .top-nav .nav-links a.gr-link { color: var(--gold); font-style: italic; }
+    .top-nav .nav-links a.cta {
+      background: var(--gold); color: var(--bg-deep);
+      padding: 0.45rem 1rem; border-radius: 6px;
+      font-weight: 600; font-style: normal;
+    }
+    .top-nav .nav-links a.cta:hover { background: var(--gold-light); color: var(--bg-deep); }
+    @media (max-width: 720px) {
+      .top-nav { padding: 0.75rem 1rem; }
+      .top-nav .nav-links { gap: 0.85rem; }
+      .top-nav .nav-links a.hide-mobile { display: none; }
+      .top-nav .nav-links a { font-size: 0.88rem; }
+    }
+
+    /* ============================================
+       Hero Grimoire search
+       ============================================ */
+    .hero-grimoire-search {
+      max-width: 480px;
+      margin: 1.75rem auto 0;
+      padding: 0 1rem;
+      text-align: center;
+    }
+    .hero-grimoire-search .search-prompt {
+      font-family: var(--font-heading);
+      font-style: italic;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin: 0 0 0.6rem;
+      letter-spacing: 0.02em;
+    }
+    .hero-grimoire-search form {
+      display: flex; align-items: stretch;
+      background: rgba(26, 10, 46, 0.55);
+      border: 1px solid rgba(201, 168, 76, 0.3);
+      border-radius: 999px;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .hero-grimoire-search form:focus-within {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.18);
+    }
+    .hero-grimoire-search input {
+      flex: 1; min-width: 0;
+      background: transparent; border: 0; outline: none;
+      padding: 0.75rem 0.5rem 0.75rem 1.25rem;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.98rem;
+    }
+    .hero-grimoire-search input::placeholder { color: var(--text-muted); font-style: italic; }
+    .hero-grimoire-search button {
+      background: var(--gold); color: var(--bg-deep);
+      border: 0; cursor: pointer;
+      padding: 0 1.2rem;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+    }
+    .hero-grimoire-search button:hover { background: var(--gold-light); }
+    .hero-grimoire-search .browse-link {
+      display: inline-block;
+      margin-top: 0.85rem;
+      color: var(--gold);
+      font-family: var(--font-heading);
+      font-style: italic;
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+    .hero-grimoire-search .browse-link:hover { color: var(--gold-light); }
+
+    /* ============================================
+       Grimoire callout (bigger, replaces symbols strip)
+       ============================================ */
+    .grimoire-callout {
+      background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-purple-dark) 100%);
+    }
+    .grimoire-callout .gc-meta {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 2.5rem;
+    }
+    .grimoire-callout .gc-stat {
+      display: inline-block;
+      font-family: var(--font-heading);
+      color: var(--gold);
+      font-size: 0.78rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      padding: 0.35rem 1rem;
+      border: 1px solid rgba(201, 168, 76, 0.35);
+      border-radius: 999px;
+      margin-bottom: 1.2rem;
+    }
+    .gc-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+    .gc-tile {
+      position: relative;
+      display: block;
+      aspect-ratio: 1 / 1;
+      border-radius: 16px;
+      overflow: hidden;
+      text-decoration: none;
+      border: 1px solid rgba(201, 168, 76, 0.18);
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      background: var(--bg-purple-dark);
+    }
+    .gc-tile:hover {
+      transform: translateY(-4px);
+      border-color: rgba(201, 168, 76, 0.6);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(201, 168, 76, 0.4);
+    }
+    .gc-tile img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease, opacity 0.25s ease;
+      opacity: 0.85;
+    }
+    .gc-tile:hover img { transform: scale(1.08); opacity: 1; }
+    .gc-tile .gc-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(13,27,42,0) 40%, rgba(13,27,42,0.92) 100%);
+      pointer-events: none;
+    }
+    .gc-tile .gc-text {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      padding: 1rem 1.1rem 1.1rem;
+      z-index: 1;
+    }
+    .gc-tile .gc-name {
+      font-family: var(--font-heading);
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: 0.01em;
+      margin: 0;
+      line-height: 1.1;
+    }
+    .gc-tile .gc-sub {
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      color: var(--gold-light);
+      font-style: italic;
+      margin: 0.25rem 0 0;
+      line-height: 1.35;
+    }
+    .gc-cta {
+      text-align: center;
+      margin-top: 2.5rem;
+    }
+    .gc-cta a {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--bg-deep);
+      padding: 0.95rem 2.2rem;
+      border-radius: 999px;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1rem;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 8px 24px rgba(201, 168, 76, 0.2);
+    }
+    .gc-cta a:hover {
+      background: var(--gold-light);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(201, 168, 76, 0.35);
+    }
+    @media (min-width: 640px) {
+      .gc-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (min-width: 960px) {
+      .gc-grid { grid-template-columns: repeat(6, 1fr); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .gc-tile, .gc-tile img, .gc-cta a { transition: none; }
+    }
   </style>
 </head>
 <body>
+
+  <!-- ==========================================
+       TOP NAV
+       ========================================== -->
+  <nav class="top-nav" aria-label="Primary">
+    <a href="/" class="brand">Dreamz <em>Journal</em></a>
+    <ul class="nav-links">
+      <li><a href="/blog/dream-symbol/" class="gr-link">Grimoire</a></li>
+      <li><a href="#pricing" class="hide-mobile">Pricing</a></li>
+      <li><a href="#faq" class="hide-mobile">FAQ</a></li>
+      <li><a href="https://apps.apple.com/app/id6760150023" class="cta">Download</a></li>
+    </ul>
+  </nav>
 
   <!-- ==========================================
        HERO
@@ -1047,6 +1280,15 @@
       <div class="cta-group">
         <a href="https://apps.apple.com/app/id6760150023" class="hero-cta-btn">Download on the App Store</a>
         <p class="hero-sub-text">Free on iOS. Android coming soon.</p>
+      </div>
+
+      <div class="hero-grimoire-search">
+        <p class="search-prompt">Or search 302 dream symbols</p>
+        <form action="/blog/dream-symbol/" method="get" role="search">
+          <input type="search" name="q" placeholder="falling, teeth, snake, water…" autocomplete="off" aria-label="Search the Grimoire">
+          <button type="submit">Search</button>
+        </form>
+        <a href="/blog/dream-symbol/" class="browse-link">Browse the full Grimoire →</a>
       </div>
     </div>
   </section>
@@ -1078,6 +1320,74 @@
           <h3 class="step-title">Grow your grimoire</h3>
           <p class="step-desc">Every reading is saved to your personal dream archive. Over time, patterns and recurring symbols emerge.</p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       GRIMOIRE CALLOUT (moved from below FAQ — now featured up top)
+       ========================================== -->
+  <section class="section grimoire-callout" id="symbols">
+    <div class="section-inner">
+      <div class="gc-meta">
+        <span class="gc-stat">302 dream symbols · A–Z · searchable</span>
+        <h2 class="section-title">One illuminated <em>index</em>.</h2>
+        <p class="section-subtitle">Every symbol you've ever dreamed of — falling, teeth, snakes, water — interpreted, indexed, and waiting for you to look it up.</p>
+      </div>
+
+      <div class="gc-grid">
+        <a href="/blog/dream-symbol/falling/" class="gc-tile">
+          <img src="/blog/dream-symbol/falling/hero.jpg" alt="" loading="lazy">
+          <div class="gc-overlay"></div>
+          <div class="gc-text">
+            <p class="gc-name">Falling</p>
+            <p class="gc-sub">loss of control</p>
+          </div>
+        </a>
+        <a href="/blog/dream-symbol/teeth/" class="gc-tile">
+          <img src="/blog/dream-symbol/teeth/hero.jpg" alt="" loading="lazy">
+          <div class="gc-overlay"></div>
+          <div class="gc-text">
+            <p class="gc-name">Teeth</p>
+            <p class="gc-sub">power, anxiety</p>
+          </div>
+        </a>
+        <a href="/blog/dream-symbol/chased/" class="gc-tile">
+          <img src="/blog/dream-symbol/chased/hero.jpg" alt="" loading="lazy">
+          <div class="gc-overlay"></div>
+          <div class="gc-text">
+            <p class="gc-name">Chased</p>
+            <p class="gc-sub">what you're avoiding</p>
+          </div>
+        </a>
+        <a href="/blog/dream-symbol/snake/" class="gc-tile">
+          <img src="/blog/dream-symbol/snake/hero.jpg" alt="" loading="lazy">
+          <div class="gc-overlay"></div>
+          <div class="gc-text">
+            <p class="gc-name">Snake</p>
+            <p class="gc-sub">transformation</p>
+          </div>
+        </a>
+        <a href="/blog/dream-symbol/water/" class="gc-tile">
+          <img src="/blog/dream-symbol/water/hero.jpg" alt="" loading="lazy">
+          <div class="gc-overlay"></div>
+          <div class="gc-text">
+            <p class="gc-name">Water</p>
+            <p class="gc-sub">emotion, depth</p>
+          </div>
+        </a>
+        <a href="/blog/dream-symbol/death/" class="gc-tile">
+          <img src="/blog/dream-symbol/death/hero.jpg" alt="" loading="lazy">
+          <div class="gc-overlay"></div>
+          <div class="gc-text">
+            <p class="gc-name">Death</p>
+            <p class="gc-sub">endings, change</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="gc-cta">
+        <a href="/blog/dream-symbol/">Open the Grimoire →</a>
       </div>
     </div>
   </section>
@@ -1294,69 +1604,6 @@
           <div class="faq-item-body">Most apps are either plain journals (no interpretation), static dream dictionaries (no personalization), or generic AI with no symbol framework. Dreamz pairs a 5,700+ symbol dictionary with personalized mystical readings — symbols, omens, rituals — all saved to a private Grimoire that surfaces your dream patterns over time.</div>
         </details>
       </div>
-    </div>
-  </section>
-
-  <!-- ==========================================
-       POPULAR DREAM SYMBOLS
-       ========================================== -->
-  <section class="section symbols-strip" id="symbols">
-    <div class="section-inner">
-      <p class="section-label">Popular Dream Symbols</p>
-      <h2 class="section-title">What did you <em>dream of?</em></h2>
-      <p class="section-subtitle">Twelve of the most common symbols people search — start here, or browse the full Grimoire of 300+.</p>
-
-      <div class="symbols-grid">
-        <a href="/blog/dream-symbol/falling/" class="symbol-tile">
-          <img class="symbol-thumb" src="/blog/dream-symbol/falling/hero.jpg" alt="" loading="lazy" width="44" height="44">
-          <span class="symbol-label">Falling<span class="symbol-sub">loss of control</span></span>
-        </a>
-        <a href="/blog/dream-symbol/teeth/" class="symbol-tile">
-          <img class="symbol-thumb" src="/blog/dream-symbol/teeth/hero.jpg" alt="" loading="lazy" width="44" height="44">
-          <span class="symbol-label">Teeth<span class="symbol-sub">power, anxiety</span></span>
-        </a>
-        <a href="/blog/dream-symbol/chased/" class="symbol-tile">
-          <img class="symbol-thumb" src="/blog/dream-symbol/chased/hero.jpg" alt="" loading="lazy" width="44" height="44">
-          <span class="symbol-label">Chased<span class="symbol-sub">avoidance</span></span>
-        </a>
-        <a href="/blog/dream-symbol/snake/" class="symbol-tile">
-          <img class="symbol-thumb" src="/blog/dream-symbol/snake/hero.jpg" alt="" loading="lazy" width="44" height="44">
-          <span class="symbol-label">Snake<span class="symbol-sub">transformation</span></span>
-        </a>
-        <a href="/blog/dream-symbol/water/" class="symbol-tile">
-          <img class="symbol-thumb" src="/blog/dream-symbol/water/hero.jpg" alt="" loading="lazy" width="44" height="44">
-          <span class="symbol-label">Water<span class="symbol-sub">emotion, depth</span></span>
-        </a>
-        <a href="/blog/dream-symbol/flying/" class="symbol-tile">
-          <img class="symbol-thumb" src="/blog/dream-symbol/flying/hero.jpg" alt="" loading="lazy" width="44" height="44">
-          <span class="symbol-label">Flying<span class="symbol-sub">freedom</span></span>
-        </a>
-        <a href="/blog/dream-symbol/death/" class="symbol-tile">
-          <img class="symbol-thumb" src="/blog/dream-symbol/death/hero.jpg" alt="" loading="lazy" width="44" height="44">
-          <span class="symbol-label">Death<span class="symbol-sub">endings, change</span></span>
-        </a>
-        <a href="/blog/dream-symbol/pregnancy/" class="symbol-tile">
-          <img class="symbol-thumb" src="/blog/dream-symbol/pregnancy/hero.jpg" alt="" loading="lazy" width="44" height="44">
-          <span class="symbol-label">Pregnancy<span class="symbol-sub">new beginning</span></span>
-        </a>
-        <a href="/blog/dream-symbol/ex-boyfriend/" class="symbol-tile">
-          <img class="symbol-thumb" src="/blog/dream-symbol/ex-boyfriend/hero.jpg" alt="" loading="lazy" width="44" height="44">
-          <span class="symbol-label">Ex<span class="symbol-sub">unfinished feeling</span></span>
-        </a>
-        <a href="/blog/dream-symbol/house/" class="symbol-tile">
-          <img class="symbol-thumb" src="/blog/dream-symbol/house/hero.jpg" alt="" loading="lazy" width="44" height="44">
-          <span class="symbol-label">House<span class="symbol-sub">the self</span></span>
-        </a>
-        <a href="/blog/dream-symbol/fire/" class="symbol-tile">
-          <img class="symbol-thumb" src="/blog/dream-symbol/fire/hero.jpg" alt="" loading="lazy" width="44" height="44">
-          <span class="symbol-label">Fire<span class="symbol-sub">passion, warning</span></span>
-        </a>
-        <a href="/blog/dream-symbol/baby/" class="symbol-tile">
-          <img class="symbol-thumb" src="/blog/dream-symbol/baby/hero.jpg" alt="" loading="lazy" width="44" height="44">
-          <span class="symbol-label">Baby<span class="symbol-sub">vulnerability</span></span>
-        </a>
-      </div>
-      <div class="symbols-all"><a href="/blog/dream-symbol/">Browse all 300+ dream symbols →</a></div>
     </div>
   </section>
 
