@@ -141,7 +141,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://formspree.io">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,400;1,9..144,500;1,9..144,700;1,9..144,900&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
 
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8597027816949059" crossorigin="anonymous"></script>
@@ -164,12 +164,12 @@
    ============================================================ */
 
 :root {
-  /* Aubergine ink */
-  --aubergine-deep: #2A1332;
-  --aubergine: #3B1F47;
-  --aubergine-lift: #4B2B58;
-  --aubergine-hair: #5C3A69;
-  --aubergine-shadow: rgba(15, 5, 22, 0.45);
+  /* Aubergine ink — darker palette */
+  --aubergine-deep: #15081E;
+  --aubergine: #251238;
+  --aubergine-lift: #341B4D;
+  --aubergine-hair: #4A2A66;
+  --aubergine-shadow: rgba(8, 3, 14, 0.55);
 
   /* Bone paper */
   --bone: #F0E8D8;
@@ -189,7 +189,7 @@
   --sage: #7A9A7A;
 
   /* Type */
-  --font-display: 'Fraunces', Georgia, serif;
+  --font-display: 'EB Garamond', Georgia, serif;
   --font-body: 'Instrument Sans', system-ui, -apple-system, sans-serif;
 
   /* Optical-size */
@@ -663,14 +663,13 @@ nav.topnav .nav-cta:hover {
   font-family: var(--font-display);
   font-size: clamp(2.4rem, 5.5vw, 4.6rem);
   font-weight: 500;
-  font-style: italic;
+  font-style: normal;
   line-height: 1.02;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.015em;
   color: var(--bone);
-  font-variation-settings: "opsz" 96;
   max-width: 780px;
 }
-.section-title em { font-style: normal; color: var(--ochre); font-weight: 400; }
+.section-title em { font-style: italic; color: var(--ochre); font-weight: 500; }
 .section-deck {
   font-family: var(--font-display);
   font-size: 1.2rem;
