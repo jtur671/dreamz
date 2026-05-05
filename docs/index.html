@@ -609,7 +609,7 @@ nav.topnav .nav-cta:hover {
   padding: 7rem var(--gutter) 5.5rem;
   z-index: 3;
 }
-.section-inner { max-width: var(--col-wide); margin: 0 auto; position: relative; }
+.section-inner { max-width: var(--col-wide); margin: 0 auto; position: relative; display: flow-root; }
 
 .section-rule {
   max-width: var(--col-wide);
@@ -766,16 +766,16 @@ nav.topnav .nav-cta:hover {
   display: inline-block;
 }
 .index-numeral .num-after {
-  font-size: 0.18em;
+  font-family: var(--font-body);
+  font-size: 11px;
   font-style: normal;
   font-weight: 600;
   color: var(--bone-muted);
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  position: absolute;
-  bottom: 1rem;
-  right: -0.5rem;
-  white-space: nowrap;
+  display: block;
+  margin-top: 0.85rem;
+  line-height: 1.6;
 }
 .index-deck {
   font-family: var(--font-display);
